@@ -15,6 +15,6 @@ module load anaconda3
 #module load gurobi/9.5.1
 conda activate mroenv
 
-python portfolio/portcont_testing.py 
+python portfolio/portMIP_testing.py 
 #--sparsity $SLURM_ARRAY_TASK_ID
 

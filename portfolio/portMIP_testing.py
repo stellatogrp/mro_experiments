@@ -89,7 +89,7 @@ def port_experiment(dat, dateval, R, m, prob, N_tot, K_tot,K_nums, eps_tot, eps_
             ######################## solve for various epsilons ########################
             for eps_count, eps in enumerate(eps_nums):
                 eps_pm.value = eps
-                problem.solve()
+                problem.solve(verbose = True)
                 solvetimes[K_count,eps_count,r] = problem.solver_stats.solve_time
                 #print(eps,K, problem.objective.value)
                 x_sols[K_count, eps_count, :, r] = x.value
@@ -103,82 +103,83 @@ def port_experiment(dat, dateval, R, m, prob, N_tot, K_tot,K_nums, eps_tot, eps_
     return x_sols, Opt_vals, eval_vals, probs,setuptimes,solvetimes
 
     
-if __name__ == '__main__':
-    colors = ["tab:blue", "tab:orange", "tab:green",
-            "tab:red", "tab:purple", "tab:brown", "tab:pink", "tab:grey", "tab:olive","tab:blue", "tab:orange", "tab:green",
-            "tab:red", "tab:purple", "tab:brown", "tab:pink", "tab:grey", "tab:olive"]
 
-    synthetic_returns = pd.read_csv('sp500_synthetic_returns.csv').to_numpy()[:,1:]
+colors = ["tab:blue", "tab:orange", "tab:green",
+        "tab:red", "tab:purple", "tab:brown", "tab:pink", "tab:grey", "tab:olive","tab:blue", "tab:orange", "tab:green",
+        "tab:red", "tab:purple", "tab:brown", "tab:pink", "tab:grey", "tab:olive"]
 
-    K_nums = np.array([1,50,100,500,1000])
-    K_tot = K_nums.size  # Total number of clusters we consider
-    N_tot = 1000
-    M = 20
-    R = 10           # Total times we repeat experiment to estimate final probabilty
-    m = 100 
-    eps_min = -6    # minimum epsilon we consider
-    eps_max = -3.5        # maximum epsilon we consider
-    eps_nums = np.linspace(eps_min,eps_max,M)
-    eps_nums = 10**(eps_nums)
-    eps_tot = M
+synthetic_returns = pd.read_csv('/scratch/gpfs/iywang/mro_code/portfolio/sp500_synthetic_returns.csv').to_numpy()[:,1:]
 
-    dat = synthetic_returns[:10000,:m]
-    dateval = synthetic_returns[-10000:,:m]
+K_nums = np.array([1,50,100,500,1000])
+K_tot = K_nums.size  # Total number of clusters we consider
+N_tot = 1000
+M = 20
+R = 10           # Total times we repeat experiment to estimate final probabilty
+m = 100 
+eps_min = -7    # minimum epsilon we consider
+eps_max = -4        # maximum epsilon we consider
+eps_nums = np.linspace(eps_min,eps_max,M)
+eps_nums = 10**(eps_nums)
+eps_tot = M
 
-    x_sols, Opt_vals, eval_vals, probs,setuptimes,solvetimes = port_experiment(dat,dateval,R, m, createproblem_portMIP,N_tot, K_tot,K_nums, eps_tot,eps_nums)
+dat = synthetic_returns[:10000,:m]
+dateval = synthetic_returns[-10000:,:m]
 
-    np.save(Path("../mro_results/portfolio/MIP/m=100,K=1000,r=10/x.npy"),x_sols)
-    np.save(Path("../mro_results/portfolio/MIP/m=100,K=1000,r=10/Opt_vals.npy"),Opt_vals)
-    np.save(Path("../mro_results/portfolio/MIP/m=100,K=1000,r=10/solvetimes.npy"),solvetimes)
-    
-    np.save(Path("../mro_results/portfolio/MIP/m=100,K=1000,r=10/setuptimes.npy"),setuptimes)
-    np.save(Path("../mro_results/portfolio/MIP/m=100,K=1000,r=10/probs.npy"),probs)
-    np.save(Path("../mro_results/portfolio/MIP/m=100,K=1000,r=10/eval_vals.npy"),eval_vals)
+x_sols, Opt_vals, eval_vals, probs,setuptimes,solvetimes = port_experiment(dat,dateval,R, m, createproblem_portMIP,N_tot, K_tot,K_nums, eps_tot,eps_nums)
 
-    plt.figure(figsize=(10, 6))
-    for K_count, K in enumerate(K_nums):
-        plt.plot(eps_nums, np.mean(Opt_vals[:,:,],axis = 2)[K_count,:],linestyle='-', marker='o', color = colors[K_count], label = "$K = {}$".format(round(K,4)))
-        plt.xlabel("$\epsilon^2$")
-    plt.xscale("log")
-    plt.ylabel("Optimal value")
-    plt.legend()
-    plt.show()
-    plt.savefig('objs.png')
+np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/m=100,K=1000,r=10/x.npy"),x_sols)
+np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/m=100,K=1000,r=10/Opt_vals.npy"),Opt_vals)
+np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/m=100,K=1000,r=10/solvetimes.npy"),solvetimes)
 
-    plt.figure(figsize=(10, 6))
-    for K_count, K in enumerate(K_nums):
-        plt.plot(eps_nums, np.mean(probs[:,:,],axis = 2)[K_count,:],linestyle='-', marker='o', color = colors[K_count], label = "$K = {}$".format(round(K,4)))
-        plt.xlabel("$\epsilon^2$")
-    plt.xscale("log")
-    plt.ylabel("Reliability")
-    plt.legend()
-    plt.show()
-    plt.savefig('reliability.png')
+np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/m=100,K=1000,r=10/setuptimes.npy"),setuptimes)
+np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/m=100,K=1000,r=10/probs.npy"),probs)
+np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/m=100,K=1000,r=10/eval_vals.npy"),eval_vals)
 
-    plt.figure(figsize=(10, 6))
-    for eps_count, eps in enumerate(eps_nums):
-        plt.plot(K_nums,np.mean(solvetimes[:,:,],axis = 2)[:,eps_count],linestyle='-', marker='o', label = "$\epsilon^2 = {}$".format(round(eps,6)), alpha = 0.5)
-        plt.xlabel("Number of clusters (K)")
+plt.figure(figsize=(10, 6))
+for K_count, K in enumerate(K_nums):
+    plt.plot(eps_nums, np.mean(Opt_vals[:,:,],axis = 2)[K_count,:],linestyle='-', marker='o', color = colors[K_count], label = "$K = {}$".format(round(K,4)))
+    plt.xlabel("$\epsilon^2$")
+plt.xscale("log")
+plt.ylabel("Optimal value")
+plt.legend()
+plt.show()
+plt.savefig("/scratch/gpfs/iywang/mro_results/portfolio/MIP/m=100,K=1000,r=10/objs.png")
 
-    plt.ylabel("time")
-    plt.title("Solve time")
-    plt.legend()
-    plt.show()
+plt.figure(figsize=(10, 6))
+for K_count, K in enumerate(K_nums):
+    plt.plot(eps_nums, np.mean(probs[:,:,],axis = 2)[K_count,:],linestyle='-', marker='o', color = colors[K_count], label = "$K = {}$".format(round(K,4)))
+    plt.xlabel("$\epsilon^2$")
+plt.xscale("log")
+plt.ylabel("Reliability")
+plt.legend()
+plt.show()
+plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/MIP/m=100,K=1000,r=10/reliability.png')
 
-    plt.figure(figsize=(10, 6))
-    plt.plot(K_nums,np.mean(setuptimes,axis = 1),linestyle='-', marker='o')
+plt.figure(figsize=(10, 6))
+for eps_count, eps in enumerate(eps_nums):
+    plt.plot(K_nums,np.mean(solvetimes[:,:,],axis = 2)[:,eps_count],linestyle='-', marker='o', label = "$\epsilon^2 = {}$".format(round(eps,6)), alpha = 0.5)
     plt.xlabel("Number of clusters (K)")
-    plt.ylabel("time")
-    plt.title("Set-up time (clustering + creating problem)")
-    plt.show()
 
-    plt.figure(figsize=(10, 6))
-    for eps_count, eps in enumerate(eps_nums):
-        plt.plot(K_nums,np.mean(setuptimes,axis = 1) + np.mean(solvetimes[:,:,],axis = 2)[:,eps_count],linestyle='-', marker='o', label = "$\epsilon^2 = {}$".format(round(eps,6)), alpha = 0.5)
-        plt.xlabel("Number of clusters (K)")
+plt.ylabel("time")
+plt.title("Solve time")
+plt.legend()
+plt.show()
+plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/MIP/m=100,K=1000,r=10/solvetime.png')
 
-    plt.ylabel("time")
-    plt.title("Total time")
-    plt.legend(fontsize=5)
-    plt.show()
-    plt.savefig('time.png')
+plt.figure(figsize=(10, 6))
+plt.plot(K_nums,np.mean(setuptimes,axis = 1),linestyle='-', marker='o')
+plt.xlabel("Number of clusters (K)")
+plt.ylabel("time")
+plt.title("Set-up time (clustering + creating problem)")
+plt.show()
+
+plt.figure(figsize=(10, 6))
+for eps_count, eps in enumerate(eps_nums):
+    plt.plot(K_nums,np.mean(setuptimes,axis = 1) + np.mean(solvetimes[:,:,],axis = 2)[:,eps_count],linestyle='-', marker='o', label = "$\epsilon^2 = {}$".format(round(eps,6)), alpha = 0.5)
+    plt.xlabel("Number of clusters (K)")
+
+plt.ylabel("time")
+plt.title("Total time")
+plt.legend(fontsize=5)
+plt.show()
+plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/MIP/m=100,K=1000,r=10/totaltime.png')
