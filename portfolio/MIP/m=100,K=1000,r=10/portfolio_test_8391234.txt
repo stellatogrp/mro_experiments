@@ -1,0 +1,6 @@
+Restricted license - for non-production use only - expires 2023-10-25
+/home/iywang/.conda/envs/mroenv/lib/python3.10/site-packages/cvxpy/problems/problem.py:1333: UserWarning: Solution may be inaccurate. Try another solver, adjusting the solver settings, or solve with verbose=True for more information.
+  warnings.warn(
+slurmstepd: error: *** JOB 8391247 ON tiger-h26c2n14 CANCELLED AT 2022-04-16T14:13:09 ***
+slurmstepd: error: *** JOB 8391238 ON tiger-h26c2n16 CANCELLED AT 2022-04-16T14:13:09 ***
+slurmstepd: error: *** JOB 8391239 ON tiger-h19c1n7 CANCELLED AT 2022-04-16T14:13:09 ***

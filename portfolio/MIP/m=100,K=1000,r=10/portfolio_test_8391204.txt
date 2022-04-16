@@ -1,0 +1,32 @@
+Traceback (most recent call last):
+  File "/scratch/gpfs/iywang/mro_code/portfolio/portMIP_testing.py", line 135, in <module>
+    x_sols, Opt_vals, eval_vals, probs,setuptimes,solvetimes = port_experiment(dat,dateval,R, m, createproblem_portMIP,N_tot, K_tot,K_nums, eps_tot,eps_nums)
+  File "/scratch/gpfs/iywang/mro_code/portfolio/portMIP_testing.py", line 92, in port_experiment
+    problem.solve(solver = cp.MOSEK)
+  File "/home/iywang/.conda/envs/mroenv/lib/python3.10/site-packages/cvxpy/problems/problem.py", line 481, in solve
+    return solve_func(self, *args, **kwargs)
+  File "/home/iywang/.conda/envs/mroenv/lib/python3.10/site-packages/cvxpy/problems/problem.py", line 1012, in _solve
+    solution = solving_chain.solve_via_data(
+  File "/home/iywang/.conda/envs/mroenv/lib/python3.10/site-packages/cvxpy/reductions/solvers/solving_chain.py", line 361, in solve_via_data
+    return self.solver.solve_via_data(data, warm_start, verbose,
+  File "/home/iywang/.conda/envs/mroenv/lib/python3.10/site-packages/cvxpy/reductions/solvers/conic_solvers/mosek_conif.py", line 238, in solve_via_data
+    task.optimize()
+  File "/home/iywang/.conda/envs/mroenv/lib/python3.10/site-packages/mosek/__init__.py", line 7627, in optimize
+    raise Error(rescode(res),msg)
+mosek.Error: rescode.err_missing_license_file(1008): License cannot be located. The default search path is ':/home/iywang/mosek/mosek.lic:'.
+Traceback (most recent call last):
+  File "/scratch/gpfs/iywang/mro_code/portfolio/portMIP_testing.py", line 135, in <module>
+    x_sols, Opt_vals, eval_vals, probs,setuptimes,solvetimes = port_experiment(dat,dateval,R, m, createproblem_portMIP,N_tot, K_tot,K_nums, eps_tot,eps_nums)
+  File "/scratch/gpfs/iywang/mro_code/portfolio/portMIP_testing.py", line 92, in port_experiment
+    problem.solve(solver = cp.MOSEK)
+  File "/home/iywang/.conda/envs/mroenv/lib/python3.10/site-packages/cvxpy/problems/problem.py", line 481, in solve
+    return solve_func(self, *args, **kwargs)
+  File "/home/iywang/.conda/envs/mroenv/lib/python3.10/site-packages/cvxpy/problems/problem.py", line 1012, in _solve
+    solution = solving_chain.solve_via_data(
+  File "/home/iywang/.conda/envs/mroenv/lib/python3.10/site-packages/cvxpy/reductions/solvers/solving_chain.py", line 361, in solve_via_data
+    return self.solver.solve_via_data(data, warm_start, verbose,
+  File "/home/iywang/.conda/envs/mroenv/lib/python3.10/site-packages/cvxpy/reductions/solvers/conic_solvers/mosek_conif.py", line 238, in solve_via_data
+    task.optimize()
+  File "/home/iywang/.conda/envs/mroenv/lib/python3.10/site-packages/mosek/__init__.py", line 7627, in optimize
+    raise Error(rescode(res),msg)
+mosek.Error: rescode.err_missing_license_file(1008): License cannot be located. The default search path is ':/home/iywang/mosek/mosek.lic:'.

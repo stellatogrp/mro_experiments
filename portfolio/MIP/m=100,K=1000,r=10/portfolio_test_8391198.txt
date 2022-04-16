@@ -1,0 +1,32 @@
+Traceback (most recent call last):
+  File "/scratch/gpfs/iywang/mro_code/portfolio/portMIP_testing.py", line 135, in <module>
+    x_sols, Opt_vals, eval_vals, probs,setuptimes,solvetimes = port_experiment(dat,dateval,R, m, createproblem_portMIP,N_tot, K_tot,K_nums, eps_tot,eps_nums)
+  File "/scratch/gpfs/iywang/mro_code/portfolio/portMIP_testing.py", line 92, in port_experiment
+    problem.solve(solver = cp.MOSEK)
+  File "/home/iywang/.conda/envs/mroenv/lib/python3.10/site-packages/cvxpy/problems/problem.py", line 481, in solve
+    return solve_func(self, *args, **kwargs)
+  File "/home/iywang/.conda/envs/mroenv/lib/python3.10/site-packages/cvxpy/problems/problem.py", line 1003, in _solve
+    data, solving_chain, inverse_data = self.get_problem_data(
+  File "/home/iywang/.conda/envs/mroenv/lib/python3.10/site-packages/cvxpy/problems/problem.py", line 607, in get_problem_data
+    solving_chain = self._construct_chain(
+  File "/home/iywang/.conda/envs/mroenv/lib/python3.10/site-packages/cvxpy/problems/problem.py", line 839, in _construct_chain
+    candidate_solvers = self._find_candidate_solvers(solver=solver, gp=gp)
+  File "/home/iywang/.conda/envs/mroenv/lib/python3.10/site-packages/cvxpy/problems/problem.py", line 718, in _find_candidate_solvers
+    raise error.SolverError("The solver %s is not installed." % solver)
+cvxpy.error.SolverError: The solver MOSEK is not installed.
+Traceback (most recent call last):
+  File "/scratch/gpfs/iywang/mro_code/portfolio/portMIP_testing.py", line 135, in <module>
+    x_sols, Opt_vals, eval_vals, probs,setuptimes,solvetimes = port_experiment(dat,dateval,R, m, createproblem_portMIP,N_tot, K_tot,K_nums, eps_tot,eps_nums)
+  File "/scratch/gpfs/iywang/mro_code/portfolio/portMIP_testing.py", line 92, in port_experiment
+    problem.solve(solver = cp.MOSEK)
+  File "/home/iywang/.conda/envs/mroenv/lib/python3.10/site-packages/cvxpy/problems/problem.py", line 481, in solve
+    return solve_func(self, *args, **kwargs)
+  File "/home/iywang/.conda/envs/mroenv/lib/python3.10/site-packages/cvxpy/problems/problem.py", line 1003, in _solve
+    data, solving_chain, inverse_data = self.get_problem_data(
+  File "/home/iywang/.conda/envs/mroenv/lib/python3.10/site-packages/cvxpy/problems/problem.py", line 607, in get_problem_data
+    solving_chain = self._construct_chain(
+  File "/home/iywang/.conda/envs/mroenv/lib/python3.10/site-packages/cvxpy/problems/problem.py", line 839, in _construct_chain
+    candidate_solvers = self._find_candidate_solvers(solver=solver, gp=gp)
+  File "/home/iywang/.conda/envs/mroenv/lib/python3.10/site-packages/cvxpy/problems/problem.py", line 718, in _find_candidate_solvers
+    raise error.SolverError("The solver %s is not installed." % solver)
+cvxpy.error.SolverError: The solver MOSEK is not installed.
