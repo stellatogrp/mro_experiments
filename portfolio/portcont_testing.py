@@ -123,14 +123,14 @@ dat = synthetic_returns[:10000,:m]
 dateval = synthetic_returns[-10000:,:m]
 
 x_sols, Opt_vals, eval_vals, probs,setuptimes,solvetimes = port_experiment(dat,dateval,R, m, createproblem_port,N_tot, K_tot,K_nums, eps_tot,eps_nums)
-np.save(Path("../mro_results/portfolio/cont/x_m=400,K=1000,r=10.npy"),x_sols)
-np.save(Path("../mro_results/portfolio/cont/Opt_vals_m=400,K=1000,r=10.npy"),Opt_vals)
+np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/cont/m=200,K=1000/x_m=400,K=1000,r=10.npy"),x_sols)
+np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/cont/m=200,K=1000/Opt_vals_m=400,K=1000,r=10.npy"),Opt_vals)
 
-np.save(Path("../mro_results/portfolio/cont/solvetimes_m=400,K=1000,r=10.npy"),solvetimes)
+np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/cont/m=200,K=1000/solvetimes_m=400,K=1000,r=10.npy"),solvetimes)
 
-np.save(Path("../mro_results/portfolio/cont/setuptimes_m=400,K=1000,r=10.npy"),setuptimes)
-np.save(Path("../mro_results/portfolio/cont/probs_m=400,K=1000,r=10.npy"),probs)
-np.save(Path("../mro_results/portfolio/cont/eval_vals_m=400,K=1000,r=10.npy"),eval_vals)
+np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/cont/m=200,K=1000/setuptimes_m=400,K=1000,r=10.npy"),setuptimes)
+np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/cont/m=200,K=1000/probs_m=400,K=1000,r=10.npy"),probs)
+np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/cont/m=200,K=1000/eval_vals_m=400,K=1000,r=10.npy"),eval_vals)
 
 plt.figure(figsize=(10, 6))
 for K_count, K in enumerate(K_nums):
@@ -140,7 +140,7 @@ plt.xscale("log")
 plt.ylabel("Optimal value")
 plt.legend()
 plt.show()
-plt.savefig('objs.png')
+plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/cont/m=200,K=1000/objs.png')
 
 plt.figure(figsize=(10, 6))
 for K_count, K in enumerate(K_nums):
@@ -150,7 +150,7 @@ plt.xscale("log")
 plt.ylabel("Reliability")
 plt.legend()
 plt.show()
-plt.savefig('reliability.png')
+plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/cont/m=200,K=1000/reliability.png')
 
 plt.figure(figsize=(10, 6))
 for eps_count, eps in enumerate(eps_nums):
@@ -178,4 +178,4 @@ plt.ylabel("time")
 plt.title("Total time")
 plt.legend()
 plt.show()
-plt.savefig('time.png')
+plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/cont/m=200,K=1000/time.png')

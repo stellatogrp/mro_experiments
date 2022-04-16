@@ -89,7 +89,7 @@ def port_experiment(dat, dateval, R, m, prob, N_tot, K_tot,K_nums, eps_tot, eps_
             ######################## solve for various epsilons ########################
             for eps_count, eps in enumerate(eps_nums):
                 eps_pm.value = eps
-                problem.solve(verbose = True)
+                problem.solve(verbose = True,TimeLimit=600)
                 solvetimes[K_count,eps_count,r] = problem.solver_stats.solve_time
                 #print(eps,K, problem.objective.value)
                 x_sols[K_count, eps_count, :, r] = x.value
@@ -98,25 +98,31 @@ def port_experiment(dat, dateval, R, m, prob, N_tot, K_tot,K_nums, eps_tot, eps_
                 probs[K_count, eps_count, r] = -evalvalue <= problem.objective.value 
                 Opt_vals[K_count,eps_count,r] = problem.objective.value
 
+                np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/m=100,K=1000,r=10/x.npy"),x_sols)
+                np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/m=100,K=1000,r=10/Opt_vals.npy"),Opt_vals)
+                np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/m=100,K=1000,r=10/solvetimes.npy"),solvetimes)
+                np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/m=100,K=1000,r=10/setuptimes.npy"),setuptimes)
+                np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/m=100,K=1000,r=10/probs.npy"),probs)
+                np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/m=100,K=1000,r=10/eval_vals.npy"),eval_vals)
+
     #output_stream.write('Percent Complete %.2f%s\r' % (100,'%'))  
     
     return x_sols, Opt_vals, eval_vals, probs,setuptimes,solvetimes
 
     
-
 colors = ["tab:blue", "tab:orange", "tab:green",
         "tab:red", "tab:purple", "tab:brown", "tab:pink", "tab:grey", "tab:olive","tab:blue", "tab:orange", "tab:green",
         "tab:red", "tab:purple", "tab:brown", "tab:pink", "tab:grey", "tab:olive"]
 
 synthetic_returns = pd.read_csv('/scratch/gpfs/iywang/mro_code/portfolio/sp500_synthetic_returns.csv').to_numpy()[:,1:]
 
-K_nums = np.array([1,50,100,500,1000])
+K_nums = np.array([1,5, 50,100,500])
 K_tot = K_nums.size  # Total number of clusters we consider
-N_tot = 1000
-M = 20
-R = 10           # Total times we repeat experiment to estimate final probabilty
-m = 100 
-eps_min = -7    # minimum epsilon we consider
+N_tot = 500
+M = 15
+R = 5           # Total times we repeat experiment to estimate final probabilty
+m = 50 
+eps_min = -6    # minimum epsilon we consider
 eps_max = -4        # maximum epsilon we consider
 eps_nums = np.linspace(eps_min,eps_max,M)
 eps_nums = 10**(eps_nums)
