@@ -89,13 +89,14 @@ def port_experiment(dat, dateval, R, m, prob, N_tot, K_tot,K_nums, eps_tot, eps_
             ######################## solve for various epsilons ########################
             for eps_count, eps in enumerate(eps_nums):
                 eps_pm.value = eps
-                problem.solve(verbose = True,TimeLimit=600)
+                problem.solve(solver = cp.MOSEK, verbose  = True)
                 solvetimes[K_count,eps_count,r] = problem.solver_stats.solve_time
-                #print(eps,K, problem.objective.value)
                 x_sols[K_count, eps_count, :, r] = x.value
                 evalvalue = np.mean(Data_eval@x.value)
                 eval_vals[K_count, eps_count, r] = -evalvalue
                 probs[K_count, eps_count, r] = -evalvalue <= problem.objective.value 
+                print(eps,K, problem.solver_stats.solve_time, problem.objective.value,-evalvalue <= problem.objective.value)
+
                 Opt_vals[K_count,eps_count,r] = problem.objective.value
 
                 np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/m=100,K=1000,r=10/x.npy"),x_sols)
@@ -116,14 +117,15 @@ colors = ["tab:blue", "tab:orange", "tab:green",
 
 synthetic_returns = pd.read_csv('/scratch/gpfs/iywang/mro_code/portfolio/sp500_synthetic_returns.csv').to_numpy()[:,1:]
 
-K_nums = np.array([1,5, 50,100,500])
+K_nums = np.array([1,5,50,100])
+#np.array([1,10,20,50,100,500]) # different cluster values we consider
 K_tot = K_nums.size  # Total number of clusters we consider
-N_tot = 500
-M = 15
+N_tot = 100
+M = 10
 R = 5           # Total times we repeat experiment to estimate final probabilty
-m = 50 
-eps_min = -6    # minimum epsilon we consider
-eps_max = -4        # maximum epsilon we consider
+m = 30 
+eps_min = -5    # minimum epsilon we consider
+eps_max = -3.5        # maximum epsilon we consider
 eps_nums = np.linspace(eps_min,eps_max,M)
 eps_nums = 10**(eps_nums)
 eps_tot = M
