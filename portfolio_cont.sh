@@ -1,12 +1,11 @@
 #!/bin/bash
 #SBATCH --job-name=portfoliotest
-#SBATCH --array=10,20,30,40,50
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=20
 #SBATCH --mem-per-cpu=2G
-#SBATCH --time=40:00:00
-#SBATCH -o /scratch/gpfs/iywang/mro_results/portfolio/MIP/m=30,K=1000,r=5/portfolio_test_%A.txt
+#SBATCH --time=60:00:00
+#SBATCH -o /scratch/gpfs/iywang/mro_results/portfolio/MIP/m=50,K=300,r=3/portfolio_test_%A.txt
 #SBATCH --mail-type=BEGIN,END,FAIL,TIME_LIMIT
 #SBATCH --mail-user=iabirina@hotmail.com
 
