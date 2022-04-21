@@ -106,6 +106,48 @@ def port_experiment(dat, dateval, R, m, prob, N_tot, K_tot,K_nums, eps_tot, eps_
                 np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/cont/m=200,K=1000,r=10/setuptimes.npy"),setuptimes)
                 np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/cont/m=200,K=1000,r=10/probs.npy"),probs)
                 np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/cont/m=200,K=1000,r=10/eval_vals.npy"),eval_vals)
+        
+        plt.figure(figsize=(10, 6))
+        for K_count, K in enumerate(K_nums):
+            plt.plot(eps_nums, np.mean(probs[:,:,:r+1],axis = 2)[K_count,:],linestyle='-', marker='o', color = colors[K_count], label = "$K = {}$".format(round(K,4)))
+            plt.xlabel("$\epsilon^2$")
+        plt.xscale("log")
+        plt.ylabel("Reliability")
+        plt.legend()
+        plt.show()
+        plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/cont/m=200,K=1000,r=10/reliability.png')
+
+        plt.figure(figsize=(10, 6))
+        for K_count, K in enumerate(K_nums):
+            plt.plot(eps_nums, np.mean(Opt_vals[:,:,:r+1],axis = 2)[K_count,:],linestyle='-', marker='o', color = colors[K_count], label = "$K = {}$".format(round(K,4)))
+            plt.xlabel("$\epsilon^2$")
+        plt.xscale("log")
+        plt.ylabel("Optimal value")
+        plt.legend()
+        plt.show()
+        plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/cont/m=200,K=1000,r=10/objs.png')
+
+        plt.figure(figsize=(10, 6))
+
+        for eps_count, eps in enumerate(eps_nums):
+            plt.plot(K_nums,np.mean(solvetimes[:,:,:r+1],axis = 2)[:,eps_count],linestyle='-', marker='o', label = "$\epsilon^2 = {}$".format(round(eps,6)), alpha = 0.5)
+            plt.xlabel("Number of clusters (K)")
+
+        plt.ylabel("time")
+        plt.title("Solve time")
+        plt.legend()
+        plt.show()
+        plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/cont/m=200,K=1000,r=10/solvetime.png')
+
+
+        plt.figure(figsize=(10, 6))
+        plt.plot(K_nums, np.mean(setuptimes[:,:r+1],axis = 1),linestyle='-', marker='o')
+        plt.xlabel("Number of clusters (K)")
+        plt.ylabel("time")
+        plt.title("Set-up time (clustering + creating problem)")
+        plt.show()
+        plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/cont/m=200,K=1000,r=10/setuptime.png')
+
 
     #output_stream.write('Percent Complete %.2f%s\r' % (100,'%'))  
     
@@ -120,10 +162,10 @@ synthetic_returns = pd.read_csv('/scratch/gpfs/iywang/mro_code/portfolio/sp500_s
 K_nums = np.array([1,5,50,100,500,800,900])
 K_tot = K_nums.size  # Total number of clusters we consider
 N_tot = 1000
-M = 20
+M = 15
 R = 10           # Total times we repeat experiment to estimate final probabilty
 m = 200 
-eps_min = -6    # minimum epsilon we consider
+eps_min = -5    # minimum epsilon we consider
 eps_max = -3.5        # maximum epsilon we consider
 eps_nums = np.linspace(eps_min,eps_max,M)
 eps_nums = 10**(eps_nums)
