@@ -148,6 +148,17 @@ def port_experiment(dat, dateval, R, m, prob, N_tot, K_tot,K_nums, eps_tot, eps_
         plt.show()
         plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/cont/m=200,K=1000,r=10/setuptime.png')
 
+        for eps_count, eps in enumerate(eps_nums):
+            plt.plot(K_nums,np.mean(setuptimes[:,:r+1],axis = 1) + np.mean(solvetimes[:,:,:r+1],axis = 2)[:,eps_count],linestyle='-', marker='o', label = "$\epsilon^2 = {}$".format(round(eps,6)), alpha = 0.5)
+            plt.xlabel("Number of clusters (K)")
+
+        plt.ylabel("time")
+        plt.title("totaltime")
+        plt.legend()
+        plt.show()
+        plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/cont/m=200,K=1000,r=10/totaltime.png')
+
+
 
     #output_stream.write('Percent Complete %.2f%s\r' % (100,'%'))  
     
