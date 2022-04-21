@@ -31,28 +31,31 @@ def createproblem_port(N, m):
     dat = cp.Parameter((N, m))
     eps = cp.Parameter()
     w = cp.Parameter(N)
+    a = -50
+    b = -40
 
     # VARIABLES #
     # weights, s_i, lambda, tau
     x = cp.Variable(m)
     s = cp.Variable(N)
     lam = cp.Variable()
-    #z = cp.Variable(m,boolean = True)
+    tao = cp.Variable()
+    t = cp.Variable()
     # OBJECTIVE #
-    objective = cp.multiply(eps, lam) + w@s
+    objective = t
 
     # CONSTRAINTS #
-    constraints = []
-    constraints += [-dat@x + cp.quad_over_lin(x, 4*lam) <= s]
+    constraints = [cp.multiply(eps, lam) + w@s <= t]
+    constraints += [10*tao <= t]
+    constraints += [cp.hstack([b*tao]*N) + a*dat@x + cp.hstack([cp.quad_over_lin(-a*x, 4*lam)]*N) <= s]
     constraints += [cp.sum(x) == 1]
     constraints += [x >= 0, x <= 1]
     #for k in range(2):
     #    constraints += [cp.sum(x[k*np.ceil(m/2):(k+1)*np.ceil(m/2)]) <= 0.50]
     constraints += [lam >= 0]
-    #constraints += [x - z <= 0, cp.sum(z)<=8]
     # PROBLEM #
     problem = cp.Problem(cp.Minimize(objective), constraints)
-    return problem, x, s, lam, dat, eps, w
+    return problem, x, s, tao, lam, dat, eps, w
 
 def port_experiment(dat, dateval, R, m, prob, N_tot, K_tot,K_nums, eps_tot, eps_nums):
     x_sols = np.zeros((K_tot, eps_tot, m, R))
@@ -80,7 +83,7 @@ def port_experiment(dat, dateval, R, m, prob, N_tot, K_tot,K_nums, eps_tot, eps_
             d_train, wk = cluster_data(Data[(N_tot*r):(N_tot*(r+1))], K)
             d_eval = Data_eval[(N_tot*r):(N_tot*(r+1))]
             assert(d_train.shape == (K,m))
-            problem, x, s, lmbda, data_train_pm,eps_pm, w_pm = prob(K,m)
+            problem, x, s, tao, lmbda, data_train_pm,eps_pm, w_pm = prob(K,m)
             data_train_pm.value = d_train
             w_pm.value = wk
             setuptimes[K_count,r] = time.time() - tnow
@@ -88,14 +91,21 @@ def port_experiment(dat, dateval, R, m, prob, N_tot, K_tot,K_nums, eps_tot, eps_
             ######################## solve for various epsilons ########################
             for eps_count, eps in enumerate(eps_nums):
                 eps_pm.value = eps
-                problem.solve(ignore_dpp = True)
+                problem.solve(ignore_dpp = True,verbose = True)
                 solvetimes[K_count,eps_count,r] = problem.solver_stats.solve_time
-                #print(eps,K, problem.objective.value)
                 x_sols[K_count, eps_count, :, r] = x.value
-                evalvalue = np.mean(Data_eval@x.value)
-                eval_vals[K_count, eps_count, r] = -evalvalue
-                probs[K_count, eps_count, r] = -evalvalue <= problem.objective.value 
+                evalvalue = -np.mean(Data_eval@x.value) -40*tao.value
+                eval_vals[K_count, eps_count, r] = evalvalue
+                probs[K_count, eps_count, r] = evalvalue <= problem.objective.value 
                 Opt_vals[K_count,eps_count,r] = problem.objective.value
+                print(eps,K, problem.solver_stats.solve_time, problem.objective.value,evalvalue <= problem.objective.value)
+
+                np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/cont/m=200,K=1000,r=10/x.npy"),x_sols)
+                np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/cont/m=200,K=1000,r=10/Opt_vals.npy"),Opt_vals)
+                np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/cont/m=200,K=1000,r=10/solvetimes.npy"),solvetimes)
+                np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/cont/m=200,K=1000,r=10/setuptimes.npy"),setuptimes)
+                np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/cont/m=200,K=1000,r=10/probs.npy"),probs)
+                np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/cont/m=200,K=1000,r=10/eval_vals.npy"),eval_vals)
 
     #output_stream.write('Percent Complete %.2f%s\r' % (100,'%'))  
     
@@ -107,14 +117,14 @@ colors = ["tab:blue", "tab:orange", "tab:green",
         "tab:red", "tab:purple", "tab:brown", "tab:pink", "tab:grey", "tab:olive"]
 
 synthetic_returns = pd.read_csv('/scratch/gpfs/iywang/mro_code/portfolio/sp500_synthetic_returns.csv').to_numpy()[:,1:]
-K_nums = np.array([1,5,50,100,500,1000])
+K_nums = np.array([1,5,50,100,500,800,900])
 K_tot = K_nums.size  # Total number of clusters we consider
 N_tot = 1000
 M = 20
 R = 10           # Total times we repeat experiment to estimate final probabilty
 m = 200 
-eps_min = -7    # minimum epsilon we consider
-eps_max = -3        # maximum epsilon we consider
+eps_min = -6    # minimum epsilon we consider
+eps_max = -3.5        # maximum epsilon we consider
 eps_nums = np.linspace(eps_min,eps_max,M)
 eps_nums = 10**(eps_nums)
 eps_tot = M
@@ -123,14 +133,14 @@ dat = synthetic_returns[:10000,:m]
 dateval = synthetic_returns[-10000:,:m]
 
 x_sols, Opt_vals, eval_vals, probs,setuptimes,solvetimes = port_experiment(dat,dateval,R, m, createproblem_port,N_tot, K_tot,K_nums, eps_tot,eps_nums)
-np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/cont/m=200,K=1000/x_m=400,K=1000,r=10.npy"),x_sols)
-np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/cont/m=200,K=1000/Opt_vals_m=400,K=1000,r=10.npy"),Opt_vals)
+np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/cont/m=200,K=1000,r=10/x.npy"),x_sols)
+np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/cont/m=200,K=1000,r=10/Opt_vals.npy"),Opt_vals)
 
-np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/cont/m=200,K=1000/solvetimes_m=400,K=1000,r=10.npy"),solvetimes)
+np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/cont/m=200,K=1000,r=10/solvetimes.npy"),solvetimes)
 
-np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/cont/m=200,K=1000/setuptimes_m=400,K=1000,r=10.npy"),setuptimes)
-np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/cont/m=200,K=1000/probs_m=400,K=1000,r=10.npy"),probs)
-np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/cont/m=200,K=1000/eval_vals_m=400,K=1000,r=10.npy"),eval_vals)
+np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/cont/m=200,K=1000,r=10/setuptimes.npy"),setuptimes)
+np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/cont/m=200,K=1000,r=10/probs.npy"),probs)
+np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/cont/m=200,K=1000,r=10/eval_vals.npy"),eval_vals)
 
 plt.figure(figsize=(10, 6))
 for K_count, K in enumerate(K_nums):
@@ -140,7 +150,7 @@ plt.xscale("log")
 plt.ylabel("Optimal value")
 plt.legend()
 plt.show()
-plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/cont/m=200,K=1000/objs.png')
+plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/cont/m=200,K=1000,r=10/objs.png')
 
 plt.figure(figsize=(10, 6))
 for K_count, K in enumerate(K_nums):
@@ -150,7 +160,7 @@ plt.xscale("log")
 plt.ylabel("Reliability")
 plt.legend()
 plt.show()
-plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/cont/m=200,K=1000/reliability.png')
+plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/cont/m=200,K=1000,r=10/reliability.png')
 
 plt.figure(figsize=(10, 6))
 for eps_count, eps in enumerate(eps_nums):
@@ -161,6 +171,7 @@ plt.ylabel("time")
 plt.title("Solve time")
 plt.legend()
 plt.show()
+plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/cont/m=200,K=1000,r=10/solvetime.png')
 
 plt.figure(figsize=(10, 6))
 plt.plot(K_nums,np.mean(setuptimes,axis = 1),linestyle='-', marker='o')
@@ -168,6 +179,7 @@ plt.xlabel("Number of clusters (K)")
 plt.ylabel("time")
 plt.title("Set-up time (clustering + creating problem)")
 plt.show()
+plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/cont/m=200,K=1000,r=10/setuptime.png')
 
 plt.figure(figsize=(10, 6))
 for eps_count, eps in enumerate(eps_nums):
@@ -178,4 +190,4 @@ plt.ylabel("time")
 plt.title("Total time")
 plt.legend()
 plt.show()
-plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/cont/m=200,K=1000/time.png')
+plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/cont/m=200,K=1000,r=10/totaltime.png')
