@@ -61,13 +61,14 @@ def createproblem_portMIP(N, m):
     problem = cp.Problem(cp.Minimize(objective), constraints)
     return problem, x, s, tao, lam, dat, eps, w
 
-def port_experiment(dat, dateval, r, m, prob, N_tot, K_tot,K_nums, eps_tot, eps_nums):
-    x_sols = np.zeros((K_tot, eps_tot, m))
-    Opt_vals = np.zeros((K_tot,eps_tot))
-    eval_vals = np.zeros((K_tot,eps_tot))
-    probs = np.zeros((K_tot,eps_tot))
-    setuptimes = np.zeros((K_tot))
-    solvetimes = np.zeros((K_tot,eps_tot))
+def port_experiment(dat, dateval, r, m, prob, N_tot, K_tot,K_nums, eps_tot, eps_nums,foldername):
+
+    x_sols = np.zeros((K_tot, eps_tot, m, R))
+    Opt_vals = np.zeros((K_tot,eps_tot, R))
+    eval_vals = np.zeros((K_tot,eps_tot, R))
+    probs = np.zeros((K_tot,eps_tot, R))
+    setuptimes = np.zeros((K_tot,R))
+    solvetimes = np.zeros((K_tot,eps_tot,R))
     Data = dat
     Data_eval = dateval
 
@@ -100,64 +101,64 @@ def port_experiment(dat, dateval, r, m, prob, N_tot, K_tot,K_nums, eps_tot, eps_
 
             Opt_vals[K_count,eps_count,r] = problem.objective.value
 
-            np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/m=100,K=500,r=5/x.npy"),x_sols)
-            np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/m=100,K=500,r=5/Opt_vals.npy"),Opt_vals)
-            np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/m=100,K=500,r=5/solvetimes.npy"),solvetimes)
-            np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/m=100,K=500,r=5/setuptimes.npy"),setuptimes)
-            np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/m=100,K=500,r=5/probs.npy"),probs)
-            np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/m=100,K=500,r=5/eval_vals.npy"),eval_vals)
+            np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/" + foldername + "/x"+str(r)+".npy"),x_sols)
+            np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/" + foldername + "/Opt_vals"+str(r)+".npy"),Opt_vals)
+            np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/" + foldername + "/solvetimes"+str(r)+".npy"),solvetimes)
+            np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/" + foldername + "/setuptimes"+str(r)+".npy"),setuptimes)
+            np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/" + foldername + "/probs"+str(r)+".npy"),probs)
+            np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP" + foldername + "/eval_vals"+str(r)+".npy"),eval_vals)
 
     #, mosek_params = {mosek.dparam.optimizer_max_time:  300.0, mosek.iparam.intpnt_solve_form:   mosek.solveform.dual}
     plt.figure(figsize=(10, 6))
     for K_count, K in enumerate(K_nums):
-        plt.plot(eps_nums, np.mean(probs[:,:,:r+1],axis = 2)[K_count,:],linestyle='-', marker='o', color = colors[K_count], label = "$K = {}$".format(round(K,4)))
+        plt.plot(eps_nums, np.mean(probs[:,:,:r],axis = 2)[K_count,:],linestyle='-', marker='o', color = colors[K_count], label = "$K = {}$".format(round(K,4)))
         plt.xlabel("$\epsilon^2$")
     plt.xscale("log")
     plt.ylabel("Reliability")
     plt.legend()
     plt.show()
-    plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/MIP/m=100,K=500,r=5/reliability.png')
+    plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/MIP/' + foldername + '/reliability'+str(r)+'.pdf')
 
     plt.figure(figsize=(10, 6))
     for K_count, K in enumerate(K_nums):
-        plt.plot(eps_nums, np.mean(Opt_vals[:,:,:r+1],axis = 2)[K_count,:],linestyle='-', marker='o', color = colors[K_count], label = "$K = {}$".format(round(K,4)))
+        plt.plot(eps_nums, Opt_vals[:,:,r][K_count,:],linestyle='-', marker='o', color = colors[K_count], label = "$K = {}$".format(round(K,4)))
         plt.xlabel("$\epsilon^2$")
     plt.xscale("log")
     plt.ylabel("Optimal value")
     plt.legend()
     plt.show()
-    plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/MIP/m=100,K=500,r=5/objs.png')
+    plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/MIP/' + foldername + '/objs'+str(r)+'.pdf')
 
     plt.figure(figsize=(10, 6))
 
     for eps_count, eps in enumerate(eps_nums):
-        plt.plot(K_nums,np.mean(solvetimes[:,:,:r+1],axis = 2)[:,eps_count],linestyle='-', marker='o', label = "$\epsilon^2 = {}$".format(round(eps,6)), alpha = 0.5)
+        plt.plot(K_nums,solvetimes[:,:,r][:,eps_count],linestyle='-', marker='o', label = "$\epsilon^2 = {}$".format(round(eps,6)), alpha = 0.5)
         plt.xlabel("Number of clusters (K)")
 
     plt.ylabel("time")
     plt.title("Solve time")
     plt.legend()
     plt.show()
-    plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/MIP/m=100,K=500,r=5/solvetime.png')
+    plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/MIP/' + foldername + '/solvetime'+str(r)+'.pdf')
 
 
     plt.figure(figsize=(10, 6))
-    plt.plot(K_nums, np.mean(setuptimes[:,:r+1],axis = 1),linestyle='-', marker='o')
+    plt.plot(K_nums, setuptimes[:,r],linestyle='-', marker='o')
     plt.xlabel("Number of clusters (K)")
     plt.ylabel("time")
     plt.title("Set-up time (clustering + creating problem)")
     plt.show()
-    plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/MIP/m=100,K=500,r=5/setuptime.png')
+    plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/MIP/' + foldername + '/setuptime'+str(r)+'.pdf')
 
     for eps_count, eps in enumerate(eps_nums):
-        plt.plot(K_nums,np.mean(setuptimes[:,:r+1],axis = 1) + np.mean(solvetimes[:,:,:r+1],axis = 2)[:,eps_count],linestyle='-', marker='o', label = "$\epsilon^2 = {}$".format(round(eps,6)), alpha = 0.5)
+        plt.plot(K_nums,setuptimes[:,r] + solvetimes[:,:,r][:,eps_count],linestyle='-', marker='o', label = "$\epsilon^2 = {}$".format(round(eps,6)), alpha = 0.5)
         plt.xlabel("Number of clusters (K)")
 
     plt.ylabel("time")
     plt.title("totaltime")
     plt.legend()
     plt.show()
-    plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/MIP/m=100,K=500,r=5/totaltime.png')
+    plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/MIP/' + foldername + '/totaltime'+str(r)+'.pdf')
 
     #output_stream.write('Percent Complete %.2f%s\r' % (100,'%'))  
     
@@ -172,6 +173,7 @@ colors = ["tab:blue", "tab:orange", "tab:green",
 
 
 if __name__ == '__main__':
+    foldername = "m40_K300_r10"
     synthetic_returns = pd.read_csv('/scratch/gpfs/iywang/mro_code/portfolio/sp500_synthetic_returns.csv').to_numpy()[:,1:]
 
     K_nums = np.array([1,5,50,100,300])
@@ -179,8 +181,8 @@ if __name__ == '__main__':
     K_tot = K_nums.size  # Total number of clusters we consider
     N_tot = 300
     M = 10
-    R = 5           # Total times we repeat experiment to estimate final probabilty
-    m = 30 
+    R = 10           # Total times we repeat experiment to estimate final probabilty
+    m = 40 
     eps_min = -5    # minimum epsilon we consider
     eps_max = -3.9       # maximum epsilon we consider
     eps_nums = np.linspace(eps_min,eps_max,M)
@@ -190,17 +192,31 @@ if __name__ == '__main__':
     dat = synthetic_returns[:10000,:m]
     dateval = synthetic_returns[-10000:,:m]
 
-    results = Parallel(n_jobs=2)(port_experiment(dat,dateval,r, m, createproblem_portMIP,N_tot, K_tot,K_nums, eps_tot,eps_nums) for r in range(R))
+    results = Parallel(n_jobs=10)(port_experiment(dat,dateval,r, m, createproblem_portMIP,N_tot, K_tot,K_nums, eps_tot,eps_nums,foldername) for r in range(R))
 
-    x_sols, Opt_vals, eval_vals, probs,setuptimes,solvetimes = port_experiment(dat,dateval,R, m, createproblem_portMIP,N_tot, K_tot,K_nums, eps_tot,eps_nums)
+    x_sols = np.zeros((K_tot, eps_tot, m, R))
+    Opt_vals = np.zeros((K_tot,eps_tot, R))
+    eval_vals = np.zeros((K_tot,eps_tot, R))
+    probs = np.zeros((K_tot,eps_tot, R))
+    setuptimes = np.zeros((K_tot,R))
+    solvetimes = np.zeros((K_tot,eps_tot,R))
+    
+    for r in range(R):
+        x_sols += results[r][0]
+        Opt_vals += results[r][1]
+        eval_vals += results[r][2]
+        probs += results[r][3]
+        setuptimes += results[r][4]
+        solvetimes += results[r][5]
 
-    np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/m=100,K=500,r=5/x.npy"),x_sols)
-    np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/m=100,K=500,r=5/Opt_vals.npy"),Opt_vals)
-    np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/m=100,K=500,r=5/solvetimes.npy"),solvetimes)
+    
+    np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/" + foldername + "/x_sols.npy")
+    np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/" + foldername + "/Opt_vals.npy"),Opt_vals)
+    np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/" + foldername + "solvetimes.npy"),solvetimes)
 
-    np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/m=100,K=500,r=5/setuptimes.npy"),setuptimes)
-    np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/m=100,K=500,r=5/probs.npy"),probs)
-    np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/m=100,K=500,r=5/eval_vals.npy"),eval_vals)
+    np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/" + foldername + "setuptimes.npy"),setuptimes)
+    np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/" + foldername + "/probs.npy"),probs)
+    np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/" + foldername + "/eval_vals.npy"),eval_vals)
 
     plt.figure(figsize=(10, 6))
     for K_count, K in enumerate(K_nums):
@@ -210,7 +226,7 @@ if __name__ == '__main__':
     plt.ylabel("Optimal value")
     plt.legend()
     plt.show()
-    plt.savefig("/scratch/gpfs/iywang/mro_results/portfolio/MIP/m=100,K=500,r=5/objs.png")
+    plt.savefig("/scratch/gpfs/iywang/mro_results/portfolio/MIP/" + foldername + "/objs.pdf")
 
     plt.figure(figsize=(10, 6))
     for K_count, K in enumerate(K_nums):
@@ -220,7 +236,7 @@ if __name__ == '__main__':
     plt.ylabel("Reliability")
     plt.legend()
     plt.show()
-    plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/MIP/m=100,K=500,r=5/reliability.png')
+    plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/MIP/' + foldername + '/reliability.pdf')
 
     plt.figure(figsize=(10, 6))
     for eps_count, eps in enumerate(eps_nums):
@@ -231,7 +247,7 @@ if __name__ == '__main__':
     plt.title("Solve time")
     plt.legend()
     plt.show()
-    plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/MIP/m=100,K=500,r=5/solvetime.png')
+    plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/MIP/' + foldername + '/solvetime.pdf')
 
     plt.figure(figsize=(10, 6))
     plt.plot(K_nums,np.mean(setuptimes,axis = 1),linestyle='-', marker='o')
@@ -249,6 +265,6 @@ if __name__ == '__main__':
     plt.title("Total time")
     plt.legend(fontsize=5)
     plt.show()
-    plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/MIP/m=100,K=500,r=5/totaltime.png')
+    plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/MIP/' + foldername + '/totaltime.pdf')
 
     print("COMPLETE")
