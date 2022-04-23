@@ -18,6 +18,29 @@ import mosek
 import os
 from joblib import Parallel, delayed
 
+
+def get_n_processes(max_n=np.inf):
+    """Get number of processes from current cps number
+    Parameters
+    ----------
+    max_n: int
+        Maximum number of processes.
+    Returns
+    -------
+    float
+        Number of processes to use.
+    """
+
+    try:
+        # Check number of cpus if we are on a SLURM server
+        n_cpus = int(os.environ["SLURM_CPUS_PER_TASK"])
+    except KeyError:
+        n_cpus = joblib.cpu_count()
+
+    n_proc = max(min(max_n, n_cpus), 1)
+
+    return n_proc
+
 def cluster_data(D_in, K):
     '''returns K cluster means after clustering D_in into K clusters'''
     N = D_in.shape[0]
@@ -191,8 +214,8 @@ if __name__ == '__main__':
 
     dat = synthetic_returns[:10000,:m]
     dateval = synthetic_returns[-10000:,:m]
-
-    results = Parallel(n_jobs=10)(port_experiment(dat,dateval,r, m, createproblem_portMIP,N_tot, K_tot,K_nums, eps_tot,eps_nums,foldername) for r in range(R))
+    njobs = get_n_processes(20)
+    results = Parallel(n_jobs=njobs)(port_experiment(dat,dateval,r, m, createproblem_portMIP,N_tot, K_tot,K_nums, eps_tot,eps_nums,foldername) for r in range(R))
 
     x_sols = np.zeros((K_tot, eps_tot, m, R))
     Opt_vals = np.zeros((K_tot,eps_tot, R))
