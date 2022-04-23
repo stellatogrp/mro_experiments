@@ -184,15 +184,15 @@ if __name__ == '__main__':
     N_tot = 300
     M = 10
     R = 5           # Total times we repeat experiment to estimate final probabilty
-    m = 30 
+    m = 40 
     eps_min = -5    # minimum epsilon we consider
     eps_max = -3.9       # maximum epsilon we consider
     eps_nums = np.linspace(eps_min,eps_max,M)
     eps_nums = 10**(eps_nums)
     eps_tot = M
 
-    dat = synthetic_returns[:10000,:m]
-    dateval = synthetic_returns[-10000:,:m]
+    dat = synthetic_returns[2000:,:m]
+    dateval = synthetic_returns[-2000:,:m]
 
     x_sols, Opt_vals, eval_vals, probs,setuptimes,solvetimes = port_experiment(dat,dateval,R, m, createproblem_portMIP,N_tot, K_tot,K_nums, eps_tot,eps_nums)
 
