@@ -235,9 +235,9 @@ if __name__ == '__main__':
     
     np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/" + foldername + "/x_sols.npy")
     np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/" + foldername + "/Opt_vals.npy"),Opt_vals)
-    np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/" + foldername + "solvetimes.npy"),solvetimes)
+    np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/" + foldername + "/solvetimes.npy"),solvetimes)
 
-    np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/" + foldername + "setuptimes.npy"),setuptimes)
+    np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/" + foldername + "/setuptimes.npy"),setuptimes)
     np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/" + foldername + "/probs.npy"),probs)
     np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/" + foldername + "/eval_vals.npy"),eval_vals)
 
