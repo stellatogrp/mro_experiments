@@ -215,7 +215,7 @@ if __name__ == '__main__':
     dat = synthetic_returns[5000:,:m]
     dateval = synthetic_returns[-5000:,:m]
     njobs = get_n_processes(20)
-    results = Parallel(n_jobs=njobs)(port_experiment(dat,dateval,r, m, createproblem_portMIP,N_tot, K_tot,K_nums, eps_tot,eps_nums,foldername) for r in range(R))
+    results = Parallel(n_jobs=njobs)(delayed(port_experiment)(dat,dateval,r, m, createproblem_portMIP,N_tot, K_tot,K_nums, eps_tot,eps_nums,foldername) for r in range(R))
 
     x_sols = np.zeros((K_tot, eps_tot, m, R))
     Opt_vals = np.zeros((K_tot,eps_tot, R))
@@ -233,7 +233,7 @@ if __name__ == '__main__':
         solvetimes += results[r][5]
 
     
-    np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/" + foldername + "/x_sols.npy")
+    np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/" + foldername + "/x_sols.npy"),x_sols)
     np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/" + foldername + "/Opt_vals.npy"),Opt_vals)
     np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/" + foldername + "/solvetimes.npy"),solvetimes)
 
