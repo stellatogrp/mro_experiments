@@ -114,7 +114,7 @@ def port_experiment(dat, dateval, r, m, prob, N_tot, K_tot,K_nums, eps_tot, eps_
         ######################## solve for various epsilons ########################
         for eps_count, eps in enumerate(eps_nums):
             eps_pm.value = eps
-            problem.solve(ignore_dpp = True, solver = cp.MOSEK, verbose = True,mosek_params = {mosek.dparam.optimizer_max_time:  600.0})
+            problem.solve(ignore_dpp = True, solver = cp.MOSEK, verbose = True,mosek_params = {mosek.dparam.optimizer_max_time:  1000.0})
             solvetimes[K_count,eps_count,r] = problem.solver_stats.solve_time
             x_sols[K_count, eps_count, :, r] = x.value
             evalvalue = -np.mean(Data_eval@x.value) -40*tao.value
@@ -129,7 +129,7 @@ def port_experiment(dat, dateval, r, m, prob, N_tot, K_tot,K_nums, eps_tot, eps_
             np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/" + foldername + "/solvetimes"+str(r)+".npy"),solvetimes)
             np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/" + foldername + "/setuptimes"+str(r)+".npy"),setuptimes)
             np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/" + foldername + "/probs"+str(r)+".npy"),probs)
-            np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP" + foldername + "/eval_vals"+str(r)+".npy"),eval_vals)
+            np.save(Path("/scratch/gpfs/iywang/mro_results/portfolio/MIP/" + foldername + "/eval_vals"+str(r)+".npy"),eval_vals)
 
     #, mosek_params = {mosek.dparam.optimizer_max_time:  300.0, mosek.iparam.intpnt_solve_form:   mosek.solveform.dual}
     plt.figure(figsize=(10, 6))
@@ -196,7 +196,7 @@ colors = ["tab:blue", "tab:orange", "tab:green",
 
 
 if __name__ == '__main__':
-    foldername = "m40_K300_r10"
+    foldername = "m50_K300_r10"
     synthetic_returns = pd.read_csv('/scratch/gpfs/iywang/mro_code/portfolio/sp500_synthetic_returns.csv').to_numpy()[:,1:]
 
     K_nums = np.array([1,5,50,100,300])
@@ -205,15 +205,15 @@ if __name__ == '__main__':
     N_tot = 300
     M = 10
     R = 10           # Total times we repeat experiment to estimate final probabilty
-    m = 40 
+    m = 50 
     eps_min = -5    # minimum epsilon we consider
     eps_max = -3.9       # maximum epsilon we consider
     eps_nums = np.linspace(eps_min,eps_max,M)
     eps_nums = 10**(eps_nums)
     eps_tot = M
 
-    dat = synthetic_returns[:10000,:m]
-    dateval = synthetic_returns[-10000:,:m]
+    dat = synthetic_returns[5000:,:m]
+    dateval = synthetic_returns[-5000:,:m]
     njobs = get_n_processes(20)
     results = Parallel(n_jobs=njobs)(port_experiment(dat,dateval,r, m, createproblem_portMIP,N_tot, K_tot,K_nums, eps_tot,eps_nums,foldername) for r in range(R))
 
