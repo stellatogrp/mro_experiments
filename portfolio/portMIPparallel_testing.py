@@ -134,7 +134,7 @@ def port_experiment(dat, dateval, r, m, prob, N_tot, K_tot,K_nums, eps_tot, eps_
     #, mosek_params = {mosek.dparam.optimizer_max_time:  300.0, mosek.iparam.intpnt_solve_form:   mosek.solveform.dual}
     plt.figure(figsize=(10, 6))
     for K_count, K in enumerate(K_nums):
-        plt.plot(eps_nums, np.mean(probs[:,:,:r],axis = 2)[K_count,:],linestyle='-', marker='o', color = colors[K_count], label = "$K = {}$".format(round(K,4)))
+        plt.plot(eps_nums, probs[:,:,r][K_count,:],linestyle='-', marker='o', color = colors[K_count], label = "$K = {}$".format(round(K,4)))
         plt.xlabel("$\epsilon^2$")
     plt.xscale("log")
     plt.ylabel("Reliability")
