@@ -83,7 +83,7 @@ def createproblem_news(N, m):
                     cp.hstack([cp.quad_over_lin(a_1*p, 4*lam)]*N) <= s]
     constraints += [a_1*(-p@q + a@q + 0.5*a@y) + b_1*tao <= t]
     constraints += [10*tao <= t]
-    constraints += [q - b <= y, 0 <= y, a@q + 0.5*a@y <= 20, q >= 0, q<= 5*b]
+    constraints += [q - b <= y, 0 <= y, a@q + 0.5*a@y <= 10, q >= 0, q<= 5*b]
     constraints += [lam >= 0]
 
     # PROBLEM #
@@ -216,10 +216,10 @@ if __name__ == '__main__':
     K_tot = K_nums.size  # Total number of clusters we consider
     N_tot = 1000
     M = 15
-    R = 20
-    m = 200
-    eps_min = -5    # minimum epsilon we consider
-    eps_max = 0        # maximum epsilon we consider
+    R = 10
+    m = 500
+    eps_min = -7    # minimum epsilon we consider
+    eps_max = -3        # maximum epsilon we consider
     eps_nums = np.linspace(eps_min,eps_max,M)
     eps_nums = 10**(eps_nums)
     eps_tot = M
