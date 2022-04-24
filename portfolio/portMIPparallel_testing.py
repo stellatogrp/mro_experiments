@@ -140,7 +140,7 @@ def port_experiment(dat, dateval, r, m, prob, N_tot, K_tot,K_nums, eps_tot, eps_
     plt.ylabel("Reliability")
     plt.legend()
     plt.show()
-    plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/MIP/' + foldername + '/reliability'+str(r)+'.pdf')
+    plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/MIP/' + foldername + '/reliability'+str(r)+'.png')
 
     plt.figure(figsize=(10, 6))
     for K_count, K in enumerate(K_nums):
@@ -150,7 +150,7 @@ def port_experiment(dat, dateval, r, m, prob, N_tot, K_tot,K_nums, eps_tot, eps_
     plt.ylabel("Optimal value")
     plt.legend()
     plt.show()
-    plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/MIP/' + foldername + '/objs'+str(r)+'.pdf')
+    plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/MIP/' + foldername + '/objs'+str(r)+'.png')
 
     plt.figure(figsize=(10, 6))
 
@@ -162,7 +162,7 @@ def port_experiment(dat, dateval, r, m, prob, N_tot, K_tot,K_nums, eps_tot, eps_
     plt.title("Solve time")
     plt.legend()
     plt.show()
-    plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/MIP/' + foldername + '/solvetime'+str(r)+'.pdf')
+    plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/MIP/' + foldername + '/solvetime'+str(r)+'.png')
 
 
     plt.figure(figsize=(10, 6))
@@ -171,7 +171,7 @@ def port_experiment(dat, dateval, r, m, prob, N_tot, K_tot,K_nums, eps_tot, eps_
     plt.ylabel("time")
     plt.title("Set-up time (clustering + creating problem)")
     plt.show()
-    plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/MIP/' + foldername + '/setuptime'+str(r)+'.pdf')
+    plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/MIP/' + foldername + '/setuptime'+str(r)+'.png')
 
     for eps_count, eps in enumerate(eps_nums):
         plt.plot(K_nums,setuptimes[:,r] + solvetimes[:,:,r][:,eps_count],linestyle='-', marker='o', label = "$\epsilon^2 = {}$".format(round(eps,6)), alpha = 0.5)
@@ -181,7 +181,7 @@ def port_experiment(dat, dateval, r, m, prob, N_tot, K_tot,K_nums, eps_tot, eps_
     plt.title("totaltime")
     plt.legend()
     plt.show()
-    plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/MIP/' + foldername + '/totaltime'+str(r)+'.pdf')
+    plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/MIP/' + foldername + '/totaltime'+str(r)+'.png')
 
     #output_stream.write('Percent Complete %.2f%s\r' % (100,'%'))  
     
@@ -249,7 +249,7 @@ if __name__ == '__main__':
     plt.ylabel("Optimal value")
     plt.legend()
     plt.show()
-    plt.savefig("/scratch/gpfs/iywang/mro_results/portfolio/MIP/" + foldername + "/objs.pdf")
+    plt.savefig("/scratch/gpfs/iywang/mro_results/portfolio/MIP/" + foldername + "/objs.png")
 
     plt.figure(figsize=(10, 6))
     for K_count, K in enumerate(K_nums):
@@ -259,7 +259,7 @@ if __name__ == '__main__':
     plt.ylabel("Reliability")
     plt.legend()
     plt.show()
-    plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/MIP/' + foldername + '/reliability.pdf')
+    plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/MIP/' + foldername + '/reliability.png')
 
     plt.figure(figsize=(10, 6))
     for eps_count, eps in enumerate(eps_nums):
@@ -270,7 +270,7 @@ if __name__ == '__main__':
     plt.title("Solve time")
     plt.legend()
     plt.show()
-    plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/MIP/' + foldername + '/solvetime.pdf')
+    plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/MIP/' + foldername + '/solvetime.png')
 
     plt.figure(figsize=(10, 6))
     plt.plot(K_nums,np.mean(setuptimes,axis = 1),linestyle='-', marker='o')
@@ -288,6 +288,6 @@ if __name__ == '__main__':
     plt.title("Total time")
     plt.legend(fontsize=5)
     plt.show()
-    plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/MIP/' + foldername + '/totaltime.pdf')
+    plt.savefig('/scratch/gpfs/iywang/mro_results/portfolio/MIP/' + foldername + '/totaltime.png')
 
     print("COMPLETE")
