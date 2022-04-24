@@ -83,7 +83,7 @@ def createproblem_news(N, m):
                     cp.hstack([cp.quad_over_lin(a_1*p, 4*lam)]*N) <= s]
     constraints += [a_1*(-p@q + a@q + 0.5*a@y) + b_1*tao <= t]
     constraints += [10*tao <= t]
-    constraints += [q - b <= y, 0 <= y, a@q + 0.5*a@y <= 10, q >= 0, q<= 5*b]
+    constraints += [q - b <= y, 0 <= y, a@q + 0.5*a@y <= 20, q >= 0, q<= 5*b]
     constraints += [lam >= 0]
 
     # PROBLEM #
@@ -95,7 +95,7 @@ def generate_news_params(m = 10):
     # Cost for facility
     a = np.random.uniform(0.2,0.9,m)
     b = np.random.uniform(0.1,0.7,m)
-    F = np.random.normal(size = (m,5))
+    F = np.random.normal(size = (m,10))
     sig = 0.1*F@(F.T)
     mu = np.random.uniform(-0.2,0,m)
     norms = np.random.multivariate_normal(mu,sig)
@@ -139,14 +139,13 @@ def news_experiment(dat, dateval, r, m, a,b,p, prob, N_tot, K_tot,K_nums, eps_to
         ######################## solve for various epsilons ########################
         for eps_count, eps in enumerate(eps_nums):
             eps_pm.value = eps
-            problem.solve(ignore_dpp = True, solver = cp.MOSEK, verbose = True,mosek_params = {mosek.dparam.optimizer_max_time:  1000.0})
+            problem.solve(ignore_dpp = True, solver = cp.MOSEK, verbose = True, mosek_params = {mosek.dparam.optimizer_max_time:  1000.0})
             solvetimes[K_count,eps_count,r] = problem.solver_stats.solve_time
-            #print(eps,K, problem.objective.value)
             q_sols[K_count, eps_count, :, r] = q.value
             evalvalue = -50*np.mean(Data_eval@p_pm.value) + 50*(a@q.value + 0.5*a@y.value) -40*tao.value - t.value <= 0
             probs[K_count, eps_count, r] = evalvalue
             Opt_vals[K_count,eps_count,r] = problem.objective.value
-
+            print(r, eps,K, problem.solver_stats.solve_time, problem.objective.value, evalvalue )
             np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/q"+str(r)+".npy"),q_sols)
             np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/Opt_vals"+str(r)+".npy"),Opt_vals)
             np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/solvetimes"+str(r)+".npy"),solvetimes)
@@ -212,14 +211,14 @@ def news_experiment(dat, dateval, r, m, a,b,p, prob, N_tot, K_tot,K_nums, eps_to
 
 if __name__ == '__main__':
     foldername = "newsvendor/cont/m200_K1000_r10"
-    K_nums = np.array([1,10,50,100,500,1000])
+    K_nums = np.array([1,10,50,100,500])
     K_tot = K_nums.size  # Total number of clusters we consider
-    N_tot = 1000
+    N_tot = 500
     M = 15
     R = 10
-    m = 500
-    eps_min = -7    # minimum epsilon we consider
-    eps_max = -3        # maximum epsilon we consider
+    m = 40
+    eps_min = -6    # minimum epsilon we consider
+    eps_max = -1        # maximum epsilon we consider
     eps_nums = np.linspace(eps_min,eps_max,M)
     eps_nums = 10**(eps_nums)
     eps_tot = M
@@ -240,9 +239,9 @@ if __name__ == '__main__':
     for r in range(R):
         q_sols += results[r][0]
         Opt_vals += results[r][1]
-        probs += results[r][3]
-        setuptimes += results[r][4]
-        solvetimes += results[r][5]
+        probs += results[r][2]
+        setuptimes += results[r][3]
+        solvetimes += results[r][4]
 
     np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/q_sols.npy"),q_sols)
     np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/Opt_vals.npy"),Opt_vals)
