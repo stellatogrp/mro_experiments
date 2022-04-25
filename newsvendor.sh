@@ -2,10 +2,10 @@
 #SBATCH --job-name=newsvendortest
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=25
+#SBATCH --cpus-per-task=30
 #SBATCH --mem-per-cpu=3G
 #SBATCH --time=60:00:00
-#SBATCH -o /scratch/gpfs/iywang/mro_results/newsvendor/cont/m200_K1000_r10/newsvendor_test_%A.txt
+#SBATCH -o /scratch/gpfs/iywang/mro_results/newsvendor/cont/m40_K500_r20/newsvendor_test_%A.txt
 #SBATCH --mail-type=BEGIN,END,FAIL,TIME_LIMIT
 #SBATCH --mail-user=iabirina@hotmail.com
 

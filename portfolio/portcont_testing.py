@@ -204,18 +204,18 @@ colors = ["tab:blue", "tab:orange", "tab:green",
 
 
 if __name__ == '__main__':
-    foldername = "portfolio/cont/m200_K1000_r20"
+    foldername = "portfolio/cont/m200_K900_r10"
     synthetic_returns = pd.read_csv('/scratch/gpfs/iywang/mro_code/portfolio/sp500_synthetic_returns.csv').to_numpy()[:,1:]
 
-    K_nums = np.array([1,5,50,100,300,500,800,1000])
+    K_nums = np.array([1,5,50,100,300,450,600,800,900])
     #np.array([1,10,20,50,100,500,1000]) # different cluster values we consider
     K_tot = K_nums.size  # Total number of clusters we consider
-    N_tot = 1000
+    N_tot = 900
     M = 15
     R = 10           # Total times we repeat experiment to estimate final probabilty
     m = 200 
     eps_min = -5    # minimum epsilon we consider
-    eps_max = -3.2       # maximum epsilon we consider
+    eps_max = -3.5       # maximum epsilon we consider
     eps_nums = np.linspace(eps_min,eps_max,M)
     eps_nums = 10**(eps_nums)
     eps_tot = M

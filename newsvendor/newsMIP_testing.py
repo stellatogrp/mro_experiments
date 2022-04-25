@@ -80,7 +80,7 @@ def createproblem_news1(N, m):
     constraints = [cp.multiply(eps, lam) + w@s <= 0]
     constraints += [cp.hstack([-t]*N) + dat@(-p) +
                     cp.hstack([cp.quad_over_lin(p, 4*lam)]*N) <= s]
-    constraints += [-p@q <= t, q - b <= y, 0 <= y, a@q + 0.5*a@y <= 20, q >= 0, q<= 5*b]
+    constraints += [-p@q <= t, q - b <= y, 0 <= y, a@q + 0.5*a@y <= 40, q >= 0, q<= 15*b]
     constraints += [lam >= 0]
 
     # PROBLEM #
@@ -121,9 +121,9 @@ def createproblem_news(N, m):
                     cp.hstack([cp.quad_over_lin(a_1*p, 4*lam)]*N) <= s]
     constraints += [a_1*(-p@q + a@q + 0.5*a@y) + b_1*tao <= t]
     constraints += [10*tao <= t]
-    constraints += [q - b <= y, 0 <= y, a@q + 0.5*a@y <= 50, q >= 0, q<= 5*b]
+    constraints += [q - b <= y, 0 <= y, a@q + 0.5*a@y <= 20, q >= 0, q<= 5*b]
     constraints += [lam >= 0]
-    constraints += [q - z <= 0, cp.sum(z)<=30]
+    constraints += [q - z <= 0, cp.sum(z)<=10]
 
     # PROBLEM #
     problem = cp.Problem(cp.Minimize(objective), constraints)
@@ -193,11 +193,12 @@ def news_experiment(dat, dateval, r, m, a,b,p, prob, N_tot, K_tot,K_nums, eps_to
             probs[K_count, eps_count, r] = evalvalue
             Opt_vals[K_count,eps_count,r] = problem.objective.value
             print(r, eps,K, problem.solver_stats.solve_time, problem.objective.value, evalvalue, np.sum(z.value) )
-            #np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/q"+str(r)+".npy"),q_sols)
-            #np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/Opt_vals"+str(r)+".npy"),Opt_vals)
-            #np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/solvetimes"+str(r)+".npy"),solvetimes)
-            #np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/setuptimes"+str(r)+".npy"),setuptimes)
-            #np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/probs"+str(r)+".npy"),probs)
+            np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/q"+str(r)+".npy"),q_sols)
+            np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/Opt_vals"+str(r)+".npy"),Opt_vals)
+            np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/solvetimes"+str(r)+".npy"),solvetimes)
+            np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/setuptimes"+str(r)+".npy"),setuptimes)
+            np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/clustertimes"+str(r)+".npy"),clustertimes)
+            np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/probs"+str(r)+".npy"),probs)
 
 
     plt.figure(figsize=(10, 6))
@@ -258,13 +259,13 @@ def news_experiment(dat, dateval, r, m, a,b,p, prob, N_tot, K_tot,K_nums, eps_to
     return q_sols, Opt_vals, probs,setuptimes,solvetimes, clustertimes
 
 if __name__ == '__main__':
-    foldername = "newsvendor/MIP/m300_K1500_r10"
-    K_nums = np.array([1,10,50,100,300,500,1000,1500])
+    foldername = "newsvendor/MIP/m40_K500_r10_10"
+    K_nums = np.array([1,5,10,50,100,300,500])
     K_tot = K_nums.size  # Total number of clusters we consider
-    N_tot = 1500
+    N_tot = 500
     M = 10
     R = 10
-    m = 300
+    m = 40
     eps_min = -6    # minimum epsilon we consider
     eps_max = 0        # maximum epsilon we consider
     eps_nums = np.linspace(eps_min,eps_max,M)
@@ -274,7 +275,7 @@ if __name__ == '__main__':
 
     dat = generate_news_demands(mu,sig,N_tot, m, R)
     dateval = generate_news_demands(mu,sig,N_tot, m, R)
-    njobs = get_n_processes(25)
+    njobs = get_n_processes(30)
 
     results = Parallel(n_jobs=njobs)(delayed(news_experiment)(dat, dateval,r, m, a,b,p,createproblem_news, N_tot, K_tot,K_nums, eps_tot, eps_nums, foldername) for r in range(R))
 
