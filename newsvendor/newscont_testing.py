@@ -53,6 +53,41 @@ def cluster_data(D_in, K):
     
     return Dbar_in, weights
 
+def createproblem_news1(N, m):
+    """Creates the problem in cvxpy"""
+    # m = 10 
+    # PARAMETERS #
+    dat = cp.Parameter((N, m))
+    eps = cp.Parameter()
+    w = cp.Parameter(N)
+    p = cp.Parameter(m)
+    a = cp.Parameter(m)
+    b = cp.Parameter(m)
+
+    # VARIABLES #
+    # weights, s_i, lambda, tau
+    q = cp.Variable(m)
+    s = cp.Variable(N)
+    lam = cp.Variable()
+    t = cp.Variable()
+    y = cp.Variable(m)
+    # OBJECTIVE #
+    objective = t + a@q + 0.5*a@y
+    
+    
+
+    # CONSTRAINTS #
+    constraints = [cp.multiply(eps, lam) + w@s <= 0]
+    constraints += [cp.hstack([-t]*N) + dat@(-p) +
+                    cp.hstack([cp.quad_over_lin(p, 4*lam)]*N) <= s]
+    constraints += [-p@q <= t, q - b <= y, 0 <= y, a@q + 0.5*a@y <= 20, q >= 0, q<= 5*b]
+    constraints += [lam >= 0]
+
+    # PROBLEM #
+    problem = cp.Problem(cp.Minimize(objective), constraints)
+    return problem, q, p,a,b,t, lam, dat, eps, w
+
+
 def createproblem_news(N, m):
     """Creates the problem in cvxpy"""
     # m = 10 
@@ -65,6 +100,8 @@ def createproblem_news(N, m):
     b = cp.Parameter(m)
     a_1 = 50
     b_1 = -40
+    #a_1 = 1
+    #b_1 = 0
 
     # VARIABLES #
     # weights, s_i, lambda, tau
@@ -78,8 +115,8 @@ def createproblem_news(N, m):
     objective = t 
 
     # CONSTRAINTS #
-    constraints = [cp.multiply(eps, lam) + w@s <= t]
-    constraints += [cp.hstack([a_1*(a@q + 0.5*a@y) + b_1*tao]*N)+ a_1*dat@(-p) +
+    constraints = [cp.multiply(eps, lam) + w@s <= 0]
+    constraints += [cp.hstack([-t + a_1*(a@q + 0.5*a@y) + b_1*tao]*N)+ a_1*dat@(-p) +
                     cp.hstack([cp.quad_over_lin(a_1*p, 4*lam)]*N) <= s]
     constraints += [a_1*(-p@q + a@q + 0.5*a@y) + b_1*tao <= t]
     constraints += [10*tao <= t]
@@ -95,7 +132,7 @@ def generate_news_params(m = 10):
     # Cost for facility
     a = np.random.uniform(0.2,0.9,m)
     b = np.random.uniform(0.1,0.7,m)
-    F = np.random.normal(size = (m,10))
+    F = np.random.normal(size = (m,5))
     sig = 0.1*F@(F.T)
     mu = np.random.uniform(-0.2,0,m)
     norms = np.random.multivariate_normal(mu,sig)
@@ -114,6 +151,7 @@ def news_experiment(dat, dateval, r, m, a,b,p, prob, N_tot, K_tot,K_nums, eps_to
     probs = np.zeros((K_tot,eps_tot, R))
     setuptimes = np.zeros((K_tot,R))
     solvetimes = np.zeros((K_tot,eps_tot,R))
+    clustertimes = np.zeros((K_tot,R))
     Data = dat
     Data_eval = dateval
 
@@ -123,11 +161,16 @@ def news_experiment(dat, dateval, r, m, a,b,p, prob, N_tot, K_tot,K_nums, eps_to
         
         #output_stream.write('Percent Complete %.2f%s\r' % ((K_count)/K_tot*100,'%'))
         #output_stream.flush()
-        
-        tnow = time.time()
-        d_train, wk = cluster_data(Data[r], K)
+        if K == N_tot:
+            d_train = Data[r]
+            wk = np.ones(K)*(1/K)
+            clustertimes[K_count,r] = 0
+        else:
+            tnow = time.time()
+            d_train, wk = cluster_data(Data[r], K)
+            clustertimes[K_count,r] = time.time() - tnow
         evaldat = Data_eval[r] 
-        assert(d_train.shape == (K,m))
+        tnow = time.time()
         problem, q, y, tao, p_pm,a_pm,b_pm,t, lam_pm, dat_pm, eps_pm, w_pm = prob(K,m)
         setuptimes[K_count,r] = time.time() - tnow
         a_pm.value = np.array(a)
@@ -139,18 +182,21 @@ def news_experiment(dat, dateval, r, m, a,b,p, prob, N_tot, K_tot,K_nums, eps_to
         ######################## solve for various epsilons ########################
         for eps_count, eps in enumerate(eps_nums):
             eps_pm.value = eps
-            problem.solve(ignore_dpp = True, solver = cp.MOSEK, verbose = True, mosek_params = {mosek.dparam.optimizer_max_time:  1000.0})
+            problem.solve(ignore_dpp = True)
+            #, solver = cp.MOSEK, verbose = True, mosek_params = {mosek.dparam.optimizer_max_time:  1000.0}
             solvetimes[K_count,eps_count,r] = problem.solver_stats.solve_time
             q_sols[K_count, eps_count, :, r] = q.value
-            evalvalue = -50*np.mean(Data_eval@p_pm.value) + 50*(a@q.value + 0.5*a@y.value) -40*tao.value - t.value <= 0
+            evalvalue = -50*np.mean(evaldat@p_pm.value) + 50*(a@q.value + 0.5*a@y.value) -40*tao.value - t.value <= 0
+            #evalvalue = -np.mean(evaldat@p_pm.value) + (a@q.value + 0.5*a@y.value) - t.value <= 0
+            #evalvalue = -np.mean(evaldat@p_pm.value) <= t.value
             probs[K_count, eps_count, r] = evalvalue
             Opt_vals[K_count,eps_count,r] = problem.objective.value
             print(r, eps,K, problem.solver_stats.solve_time, problem.objective.value, evalvalue )
-            np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/q"+str(r)+".npy"),q_sols)
-            np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/Opt_vals"+str(r)+".npy"),Opt_vals)
-            np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/solvetimes"+str(r)+".npy"),solvetimes)
-            np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/setuptimes"+str(r)+".npy"),setuptimes)
-            np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/probs"+str(r)+".npy"),probs)
+            #np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/q"+str(r)+".npy"),q_sols)
+            #np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/Opt_vals"+str(r)+".npy"),Opt_vals)
+            #np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/solvetimes"+str(r)+".npy"),solvetimes)
+            #np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/setuptimes"+str(r)+".npy"),setuptimes)
+            #np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/probs"+str(r)+".npy"),probs)
 
 
     plt.figure(figsize=(10, 6))
@@ -187,7 +233,7 @@ def news_experiment(dat, dateval, r, m, a,b,p, prob, N_tot, K_tot,K_nums, eps_to
 
 
     plt.figure(figsize=(10, 6))
-    plt.plot(K_nums, setuptimes[:,r],linestyle='-', marker='o')
+    plt.plot(K_nums, clustertimes[:,r]+ setuptimes[:,r],linestyle='-', marker='o')
     plt.xlabel("Number of clusters (K)")
     plt.ylabel("time")
     plt.title("Set-up time (clustering + creating problem)")
@@ -195,7 +241,7 @@ def news_experiment(dat, dateval, r, m, a,b,p, prob, N_tot, K_tot,K_nums, eps_to
     plt.savefig('/scratch/gpfs/iywang/mro_results/' + foldername + '/setuptime'+str(r)+'.png')
 
     for eps_count, eps in enumerate(eps_nums):
-        plt.plot(K_nums,setuptimes[:,r] + solvetimes[:,:,r][:,eps_count],linestyle='-', marker='o', label = "$\epsilon^2 = {}$".format(round(eps,6)), alpha = 0.5)
+        plt.plot(K_nums,clustertimes[:,r] + setuptimes[:,r] + solvetimes[:,:,r][:,eps_count],linestyle='-', marker='o', label = "$\epsilon^2 = {}$".format(round(eps,6)), alpha = 0.5)
         plt.xlabel("Number of clusters (K)")
 
     plt.ylabel("time")
@@ -207,18 +253,18 @@ def news_experiment(dat, dateval, r, m, a,b,p, prob, N_tot, K_tot,K_nums, eps_to
 
     #output_stream.write('Percent Complete %.2f%s\r' % (100,'%'))  
     
-    return q_sols, Opt_vals, probs,setuptimes,solvetimes
+    return q_sols, Opt_vals, probs,setuptimes,solvetimes, clustertimes
 
 if __name__ == '__main__':
     foldername = "newsvendor/cont/m200_K1000_r10"
-    K_nums = np.array([1,10,50,100,500])
+    K_nums = np.array([1,10,50,100,500,1000,2000])
     K_tot = K_nums.size  # Total number of clusters we consider
-    N_tot = 500
-    M = 15
-    R = 10
-    m = 40
-    eps_min = -6    # minimum epsilon we consider
-    eps_max = -1        # maximum epsilon we consider
+    N_tot = 2000
+    M = 10
+    R = 20
+    m = 500
+    eps_min = -5    # minimum epsilon we consider
+    eps_max = 0        # maximum epsilon we consider
     eps_nums = np.linspace(eps_min,eps_max,M)
     eps_nums = 10**(eps_nums)
     eps_tot = M
@@ -235,18 +281,20 @@ if __name__ == '__main__':
     probs = np.zeros((K_tot,eps_tot, R))
     setuptimes = np.zeros((K_tot,R))
     solvetimes = np.zeros((K_tot,eps_tot,R))
-    
+    clustertimes = np.zeros((K_tot,R))
+
     for r in range(R):
         q_sols += results[r][0]
         Opt_vals += results[r][1]
         probs += results[r][2]
         setuptimes += results[r][3]
         solvetimes += results[r][4]
+        clustertimes +=  results[r][5]
 
     np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/q_sols.npy"),q_sols)
     np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/Opt_vals.npy"),Opt_vals)
     np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/solvetimes.npy"),solvetimes)
-
+    np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/clustertimes.npy"),clustertimes)
     np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/setuptimes.npy"),setuptimes)
     np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/probs.npy"),probs)
 
@@ -283,15 +331,16 @@ if __name__ == '__main__':
     plt.savefig('/scratch/gpfs/iywang/mro_results/' + foldername + '/solvetime.png')
 
     plt.figure(figsize=(10, 6))
-    plt.plot(K_nums,np.mean(setuptimes,axis = 1),linestyle='-', marker='o')
+    plt.plot(K_nums,np.mean(setuptimes + clustertimes,axis = 1),linestyle='-', marker='o')
     plt.xlabel("Number of clusters (K)")
     plt.ylabel("time")
     plt.title("Set-up time (clustering + creating problem)")
     plt.show()
+    plt.savefig('/scratch/gpfs/iywang/mro_results/' + foldername + '/setuptime.png')
 
     plt.figure(figsize=(10, 6))
     for eps_count, eps in enumerate(eps_nums):
-        plt.plot(K_nums,np.mean(setuptimes,axis = 1) + np.mean(solvetimes[:,:,],axis = 2)[:,eps_count],linestyle='-', marker='o', label = "$\epsilon^2 = {}$".format(round(eps,6)), alpha = 0.5)
+        plt.plot(K_nums,np.mean(setuptimes + clustertimes,axis = 1) + np.mean(solvetimes[:,:,],axis = 2)[:,eps_count],linestyle='-', marker='o', label = "$\epsilon^2 = {}$".format(round(eps,6)), alpha = 0.5)
         plt.xlabel("Number of clusters (K)")
 
     plt.ylabel("time")
