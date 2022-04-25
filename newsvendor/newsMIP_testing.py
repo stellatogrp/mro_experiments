@@ -121,9 +121,9 @@ def createproblem_news(N, m):
                     cp.hstack([cp.quad_over_lin(a_1*p, 4*lam)]*N) <= s]
     constraints += [a_1*(-p@q + a@q + 0.5*a@y) + b_1*tao <= t]
     constraints += [10*tao <= t]
-    constraints += [q - b <= y, 0 <= y, a@q + 0.5*a@y <= 20, q >= 0, q<= 5*b]
+    constraints += [q - b <= y, 0 <= y, a@q + 0.5*a@y <= 50, q >= 0, q<= 5*b]
     constraints += [lam >= 0]
-    constraints += [q - z <= 0, cp.sum(z)<=20]
+    constraints += [q - z <= 0, cp.sum(z)<=30]
 
     # PROBLEM #
     problem = cp.Problem(cp.Minimize(objective), constraints)
@@ -164,8 +164,7 @@ def news_experiment(dat, dateval, r, m, a,b,p, prob, N_tot, K_tot,K_nums, eps_to
         #output_stream.write('Percent Complete %.2f%s\r' % ((K_count)/K_tot*100,'%'))
         #output_stream.flush()
         if K == N_tot:
-            d_train = Data[r]
-            wk = np.ones(K)*(1/K)
+            d_train, wk = cluster_data(Data[r], K)
             clustertimes[K_count,r] = 0
         else:
             tnow = time.time()
@@ -175,12 +174,12 @@ def news_experiment(dat, dateval, r, m, a,b,p, prob, N_tot, K_tot,K_nums, eps_to
         evaldat = Data_eval[r] 
         tnow = time.time()
         problem, q, y, tao,z, p_pm,a_pm,b_pm,t, lam_pm, dat_pm, eps_pm, w_pm = prob(K,m)
-        setuptimes[K_count,r] = time.time() - tnow
         a_pm.value = np.array(a)
         b_pm.value = np.array(b)
         p_pm.value = np.array(p)
         dat_pm.value = d_train
         w_pm.value = wk
+        setuptimes[K_count,r] = time.time() - tnow
 
         ######################## solve for various epsilons ########################
         for eps_count, eps in enumerate(eps_nums):
@@ -242,6 +241,7 @@ def news_experiment(dat, dateval, r, m, a,b,p, prob, N_tot, K_tot,K_nums, eps_to
     plt.show()
     plt.savefig('/scratch/gpfs/iywang/mro_results/' + foldername + '/setuptime'+str(r)+'.png')
 
+    plt.figure(figsize=(10, 6))
     for eps_count, eps in enumerate(eps_nums):
         plt.plot(K_nums,clustertimes[:,r] + setuptimes[:,r] + solvetimes[:,:,r][:,eps_count],linestyle='-', marker='o', label = "$\epsilon^2 = {}$".format(round(eps,6)), alpha = 0.5)
         plt.xlabel("Number of clusters (K)")
@@ -258,13 +258,13 @@ def news_experiment(dat, dateval, r, m, a,b,p, prob, N_tot, K_tot,K_nums, eps_to
     return q_sols, Opt_vals, probs,setuptimes,solvetimes, clustertimes
 
 if __name__ == '__main__':
-    foldername = "newsvendor/MIP/m50_K500_r10"
-    K_nums = np.array([1,10,50,100,500,1000])
+    foldername = "newsvendor/MIP/m300_K1500_r10"
+    K_nums = np.array([1,10,50,100,300,500,1000,1500])
     K_tot = K_nums.size  # Total number of clusters we consider
-    N_tot = 1000
+    N_tot = 1500
     M = 10
     R = 10
-    m = 200
+    m = 300
     eps_min = -6    # minimum epsilon we consider
     eps_max = 0        # maximum epsilon we consider
     eps_nums = np.linspace(eps_min,eps_max,M)

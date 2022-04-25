@@ -103,8 +103,7 @@ def port_experiment(dat, dateval, r, m, prob, N_tot, K_tot,K_nums, eps_tot, eps_
         print(r,K)
 
         if K == N_tot:
-            d_train = Data[(N_tot*r):(N_tot*(r+1))]
-            wk = np.ones(K)*(1/K)
+            d_train, wk = cluster_data(Data[(N_tot*r):(N_tot*(r+1))], K)
             clustertimes[K_count,r] = 0
         else:
             tnow = time.time()
@@ -124,19 +123,20 @@ def port_experiment(dat, dateval, r, m, prob, N_tot, K_tot,K_nums, eps_tot, eps_
             problem.solve(ignore_dpp = True, solver = cp.MOSEK, verbose = True,mosek_params = {mosek.dparam.optimizer_max_time:  1000.0})
             solvetimes[K_count,eps_count,r] = problem.solver_stats.solve_time
             x_sols[K_count, eps_count, :, r] = x.value
-            evalvalue = -np.mean(Data_eval@x.value) -40*tao.value
+            evalvalue = -np.mean(d_eval@x.value) -40*tao.value
             eval_vals[K_count, eps_count, r] = evalvalue
             probs[K_count, eps_count, r] = evalvalue <= problem.objective.value 
             print(eps,K, problem.solver_stats.solve_time, problem.objective.value,evalvalue, evalvalue <= problem.objective.value)
 
             Opt_vals[K_count,eps_count,r] = problem.objective.value
 
-            #np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/x"+str(r)+".npy"),x_sols)
-            #np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/Opt_vals"+str(r)+".npy"),Opt_vals)
-            #np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/solvetimes"+str(r)+".npy"),solvetimes)
-            #np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/setuptimes"+str(r)+".npy"),setuptimes)
-            #np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/probs"+str(r)+".npy"),probs)
-            #np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/eval_vals"+str(r)+".npy"),eval_vals)
+            np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/x"+str(r)+".npy"),x_sols)
+            np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/Opt_vals"+str(r)+".npy"),Opt_vals)
+            np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/solvetimes"+str(r)+".npy"),solvetimes)
+            np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/clustertimes"+str(r)+".npy"),clustertimes)
+            np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/setuptimes"+str(r)+".npy"),setuptimes)
+            np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/probs"+str(r)+".npy"),probs)
+            np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/eval_vals"+str(r)+".npy"),eval_vals)
 
     #, mosek_params = {mosek.dparam.optimizer_max_time:  300.0, mosek.iparam.intpnt_solve_form:   mosek.solveform.dual}
     plt.figure(figsize=(10, 6))
@@ -180,6 +180,7 @@ def port_experiment(dat, dateval, r, m, prob, N_tot, K_tot,K_nums, eps_tot, eps_
     plt.show()
     plt.savefig('/scratch/gpfs/iywang/mro_results/' + foldername + '/setuptime'+str(r)+'.png')
 
+    plt.figure(figsize=(10, 6))
     for eps_count, eps in enumerate(eps_nums):
         plt.plot(K_nums,clustertimes[:,r]+ setuptimes[:,r] + solvetimes[:,:,r][:,eps_count],linestyle='-', marker='o', label = "$\epsilon^2 = {}$".format(round(eps,6)), alpha = 0.5)
         plt.xlabel("Number of clusters (K)")
@@ -203,24 +204,24 @@ colors = ["tab:blue", "tab:orange", "tab:green",
 
 
 if __name__ == '__main__':
-    foldername = "portfolio/cont/m200_K900_r20"
+    foldername = "portfolio/cont/m200_K1000_r20"
     synthetic_returns = pd.read_csv('/scratch/gpfs/iywang/mro_code/portfolio/sp500_synthetic_returns.csv').to_numpy()[:,1:]
 
-    K_nums = np.array([1,5,50,100,300,500,800,900])
+    K_nums = np.array([1,5,50,100,300,500,800,1000])
     #np.array([1,10,20,50,100,500,1000]) # different cluster values we consider
     K_tot = K_nums.size  # Total number of clusters we consider
-    N_tot = 900
+    N_tot = 1000
     M = 15
-    R = 20           # Total times we repeat experiment to estimate final probabilty
+    R = 10           # Total times we repeat experiment to estimate final probabilty
     m = 200 
     eps_min = -5    # minimum epsilon we consider
-    eps_max = -3.5       # maximum epsilon we consider
+    eps_max = -3.2       # maximum epsilon we consider
     eps_nums = np.linspace(eps_min,eps_max,M)
     eps_nums = 10**(eps_nums)
     eps_tot = M
 
-    dat = synthetic_returns[:20000,:m]
-    dateval = synthetic_returns[-20000:,:m]
+    dat = synthetic_returns[-10000:,:m]
+    dateval = synthetic_returns[:10000,:m]
     njobs = get_n_processes(20)
     results = Parallel(n_jobs=njobs)(delayed(port_experiment)(dat,dateval,r, m, createproblem_port,N_tot, K_tot,K_nums, eps_tot,eps_nums,foldername) for r in range(R))
 

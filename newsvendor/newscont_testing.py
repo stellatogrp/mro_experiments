@@ -162,8 +162,7 @@ def news_experiment(dat, dateval, r, m, a,b,p, prob, N_tot, K_tot,K_nums, eps_to
         #output_stream.write('Percent Complete %.2f%s\r' % ((K_count)/K_tot*100,'%'))
         #output_stream.flush()
         if K == N_tot:
-            d_train = Data[r]
-            wk = np.ones(K)*(1/K)
+            d_train, wk = cluster_data(Data[r], K)
             clustertimes[K_count,r] = 0
         else:
             tnow = time.time()
@@ -172,12 +171,12 @@ def news_experiment(dat, dateval, r, m, a,b,p, prob, N_tot, K_tot,K_nums, eps_to
         evaldat = Data_eval[r] 
         tnow = time.time()
         problem, q, y, tao, p_pm,a_pm,b_pm,t, lam_pm, dat_pm, eps_pm, w_pm = prob(K,m)
-        setuptimes[K_count,r] = time.time() - tnow
         a_pm.value = np.array(a)
         b_pm.value = np.array(b)
         p_pm.value = np.array(p)
         dat_pm.value = d_train
         w_pm.value = wk
+        setuptimes[K_count,r] = time.time() - tnow
 
         ######################## solve for various epsilons ########################
         for eps_count, eps in enumerate(eps_nums):
@@ -240,6 +239,7 @@ def news_experiment(dat, dateval, r, m, a,b,p, prob, N_tot, K_tot,K_nums, eps_to
     plt.show()
     plt.savefig('/scratch/gpfs/iywang/mro_results/' + foldername + '/setuptime'+str(r)+'.png')
 
+    plt.figure(figsize=(10, 6))
     for eps_count, eps in enumerate(eps_nums):
         plt.plot(K_nums,clustertimes[:,r] + setuptimes[:,r] + solvetimes[:,:,r][:,eps_count],linestyle='-', marker='o', label = "$\epsilon^2 = {}$".format(round(eps,6)), alpha = 0.5)
         plt.xlabel("Number of clusters (K)")

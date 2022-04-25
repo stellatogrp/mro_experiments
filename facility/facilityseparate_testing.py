@@ -18,7 +18,32 @@ colors = ["tab:blue", "tab:orange", "tab:green",
           "tab:red", "tab:purple", "tab:brown", "tab:pink", "tab:grey", "tab:olive","tab:blue", "tab:orange", "tab:green",
           "tab:red", "tab:purple", "tab:brown", "tab:pink", "tab:grey", "tab:olive"]
 
+from pathlib import Path  
+import mosek
+import os
+from joblib import Parallel, delayed
 
+def get_n_processes(max_n=np.inf):
+    """Get number of processes from current cps number
+    Parameters
+    ----------
+    max_n: int
+        Maximum number of processes.
+    Returns
+    -------
+    float
+        Number of processes to use.
+    """
+
+    try:
+        # Check number of cpus if we are on a SLURM server
+        n_cpus = int(os.environ["SLURM_CPUS_PER_TASK"])
+    except KeyError:
+        n_cpus = joblib.cpu_count()
+
+    n_proc = max(min(max_n, n_cpus), 1)
+
+    return n_proc
 
 def cluster_data(D_in, K):
     '''returns K cluster means after clustering D_in into K clusters'''
@@ -144,81 +169,171 @@ def evaluate_k(p, x, X, d):
         return 0
     return 1
 
-def facility_experiment(R, n,m, Data, Data_eval, prob_facility, N_tot, K_tot,K_nums, eps_tot , eps_nums):
+def facility_experiment(r, n,m, Data, Data_eval, prob_facility, N_tot, K_tot,K_nums, eps_tot , eps_nums, foldername):
     X_sols = np.zeros((K_tot, eps_tot, n,m, R)) 
     x_sols = np.zeros((K_tot, eps_tot, n, R))
     Opt_vals = np.zeros((K_tot,eps_tot, R))
     eval_vals = np.zeros((K_tot,eps_tot, R))
     eval_vals1 = np.zeros((K_tot,eps_tot, R))
-
+    clustertimes = np.zeros((K_tot,R))
     setuptimes = np.zeros((K_tot,R))
     solvetimes = np.zeros((K_tot,eps_tot,R))
 
     ######################## Repeat experiment R times ########################
-    for r in range(R):
-#         output_stream.write('Percent Complete %.2f%s\r' % ((r)/R*100,'%'))
-#         output_stream.flush()
-        
         ######################## solve for various K ########################
-        for K_count, K in enumerate(K_nums):
-            
-            #output_stream.write('Percent Complete %.2f%s\r' % ((K_count)/K_tot*100,'%'))
-            #output_stream.flush()
-            
+    for K_count, K in enumerate(K_nums):
+        
+        #output_stream.write('Percent Complete %.2f%s\r' % ((K_count)/K_tot*100,'%'))
+        #output_stream.flush()
+        if K == N_tot:
+            d_train = Data[:,:,r]
+            wk = np.ones(K)*(1/K)
+            clustertimes[K_count,r] = 0
+        else:
             tnow = time.time()
             d_train, wk = cluster_data(Data[:,:,r], K)
-            dat_eval = Data_eval[:,:,r]
-            assert(d_train.shape == (K,m)) # dimensions should be K x n
-            
-            problem, x, X, s, lmbda, data_train_pm, w_pm, eps_pm, p_pm, c_pm, C_pm = prob_facility(K,m,n)
-            data_train_pm.value = d_train
-            w_pm.value = wk
-            p_pm.value = p
-            c_pm.value = c
-            C_pm.value = C
+            clustertimes[K_count,r] = time.time() - tnow
+        
+        dat_eval = Data_eval[:,:,r]
+        tnow = time.time()
+        problem, x, X, s, lmbda, data_train_pm, w_pm, eps_pm, p_pm, c_pm, C_pm = prob_facility(K,m,n)
+        data_train_pm.value = d_train
+        w_pm.value = wk
+        p_pm.value = p
+        c_pm.value = c
+        C_pm.value = C
 
-            setuptimes[K_count,r] = time.time() - tnow
+        setuptimes[K_count,r] = time.time() - tnow
 
-            ######################## solve for various epsilons ########################
-            for eps_count, eps in enumerate(eps_nums):
-                tnow1 = time.time()
-                eps_pm.value = eps
-                problem.solve()
-                #print(eps,K, problem.objective.value)
-                solvetimes[K_count,eps_count,r] = problem.solver_stats.solve_time
-                #time.time() - tnow1
-                X_sols[K_count, eps_count, :, :, r] = X.value
-                x_sols[K_count, eps_count, :, r] = x.value
-                evalvalue = evaluate(p_pm,x,X,dat_eval)
-                evalvalue1 = evaluate_k(p_pm,x,X,dat_eval)
-                #print(evalvalue)
-                eval_vals[K_count, eps_count, r] = evalvalue
-                eval_vals1[K_count, eps_count, r] = evalvalue1
-                Opt_vals[K_count,eps_count,r] = problem.value                         
+        ######################## solve for various epsilons ########################
+        for eps_count, eps in enumerate(eps_nums):
+            tnow1 = time.time()
+            eps_pm.value = eps
+            problem.solve(ignore_dpp = True, solver = cp.MOSEK, verbose = True,mosek_params = {mosek.dparam.optimizer_max_time:  1000.0})
+            #print(eps,K, problem.objective.value)
+            solvetimes[K_count,eps_count,r] = problem.solver_stats.solve_time
+            #time.time() - tnow1
+            X_sols[K_count, eps_count, :, :, r] = X.value
+            x_sols[K_count, eps_count, :, r] = x.value
+            evalvalue = evaluate(p_pm,x,X,dat_eval)
+            evalvalue1 = evaluate_k(p_pm,x,X,dat_eval)
+            print(K, eps, problem.solver_stats.solve_time, problem.objective.value, evalvalue)
+            eval_vals[K_count, eps_count, r] = evalvalue
+            eval_vals1[K_count, eps_count, r] = evalvalue1
+            Opt_vals[K_count,eps_count,r] = problem.value                         
 
     #output_stream.write('Percent Complete %.2f%s\r' % (100,'%'))  
     
-    return X_sols, x_sols, Opt_vals, eval_vals, eval_vals1, setuptimes, solvetimes
+    return X_sols, x_sols, Opt_vals, eval_vals, eval_vals1, setuptimes, solvetimes, clustertimes
 
-K_nums = np.array([1,10,50,100,200,500]) # different cluster values we consider
-K_tot = K_nums.size  # Total number of clusters we consider
-N_tot = 500
-M1 = 6
-M = 15
-R = 20       # Total times we repeat experiment to estimate final probabilty
-n = 10 # number of facilities
-m = 50 # number of locations
-eps_min = 1      # minimum epsilon we consider
-eps_max = 25         # maximum epsilon we consider
-eps_min1 = -5
-eps_max1 = -1
-eps_nums1 = np.linspace(eps_min1,eps_max1,M1)
-eps_nums1 = 10**(eps_nums1)
-eps_nums = np.linspace(eps_min,eps_max,M)
-eps_nums = np.concatenate((eps_nums1,eps_nums))
-eps_tot = M + M1
-c,C,p = generate_facility_data(n,m,R)
-Data = generate_facility_demands(N_tot,m, R_samples = R)
-Data_eval = generate_facility_demands(N_tot, m,R_samples = R)
+if __name__ == '__main__':
+    foldername = "facility/m50n10_K100_r10"
+    K_nums = np.array([1,10,50,100]) # different cluster values we consider
+    K_tot = K_nums.size  # Total number of clusters we consider
+    N_tot = 100
+    M = 10
+    R = 10       # Total times we repeat experiment to estimate final probabilty
+    n = 10 # number of facilities
+    m = 50 # number of locations
+    eps_min = 1      # minimum epsilon we consider
+    eps_max = 25         # maximum epsilon we consider
+    eps_nums = np.linspace(eps_min,eps_max,M)
+    eps_tot = M 
+    c,C,p = generate_facility_data(n,m,R)
+    Data = generate_facility_demands(N_tot,m, R_samples = R)
+    Data_eval = generate_facility_demands(N_tot, m,R_samples = R)
 
-X_sols, x_sols, Opt_vals, eval_vals,eval_vals1, setuptimes, solvetimes = facility_experiment(R,n,m,Data,Data_eval,prob_facility_separate,N_tot, K_tot,K_nums, eps_tot , eps_nums)
+    njobs = get_n_processes(25)
+
+    results = Parallel(n_jobs=njobs)(delayed(facility_experiment)(r,n,m,Data,Data_eval,prob_facility_separate,N_tot, K_tot,K_nums, eps_tot , eps_nums,foldername) for r in range(R))
+
+    X_sols = np.zeros((K_tot, eps_tot, n,m, R)) 
+    x_sols = np.zeros((K_tot, eps_tot, n, R))
+    Opt_vals = np.zeros((K_tot,eps_tot, R))
+    probs = np.zeros((K_tot,eps_tot, R))
+    probs1 = np.zeros((K_tot,eps_tot, R))
+    setuptimes = np.zeros((K_tot,R))
+    solvetimes = np.zeros((K_tot,eps_tot,R))
+    clustertimes = np.zeros((K_tot,R))
+
+    for r in range(R):
+        X_sols += results[r][0]
+        x_sols += results[r][1]
+        Opt_vals += results[r][2]
+        probs += results[r][3]
+        probs1 += results[r][4]
+        setuptimes += results[r][5]
+        solvetimes += results[r][6]
+        clustertimes +=  results[r][7]
+
+    np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/x_sols.npy"),x_sols)
+    np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/X_sols.npy"),X_sols)
+    np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/Opt_vals.npy"),Opt_vals)
+    np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/solvetimes.npy"),solvetimes)
+    np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/clustertimes.npy"),clustertimes)
+    np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/setuptimes.npy"),setuptimes)
+    np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/probs.npy"),probs)
+    np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/probs1.npy"),probs1)
+
+    plt.figure(figsize=(10, 6))
+    for K_count, K in enumerate(K_nums):
+        plt.plot(eps_nums, np.mean(Opt_vals[:,:,],axis = 2)[K_count,:],linestyle='-', marker='o', color = colors[K_count], label = "$K = {}$".format(round(K,4)))
+        plt.xlabel("$\epsilon^2$")
+    plt.xscale("log")
+    plt.ylabel("Optimal value")
+    plt.legend()
+    plt.show()
+    plt.savefig("/scratch/gpfs/iywang/mro_results/" + foldername + "/objs.png")
+
+    plt.figure(figsize=(10, 6))
+    for K_count, K in enumerate(K_nums):
+        plt.plot(eps_nums, np.mean(probs[:,:,],axis = 2)[K_count,:],linestyle='-', marker='o', color = colors[K_count], label = "$K = {}$".format(round(K,4)))
+        plt.xlabel("$\epsilon^2$")
+    plt.xscale("log")
+    plt.ylabel("Reliability")
+    plt.legend()
+    plt.show()
+    plt.savefig('/scratch/gpfs/iywang/mro_results/' + foldername + '/reliability.png')
+
+    plt.figure(figsize=(10, 6))
+    for K_count, K in enumerate(K_nums):
+        plt.plot(eps_nums, np.mean(probs1[:,:,],axis = 2)[K_count,:],linestyle='-', marker='o', color = colors[K_count], label = "$K = {}$".format(round(K,4)))
+        plt.xlabel("$\epsilon^2$")
+    plt.xscale("log")
+    plt.ylabel("Reliability")
+    plt.legend()
+    plt.show()
+    plt.savefig('/scratch/gpfs/iywang/mro_results/' + foldername + '/reliability1.png')
+
+    plt.figure(figsize=(10, 6))
+    for eps_count, eps in enumerate(eps_nums):
+        plt.plot(K_nums,np.mean(solvetimes[:,:,],axis = 2)[:,eps_count],linestyle='-', marker='o', label = "$\epsilon^2 = {}$".format(round(eps,6)), alpha = 0.5)
+        plt.xlabel("Number of clusters (K)")
+
+    plt.ylabel("time")
+    plt.title("Solve time")
+    plt.legend()
+    plt.show()
+    plt.savefig('/scratch/gpfs/iywang/mro_results/' + foldername + '/solvetime.png')
+
+    plt.figure(figsize=(10, 6))
+    plt.plot(K_nums,np.mean(setuptimes + clustertimes,axis = 1),linestyle='-', marker='o')
+    plt.xlabel("Number of clusters (K)")
+    plt.ylabel("time")
+    plt.title("Set-up time (clustering + creating problem)")
+    plt.show()
+    plt.savefig('/scratch/gpfs/iywang/mro_results/' + foldername + '/setuptime.png')
+
+    plt.figure(figsize=(10, 6))
+    for eps_count, eps in enumerate(eps_nums):
+        plt.plot(K_nums,np.mean(setuptimes + clustertimes,axis = 1) + np.mean(solvetimes[:,:,],axis = 2)[:,eps_count],linestyle='-', marker='o', label = "$\epsilon^2 = {}$".format(round(eps,6)), alpha = 0.5)
+        plt.xlabel("Number of clusters (K)")
+
+    plt.ylabel("time")
+    plt.title("Total time")
+    plt.legend(fontsize=5)
+    plt.show()
+    plt.savefig('/scratch/gpfs/iywang/mro_results/' + foldername + '/totaltime.png')
+
+    print("COMPLETE")
+

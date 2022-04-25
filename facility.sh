@@ -1,11 +1,11 @@
 #!/bin/bash
-#SBATCH --job-name=newsvendortest
+#SBATCH --job-name=facilitytest
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=25
 #SBATCH --mem-per-cpu=3G
 #SBATCH --time=60:00:00
-#SBATCH -o /scratch/gpfs/iywang/mro_results/newsvendor/MIP/m300_K1500_r10/newsvendor_test_%A.txt
+#SBATCH -o /scratch/gpfs/iywang/mro_results/facility/m50n10_K100_r10/portfolio_test_%A.txt
 #SBATCH --mail-type=BEGIN,END,FAIL,TIME_LIMIT
 #SBATCH --mail-user=iabirina@hotmail.com
 
@@ -16,6 +16,5 @@ module load anaconda3
 #module load gurobi/9.5.1
 conda activate mroenv
 
-python newsvendor/newsMIP_testing.py 
-#--sparsity $SLURM_ARRAY_TASK_ID
+python facility/facilityseparate_testing.py 
 
