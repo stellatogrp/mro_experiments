@@ -54,37 +54,6 @@ def cluster_data(D_in, K):
     
     return Dbar_in, weights
 
-def prob_facility_kuhn(K,m,n):
-    
-    eps = cp.Parameter()
-    d_train = cp.Parameter((K,m))
-    wk = cp.Parameter(K)
-    p = cp.Parameter(n)
-    c = cp.Parameter(n)
-    C = cp.Parameter((n,m))
-    minnum = cp.Parameter()
-    x = cp.Variable(n, boolean = True)
-    X = cp.Variable((n,m))
-    lmbda = cp.Variable()
-    s = cp.Variable(K)
-    t = cp.Variable()
-    z = cp.Variable(n,boolean = True)
-    objective = cp.Minimize(cp.trace(C.T @ X) + c@x)
-    #cp.Minimize(t)
-
-    constraints = [cp.multiply(eps,lmbda) + wk @ s <= 0]
-    for j in range(m):
-        constraints += [cp.sum(X[:, j]) == 1]  
-    for i in range(n):
-        constraints += [cp.hstack([-minnum + (-p[i]+ minnum)*x[i]]*K) + d_train @
-                        X[i] + cp.hstack([cp.quad_over_lin(X[i], 4*lmbda)]*K) <= s]
-            
-    constraints += [X >= 0, lmbda >= 0]
-    constraints += [cp.sum(X,axis = 1 )/m - z <= 0, x >= z]
-    problem = cp.Problem(objective,constraints)
-    
-    return problem, x, X, s, lmbda, d_train, wk, eps, p, c, C
-
 def prob_facility_separate(K,m,n):
     
     eps = cp.Parameter()
@@ -118,7 +87,7 @@ def prob_facility_separate(K,m,n):
     return problem, x, X, s, lmbda, d_train, wk, eps, p, c, C
 
 
-def generate_facility_data(num_facilities = 10, num_locations = 50, K = 100):
+def generate_facility_data(num_facilities = 10, num_locations = 50):
     '''data for one problem instance of facility problem'''
     n = num_facilities
     m = num_locations
@@ -170,14 +139,14 @@ def evaluate_k(p, x, X, d):
     return 1
 
 def facility_experiment(r, n,m, Data, Data_eval, prob_facility, N_tot, K_tot,K_nums, eps_tot , eps_nums, foldername):
-    X_sols = np.zeros((K_tot, eps_tot, n,m, R)) 
-    x_sols = np.zeros((K_tot, eps_tot, n, R))
-    Opt_vals = np.zeros((K_tot,eps_tot, R))
-    eval_vals = np.zeros((K_tot,eps_tot, R))
-    eval_vals1 = np.zeros((K_tot,eps_tot, R))
-    clustertimes = np.zeros((K_tot,R))
-    setuptimes = np.zeros((K_tot,R))
-    solvetimes = np.zeros((K_tot,eps_tot,R))
+    X_sols = np.zeros((K_tot, eps_tot, n,m)) 
+    x_sols = np.zeros((K_tot, eps_tot, n))
+    Opt_vals = np.zeros((K_tot,eps_tot))
+    eval_vals = np.zeros((K_tot,eps_tot))
+    eval_vals1 = np.zeros((K_tot,eps_tot))
+    clustertimes = np.zeros((K_tot))
+    setuptimes = np.zeros((K_tot))
+    solvetimes = np.zeros((K_tot,eps_tot))
 
     ######################## Repeat experiment R times ########################
         ######################## solve for various K ########################
@@ -187,11 +156,11 @@ def facility_experiment(r, n,m, Data, Data_eval, prob_facility, N_tot, K_tot,K_n
         #output_stream.flush()
         if K == N_tot:
             d_train, wk = cluster_data(Data[:,:,r], K)
-            clustertimes[K_count,r] = 0
+            clustertimes[K_count] = 0
         else:
             tnow = time.time()
             d_train, wk = cluster_data(Data[:,:,r], K)
-            clustertimes[K_count,r] = time.time() - tnow
+            clustertimes[K_count] = time.time() - tnow
         
         dat_eval = Data_eval[:,:,r]
         tnow = time.time()
@@ -202,24 +171,22 @@ def facility_experiment(r, n,m, Data, Data_eval, prob_facility, N_tot, K_tot,K_n
         c_pm.value = c
         C_pm.value = C
 
-        setuptimes[K_count,r] = time.time() - tnow
+        setuptimes[K_count] = time.time() - tnow
 
         ######################## solve for various epsilons ########################
         for eps_count, eps in enumerate(eps_nums):
-            tnow1 = time.time()
             eps_pm.value = eps
-            problem.solve(ignore_dpp = True, solver = cp.MOSEK, verbose = True,mosek_params = {mosek.dparam.optimizer_max_time:  1000.0})
-            #print(eps,K, problem.objective.value)
-            solvetimes[K_count,eps_count,r] = problem.solver_stats.solve_time
-            #time.time() - tnow1
-            X_sols[K_count, eps_count, :, :, r] = X.value
-            x_sols[K_count, eps_count, :, r] = x.value
+            problem.solve(verbose = True)
+            #, ignore_dpp = True, solver = cp.MOSEK,mosek_params = {mosek.dparam.optimizer_max_time:  1000.0}
+            solvetimes[K_count,eps_count] = problem.solver_stats.solve_time
+            X_sols[K_count, eps_count, :, :] = X.value
+            x_sols[K_count, eps_count, :] = x.value
             evalvalue = evaluate(p_pm,x,X,dat_eval)
             evalvalue1 = evaluate_k(p_pm,x,X,dat_eval)
-            print(K, eps, problem.solver_stats.solve_time, problem.objective.value, evalvalue)
-            eval_vals[K_count, eps_count, r] = evalvalue
-            eval_vals1[K_count, eps_count, r] = evalvalue1
-            Opt_vals[K_count,eps_count,r] = problem.value
+            print(K, eps, problem.solver_stats.solve_time, problem.objective.value, evalvalue1)
+            eval_vals[K_count, eps_count] = evalvalue
+            eval_vals1[K_count, eps_count] = evalvalue1
+            Opt_vals[K_count,eps_count] = problem.value
             np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/q"+str(r)+".npy"),x_sols)
             np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/q"+str(r)+".npy"),X_sols)
             np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/Opt_vals"+str(r)+".npy"),Opt_vals)
@@ -231,7 +198,7 @@ def facility_experiment(r, n,m, Data, Data_eval, prob_facility, N_tot, K_tot,K_n
 
     plt.figure(figsize=(10, 6))
     for K_count, K in enumerate(K_nums):
-        plt.plot(eps_nums, evalvalue1[:,:,r][K_count,:],linestyle='-', marker='o', color = colors[K_count], label = "$K = {}$".format(round(K,4)))
+        plt.plot(eps_nums, evalvalue1[:,:][K_count,:],linestyle='-', marker='o', color = colors[K_count], label = "$K = {}$".format(round(K,4)))
         plt.xlabel("$\epsilon^2$")
     plt.xscale("log")
     plt.ylabel("Reliability")
@@ -241,7 +208,7 @@ def facility_experiment(r, n,m, Data, Data_eval, prob_facility, N_tot, K_tot,K_n
 
     plt.figure(figsize=(10, 6))
     for K_count, K in enumerate(K_nums):
-        plt.plot(eps_nums, Opt_vals[:,:,r][K_count,:],linestyle='-', marker='o', color = colors[K_count], label = "$K = {}$".format(round(K,4)))
+        plt.plot(eps_nums, Opt_vals[:,:][K_count,:],linestyle='-', marker='o', color = colors[K_count], label = "$K = {}$".format(round(K,4)))
         plt.xlabel("$\epsilon^2$")
     plt.xscale("log")
     plt.ylabel("Optimal value")
@@ -252,7 +219,7 @@ def facility_experiment(r, n,m, Data, Data_eval, prob_facility, N_tot, K_tot,K_n
     plt.figure(figsize=(10, 6))
 
     for eps_count, eps in enumerate(eps_nums):
-        plt.plot(K_nums,solvetimes[:,:,r][:,eps_count],linestyle='-', marker='o', label = "$\epsilon^2 = {}$".format(round(eps,6)), alpha = 0.5)
+        plt.plot(K_nums,solvetimes[:,:][:,eps_count],linestyle='-', marker='o', label = "$\epsilon^2 = {}$".format(round(eps,6)), alpha = 0.5)
         plt.xlabel("Number of clusters (K)")
 
     plt.ylabel("time")
@@ -263,7 +230,7 @@ def facility_experiment(r, n,m, Data, Data_eval, prob_facility, N_tot, K_tot,K_n
 
 
     plt.figure(figsize=(10, 6))
-    plt.plot(K_nums, clustertimes[:,r]+ setuptimes[:,r],linestyle='-', marker='o')
+    plt.plot(K_nums, clustertimes[:]+ setuptimes[:],linestyle='-', marker='o')
     plt.xlabel("Number of clusters (K)")
     plt.ylabel("time")
     plt.title("Set-up time (clustering + creating problem)")
@@ -272,7 +239,7 @@ def facility_experiment(r, n,m, Data, Data_eval, prob_facility, N_tot, K_tot,K_n
 
     plt.figure(figsize=(10, 6))
     for eps_count, eps in enumerate(eps_nums):
-        plt.plot(K_nums,clustertimes[:,r] + setuptimes[:,r] + solvetimes[:,:,r][:,eps_count],linestyle='-', marker='o', label = "$\epsilon^2 = {}$".format(round(eps,6)), alpha = 0.5)
+        plt.plot(K_nums,clustertimes[:] + setuptimes[:] + solvetimes[:,:][:,eps_count],linestyle='-', marker='o', label = "$\epsilon^2 = {}$".format(round(eps,6)), alpha = 0.5)
         plt.xlabel("Number of clusters (K)")
 
     plt.ylabel("time")
@@ -288,24 +255,24 @@ def facility_experiment(r, n,m, Data, Data_eval, prob_facility, N_tot, K_tot,K_n
     return X_sols, x_sols, Opt_vals, eval_vals, eval_vals1, setuptimes, solvetimes, clustertimes
 
 if __name__ == '__main__':
-    foldername = "facility/m100n20_K500_r10"
-    K_nums = np.array([1,10,50,100,300,400,500]) # different cluster values we consider
+    print("START")
+    foldername = "facility/m100n20_K200_r10"
+    K_nums = np.array([1,5,10,50,75,100,200]) # different cluster values we consider
     K_tot = K_nums.size  # Total number of clusters we consider
-    N_tot = 500
+    N_tot = 200
     M = 10
     R = 10       # Total times we repeat experiment to estimate final probabilty
     n = 20 # number of facilities
     m = 100 # number of locations
-    eps_min = 0      # minimum epsilon we consider
+    eps_min = 5      # minimum epsilon we consider
     eps_max = 30         # maximum epsilon we consider
     eps_nums = np.linspace(eps_min,eps_max,M)
     eps_tot = M 
-    c,C,p = generate_facility_data(n,m,R)
+    c,C,p = generate_facility_data(n,m)
     Data = generate_facility_demands(N_tot,m, R_samples = R)
     Data_eval = generate_facility_demands(N_tot, m,R_samples = R)
 
-    njobs = get_n_processes(50)
-
+    njobs = get_n_processes(40)
     results = Parallel(n_jobs=njobs)(delayed(facility_experiment)(r,n,m,Data,Data_eval,prob_facility_separate,N_tot, K_tot,K_nums, eps_tot , eps_nums,foldername) for r in range(R))
 
     X_sols = np.zeros((K_tot, eps_tot, n,m, R)) 
@@ -318,14 +285,14 @@ if __name__ == '__main__':
     clustertimes = np.zeros((K_tot,R))
 
     for r in range(R):
-        X_sols += results[r][0]
-        x_sols += results[r][1]
-        Opt_vals += results[r][2]
-        probs += results[r][3]
-        probs1 += results[r][4]
-        setuptimes += results[r][5]
-        solvetimes += results[r][6]
-        clustertimes +=  results[r][7]
+        X_sols[:,:,:,:,r] = results[r][0]
+        x_sols[:,:,:,r] = results[r][1]
+        Opt_vals[:,:,r] = results[r][2]
+        probs[:,:,r] = results[r][3]
+        probs1[:,:,r] = results[r][4]
+        setuptimes[:,r] = results[r][5]
+        solvetimes[:,:,r] = results[r][6]
+        clustertimes[:,r] =  results[r][7]
 
     np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/x_sols.npy"),x_sols)
     np.save(Path("/scratch/gpfs/iywang/mro_results/" + foldername + "/X_sols.npy"),X_sols)

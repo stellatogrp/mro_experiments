@@ -256,12 +256,12 @@ def news_experiment(dat, dateval, r, m, a,b,p, prob, N_tot, K_tot,K_nums, eps_to
     return q_sols, Opt_vals, probs,setuptimes,solvetimes, clustertimes
 
 if __name__ == '__main__':
-    foldername = "newsvendor/cont/m40_K500_r20"
+    foldername = "newsvendor/cont/test"
     K_nums = np.array([1,10,50,100,300,500])
     K_tot = K_nums.size  # Total number of clusters we consider
     N_tot = 500
     M = 10
-    R = 20
+    R = 10
     m = 40
     eps_min = -3    # minimum epsilon we consider
     eps_max = 0        # maximum epsilon we consider
