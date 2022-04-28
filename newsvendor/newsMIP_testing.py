@@ -123,7 +123,7 @@ def createproblem_news(N, m):
     constraints += [10*tao <= t]
     constraints += [q - b <= y, 0 <= y, a@q + 0.5*a@y <= 20, q >= 0, q<= 5*b]
     constraints += [lam >= 0]
-    constraints += [q - 10*z <= 0, cp.sum(z)<=10]
+    constraints += [q - 10*z <= 0, cp.sum(z)<=30]
 
     # PROBLEM #
     problem = cp.Problem(cp.Minimize(objective), constraints)
@@ -209,7 +209,7 @@ def news_experiment(dat, dateval, r, m, a,b,p, prob, N_tot, K_tot,K_nums, eps_to
     plt.ylabel("Reliability")
     plt.legend()
     plt.show()
-    plt.savefig('/scratch/gpfs/iywang/mro_results/' + foldername + '/reliability'+str(r)+'.png')
+    #plt.savefig('/scratch/gpfs/iywang/mro_results/' + foldername + '/reliability'+str(r)+'.png')
 
     plt.figure(figsize=(10, 6))
     for K_count, K in enumerate(K_nums):
@@ -219,7 +219,7 @@ def news_experiment(dat, dateval, r, m, a,b,p, prob, N_tot, K_tot,K_nums, eps_to
     plt.ylabel("Optimal value")
     plt.legend()
     plt.show()
-    plt.savefig('/scratch/gpfs/iywang/mro_results/' + foldername + '/objs'+str(r)+'.png')
+    #plt.savefig('/scratch/gpfs/iywang/mro_results/' + foldername + '/objs'+str(r)+'.png')
 
     plt.figure(figsize=(10, 6))
 
@@ -231,7 +231,7 @@ def news_experiment(dat, dateval, r, m, a,b,p, prob, N_tot, K_tot,K_nums, eps_to
     plt.title("Solve time")
     plt.legend()
     plt.show()
-    plt.savefig('/scratch/gpfs/iywang/mro_results/' + foldername + '/solvetime'+str(r)+'.png')
+    #plt.savefig('/scratch/gpfs/iywang/mro_results/' + foldername + '/solvetime'+str(r)+'.png')
 
 
     plt.figure(figsize=(10, 6))
@@ -240,7 +240,7 @@ def news_experiment(dat, dateval, r, m, a,b,p, prob, N_tot, K_tot,K_nums, eps_to
     plt.ylabel("time")
     plt.title("Set-up time (clustering + creating problem)")
     plt.show()
-    plt.savefig('/scratch/gpfs/iywang/mro_results/' + foldername + '/setuptime'+str(r)+'.png')
+    #plt.savefig('/scratch/gpfs/iywang/mro_results/' + foldername + '/setuptime'+str(r)+'.png')
 
     plt.figure(figsize=(10, 6))
     for eps_count, eps in enumerate(eps_nums):
@@ -251,7 +251,7 @@ def news_experiment(dat, dateval, r, m, a,b,p, prob, N_tot, K_tot,K_nums, eps_to
     plt.title("totaltime")
     plt.legend()
     plt.show()
-    plt.savefig('/scratch/gpfs/iywang/mro_results/' + foldername + '/totaltime'+str(r)+'.png')
+    #plt.savefig('/scratch/gpfs/iywang/mro_results/' + foldername + '/totaltime'+str(r)+'.png')
 
 
     #output_stream.write('Percent Complete %.2f%s\r' % (100,'%'))  
