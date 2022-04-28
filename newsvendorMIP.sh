@@ -5,7 +5,7 @@
 #SBATCH --cpus-per-task=30
 #SBATCH --mem-per-cpu=5G
 #SBATCH --time=60:00:00
-#SBATCH -o /scratch/gpfs/iywang/mro_results/newsvendor/MIP/m40_K500_r10_10/newsvendor_test_%A.txt
+#SBATCH -o /scratch/gpfs/iywang/mro_results/newsvendor/MIP/m300_K1000_r10/newsvendor_test_%A.txt
 #SBATCH --mail-type=BEGIN,END,FAIL,TIME_LIMIT
 #SBATCH --mail-user=iabirina@hotmail.com
 
