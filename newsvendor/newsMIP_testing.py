@@ -17,9 +17,6 @@ import pandas as pd
 import sys
 import time
 output_stream = sys.stdout
-colors = ["tab:blue", "tab:orange", "tab:green",
-          "tab:red", "tab:purple", "tab:brown", "tab:pink", "tab:grey", "tab:olive", "tab:blue", "tab:orange", "tab:green",
-          "tab:red", "tab:purple", "tab:brown", "tab:pink", "tab:grey", "tab:olive"]
 
 
 def get_n_processes(max_n=np.inf):
@@ -56,7 +53,7 @@ def cluster_data(D_in, K):
 
 
 def createproblem_news1(N, m):
-    """Creates the problem in cvxpy"""
+    """Creates the problem in cvxpy, minimize loss"""
     # m = 10
     # PARAMETERS #
     dat = cp.Parameter((N, m))
@@ -90,7 +87,7 @@ def createproblem_news1(N, m):
 
 
 def createproblem_news(N, m):
-    """Creates the problem in cvxpy"""
+    """Creates the problem in cvxpy, minimize CVaR of loss"""
     # m = 10
     # PARAMETERS #
     dat = cp.Parameter((N, m))
@@ -145,6 +142,7 @@ def generate_news_params(m=10):
 
 
 def generate_news_demands(mu, sig, N_tot, m=10, R_samples=30):
+    '''generate uncertain demand'''
     norms = np.random.multivariate_normal(mu, sig, (R_samples, N_tot))
     #norms = np.random.normal(np.random.uniform(-0.2,0),0.2,(R_samples,N_tot,m))
     d_train = np.exp(norms)
@@ -152,18 +150,16 @@ def generate_news_demands(mu, sig, N_tot, m=10, R_samples=30):
 
 
 def news_experiment(dat, dateval, r, m, a, b, p, prob, N_tot, K_tot, K_nums, eps_tot, eps_nums, foldername):
+    '''run the experiment for multiple K and epsilon'''
     q_sols = np.zeros((K_tot, eps_tot, m, R))
     df = pd.DataFrame(columns=["K", "Epsilon", "Opt_val",
                                "satisfy", "solvetime", "clustertime", "setuptime"])
     Data = dat
     Data_eval = dateval
 
-    ######################## Repeat experiment R times ########################
     ######################## solve for various K ########################
     for K_count, K in enumerate(K_nums):
 
-        #output_stream.write('Percent Complete %.2f%s\r' % ((K_count)/K_tot*100,'%'))
-        # output_stream.flush()
         if K == N_tot:
             d_train, wk = cluster_data(Data[r], K)
             clustertimes = 0
@@ -183,7 +179,7 @@ def news_experiment(dat, dateval, r, m, a, b, p, prob, N_tot, K_tot, K_nums, eps
         w_pm.value = wk
         setuptimes = time.time() - tnow
 
-        ######################## solve for various epsilons ########################
+        ########## solve for various epsilons ##############
         for eps_count, eps in enumerate(eps_nums):
             eps_pm.value = eps
             problem.solve(ignore_dpp=True, solver=cp.MOSEK, verbose=True, mosek_params={

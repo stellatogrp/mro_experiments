@@ -13,13 +13,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.cluster import KMeans
 import cvxpy as cp
 import matplotlib.pyplot as plt
-import pandas as pd
 import sys
 import time
 output_stream = sys.stdout
-colors = ["tab:blue", "tab:orange", "tab:green",
-          "tab:red", "tab:purple", "tab:brown", "tab:pink", "tab:grey", "tab:olive", "tab:blue", "tab:orange", "tab:green",
-          "tab:red", "tab:purple", "tab:brown", "tab:pink", "tab:grey", "tab:olive"]
 
 
 def get_n_processes(max_n=np.inf):
@@ -114,29 +110,25 @@ def generate_facility_data(num_facilities=10, num_locations=50):
 
 
 def generate_facility_demands(N_tot, m, R_samples=30):
+    '''generate uncertain demand'''
     d_train = npr.randint(1, 5, (N_tot, m, R_samples))
     return d_train
 
 
 def evaluate(p, x, X, d):
+    '''evaluate constraint satisfaction'''
     for ind in range(n):
-        # print(-p.value[ind]*x.value[ind] + np.reshape(np.mean(d,
-        #    axis=0), (1, m))@(X.value.T@(np.eye(n)[ind])))
         if -p.value[ind]*x.value[ind] + np.reshape(np.mean(d, axis=0), (1, m))@(X.value[ind]) >= 0.001:
             return 0
     return 1
 
 
 def evaluate_k(p, x, X, d):
+    '''evaluate stricter constraint satisfaction'''
     maxval = np.zeros((np.shape(d)[0], np.shape(x)[0]))
     for fac in range(np.shape(x)[0]):
         for ind in range(np.shape(d)[0]):
             maxval[ind, fac] = -p.value[fac]*x.value[fac] + d[ind]@X.value[fac]
-            # if x.value[fac] >0:
-            #    print(-p.value[fac]+ d[ind]@X.value[fac])
-            # *x.value[fac]
-    # print(maxval)
-    #print(np.max(maxval,axis = 1))
     print(np.mean(np.max(maxval, axis=1)))
     if np.mean(np.max(maxval, axis=1)) >= 0.001:
         return 0
@@ -144,12 +136,12 @@ def evaluate_k(p, x, X, d):
 
 
 def facility_experiment(r, n, m, Data, Data_eval, prob_facility, N_tot, K_tot, K_nums, eps_tot, eps_nums, foldername):
+    '''run the experiment for multiple K and epsilon'''
     X_sols = np.zeros((K_tot, eps_tot, n, m))
     x_sols = np.zeros((K_tot, eps_tot, n))
     df = pd.DataFrame(columns=["K", "Epsilon", "Opt_val", "Eval_val",
                       "Eval_val1", "solvetime", "setuptime", "clustertime"])
 
-    ######################## Repeat experiment R times ########################
     ######################## solve for various K ########################
     for K_count, K in enumerate(K_nums):
 
@@ -175,7 +167,7 @@ def facility_experiment(r, n, m, Data, Data_eval, prob_facility, N_tot, K_tot, K
 
         setuptimes = time.time() - tnow
 
-        ######################## solve for various epsilons ########################
+        ############## solve for various epsilons ###################
         for eps_count, eps in enumerate(eps_nums):
             eps_pm.value = eps
             problem.solve(verbose=True)

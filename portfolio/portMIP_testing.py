@@ -53,7 +53,7 @@ def cluster_data(D_in, K):
 
 
 def createproblem_portMIP(N, m):
-    """Creates the problem in cvxpy"""
+    """Creates the problem in cvxpy, minimize CVaR"""
     # PARAMETERS #
     dat = cp.Parameter((N, m))
     eps = cp.Parameter()
@@ -89,7 +89,7 @@ def createproblem_portMIP(N, m):
 
 
 def port_experiment(dat, dateval, r, m, prob, N_tot, K_tot, K_nums, eps_tot, eps_nums, foldername):
-
+    '''run the experiment for multiple K and epsilon'''
     x_sols = np.zeros((K_tot, eps_tot, m, R))
     df = pd.DataFrame(columns=["K", "Epsilon", "Opt_val", "Eval_val",
                                "satisfy", "solvetime", "setuptime"])
@@ -98,9 +98,6 @@ def port_experiment(dat, dateval, r, m, prob, N_tot, K_tot, K_nums, eps_tot, eps
 
    ######################## solve for various K ########################
     for K_count, K in enumerate(K_nums):
-
-        #output_stream.write('Percent Complete %.2f%s\r' % ((K_count)/K_tot*100,'%'))
-        # output_stream.flush()
 
         print(r, K)
         tnow = time.time()
@@ -112,7 +109,7 @@ def port_experiment(dat, dateval, r, m, prob, N_tot, K_tot, K_nums, eps_tot, eps
         w_pm.value = wk
         setuptimes = time.time() - tnow
 
-        ######################## solve for various epsilons ########################
+        ############## solve for various epsilons ###################
         for eps_count, eps in enumerate(eps_nums):
             eps_pm.value = eps
             problem.solve(ignore_dpp=True, solver=cp.MOSEK, verbose=True, mosek_params={
@@ -135,16 +132,10 @@ def port_experiment(dat, dateval, r, m, prob, N_tot, K_tot, K_nums, eps_tot, eps
             df.to_csv('/scratch/gpfs/iywang/mro_results/' +
                       foldername + '/df.csv')
 
-    # , mosek_params = {mosek.dparam.optimizer_max_time:  300.0, mosek.iparam.intpnt_solve_form:   mosek.solveform.dual}
-
     return x_sols, df
 
 
 #mosek_params = {mosek.dparam.optimizer_max_time:  300.0, mosek.iparam.intpnt_solve_form:   mosek.solveform.dual}
-
-colors = ["tab:blue", "tab:orange", "tab:green",
-          "tab:red", "tab:purple", "tab:brown", "tab:pink", "tab:grey", "tab:olive", "tab:blue", "tab:orange", "tab:green",
-          "tab:red", "tab:purple", "tab:brown", "tab:pink", "tab:grey", "tab:olive"]
 
 
 if __name__ == '__main__':
