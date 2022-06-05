@@ -138,16 +138,16 @@ def port_experiment(dat, dateval, r, m, prob, N_tot, K_tot, K_nums, eps_tot, eps
 
 
 if __name__ == '__main__':
-    foldername = "portfolio/cont/m200_K800_r10"
+    foldername = "portfolio/cont/m200_K900_r10"
     synthetic_returns = pd.read_csv(
         '/scratch/gpfs/iywang/mro_code/portfolio/sp500_synthetic_returns.csv').to_numpy()[:, 1:]
 
-    K_nums = np.array([1, 5, 50, 100, 300, 450, 600, 800])
+    K_nums = np.array([1, 5, 50, 100, 300, 500, 800,900])
     # np.array([1,10,20,50,100,500,1000]) # different cluster values we consider
     K_tot = K_nums.size  # Total number of clusters we consider
-    N_tot = 800
+    N_tot = 900
     M = 15
-    R = 10       # Total times we repeat experiment 
+    R = 10      # Total times we repeat experiment 
     m = 200
     eps_min = -5    # minimum epsilon we consider
     eps_max = -3.5       # maximum epsilon we consider
@@ -180,7 +180,7 @@ if __name__ == '__main__':
     })
     
     plt.figure(figsize=(10, 6))
-    for K_count in np.arange(0,len(K_nums),1):
+    for K_count in np.arange(0,len(K_nums),2):
         plt.plot(eps_nums, dftemp.sort_values(["K","Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["Opt_val"], linestyle='-', marker = 'o', label="Objective, $K = {}$".format(K_nums[K_count]),alpha = 0.6)
     plt.xlabel("$\epsilon^2$")
     plt.xscale("log")
@@ -189,7 +189,7 @@ if __name__ == '__main__':
     plt.savefig("objectives.pdf")
 
     plt.figure(figsize=(10, 6))
-    for K_count in np.arange(0,len(K_nums),1):
+    for K_count in np.arange(0,len(K_nums),2):
         plt.plot(eps_nums, dftemp.sort_values(["K","Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["satisfy"], label="$K = {}$".format(K_nums[K_count]),linestyle='-', marker='o', alpha=0.5)
     plt.xlabel("$\epsilon^2$")
     plt.xscale("log")

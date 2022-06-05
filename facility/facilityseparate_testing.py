@@ -195,15 +195,15 @@ def facility_experiment(r, n, m, Data, Data_eval, prob_facility, N_tot, K_tot, K
 
 if __name__ == '__main__':
     print("START")
-    foldername = "facility/m100n20_K200_r10"
+    foldername = "facility/m50n10_K100_r20"
     # different cluster values we consider
-    K_nums = np.array([1, 5, 10, 50, 75, 100, 200])
+    K_nums = np.array([1, 5, 10, 50, 75,100])
     K_tot = K_nums.size  # Total number of clusters we consider
-    N_tot = 200
+    N_tot = 100
     M = 10
-    R = 10       # Total times we repeat experiment to estimate final probabilty
-    n = 20  # number of facilities
-    m = 100  # number of locations
+    R = 20       # Total times we repeat experiment to estimate final probabilty
+    n = 10  # number of facilities
+    m = 50  # number of locations
     eps_min = 5      # minimum epsilon we consider
     eps_max = 30         # maximum epsilon we consider
     eps_nums = np.linspace(eps_min, eps_max, M)
@@ -234,4 +234,41 @@ if __name__ == '__main__':
 
     dftemp.to_csv('/scratch/gpfs/iywang/mro_results/' + foldername + '/df.csv')
 
+
+
+    plt.figure(figsize=(10, 6))
+    for K_count in np.arange(0,len(K_nums),1):
+        plt.plot(eps_nums, dftemp.sort_values(["K","Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["Opt_val"], linestyle='-', marker = 'o', label="Objective, $K = {}$".format(K_nums[K_count]),alpha = 0.6)
+    plt.xlabel("$\epsilon^2$")
+    plt.xscale("log")
+    plt.title("In-sample objective value")
+    plt.legend(loc = "lower right")
+    plt.save("objectives.pdf")
+
+    plt.figure(figsize=(10, 6))
+    for K_count in np.arange(0,len(K_nums),1):
+        plt.plot(eps_nums, dftemp.sort_values(["K","Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["Eval_val"], label="$K = {}$".format(K_nums[K_count]),linestyle='-', marker='o', alpha=0.5)
+    plt.xlabel("$\epsilon^2$")
+    plt.xscale("log")
+    plt.legend(loc = "lower right")
+    plt.title(r"$1-\beta$ (probability of constraint satisfaction)(7)")
+    plt.savefig("constraint_satisfaction.pdf")
+
+        plt.figure(figsize=(10, 6))
+    for K_count in np.arange(0,len(K_nums),1):
+        plt.plot(eps_nums, dftemp.sort_values(["K","Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["Eval_val1"], label="$K = {}$".format(K_nums[K_count]),linestyle='-', marker='o', alpha=0.5)
+    plt.xlabel("$\epsilon^2$")
+    plt.xscale("log")
+    plt.legend(loc = "lower right")
+    plt.title(r"$1-\beta$ (probability of constraint satisfaction)(8)")
+    plt.savefig("constraint_satisfaction_strict.pdf")
+
+    plt.figure(figsize=(10, 6))
+    for i in np.arange(0,len(eps_nums),3):
+        plt.plot(K_nums, dftemp.sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"], linestyle='-', marker='o', label="$\epsilon = {}$".format(np.round(eps_nums[i], 5)))
+    plt.xlabel("$K$ (Number of clusters)")
+    plt.title("Time (s)")
+    plt.yscale("log")
+    plt.legend(loc = "lower right")
+    plt.savefig("time.pdf")
     print("COMPLETE")

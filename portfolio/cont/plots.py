@@ -11,10 +11,10 @@ plt.rcParams.update({
     "font.family": "serif"
 })
 
-K_nums = np.array([1, 5, 50, 100, 300, 450, 600, 800])
+K_nums = np.array([1, 5, 50, 100, 300, 500, 800,900])
 # np.array([1,10,20,50,100,500,1000]) 
 K_tot = K_nums.size 
-N_tot = 800
+N_tot = 900
 M = 15
 R = 10        
 m = 200
