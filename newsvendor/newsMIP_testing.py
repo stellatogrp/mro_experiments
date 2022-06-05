@@ -207,14 +207,14 @@ def news_experiment(dat, dateval, r, m, a, b, p, prob, N_tot, K_tot, K_nums, eps
 
 
 if __name__ == '__main__':
-    foldername = "newsvendor/MIP/m300_K1000_r10"
-    K_nums = np.array([1, 10, 50, 100, 300, 500, 1000])
+    foldername = "newsvendor/MIP/m40_K500_r20"
+    K_nums = np.array([1, 10, 50, 100, 300, 500])
     K_tot = K_nums.size  # Total number of clusters we consider
-    N_tot = 1000
+    N_tot = 500
     M = 10
-    R = 10
-    m = 300
-    eps_min = -6    # minimum epsilon we consider
+    R = 20
+    m = 40
+    eps_min = -5    # minimum epsilon we consider
     eps_max = 0        # maximum epsilon we consider
     eps_nums = np.linspace(eps_min, eps_max, M)
     eps_nums = 10**(eps_nums)
@@ -231,7 +231,7 @@ if __name__ == '__main__':
     q_sols = np.zeros((K_tot, eps_tot, m, R))
     for r in range(R):
         q_sols += results[r][0]
-    dftemp = results[0][1]
+    dftemp = results[0][1].reset_index()
     for r in range(1, R):
         dftemp = dftemp.add(results[r][1].reset_index(), fill_value=0)
     dftemp = dftemp/R

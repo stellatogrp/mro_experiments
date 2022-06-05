@@ -58,8 +58,7 @@ def createproblem_port(N, m):
     dat = cp.Parameter((N, m))
     eps = cp.Parameter()
     w = cp.Parameter(N)
-    a = -50
-    b = -40
+    a = -5
 
     # VARIABLES #
     # weights, s_i, lambda, tau
@@ -67,23 +66,22 @@ def createproblem_port(N, m):
     s = cp.Variable(N)
     lam = cp.Variable()
     tao = cp.Variable()
-    t = cp.Variable()
+    y = cp.Variable()
     # OBJECTIVE #
-    objective = t
+    objective = tao + y
 
     # CONSTRAINTS #
-    constraints = [cp.multiply(eps, lam) + w@s <= t]
-    constraints += [10*tao <= t]
-    constraints += [cp.hstack([b*tao]*N) + a*dat@x +
+    constraints = [cp.multiply(eps, lam) + w@s <= y]
+    constraints += [cp.hstack([a*tao]*N) + a*dat@x +
                     cp.hstack([cp.quad_over_lin(-a*x, 4*lam)]*N) <= s]
     constraints += [cp.sum(x) == 1]
     constraints += [x >= 0, x <= 1]
     # for k in range(2):
     #    constraints += [cp.sum(x[k*np.ceil(m/2):(k+1)*np.ceil(m/2)]) <= 0.50]
-    constraints += [lam >= 0]
+    constraints += [lam >= 0, y >=0]
     # PROBLEM #
     problem = cp.Problem(cp.Minimize(objective), constraints)
-    return problem, x, s, tao, lam, dat, eps, w
+    return problem, x, s, tao, y, lam, dat, eps, w
 
 
 def port_experiment(dat, dateval, r, m, prob, N_tot, K_tot, K_nums, eps_tot, eps_nums, foldername):
@@ -108,24 +106,25 @@ def port_experiment(dat, dateval, r, m, prob, N_tot, K_tot, K_nums, eps_tot, eps
 
         d_eval = Data_eval[(N_tot*r):(N_tot*(r+1))]
         tnow = time.time()
-        problem, x, s, tao, lmbda, data_train_pm, eps_pm, w_pm = prob(K, m)
+        problem, x, s, tao,y, lmbda, data_train_pm, eps_pm, w_pm = prob(K, m)
         data_train_pm.value = d_train
         w_pm.value = wk
         setuptimes = time.time() - tnow
 
         ######### solve for various epsilons ############
         for eps_count, eps in enumerate(eps_nums):
+            print(K,eps_count)
             eps_pm.value = eps
             problem.solve(ignore_dpp=True, solver=cp.MOSEK, verbose=True, mosek_params={
                           mosek.dparam.optimizer_max_time:  1000.0})
             x_sols[K_count, eps_count, :, r] = x.value
-            evalvalue = -np.mean(d_eval@x.value) - 40*tao.value
+            evalvalue = -5*np.mean(d_eval@x.value) - 5*tao.value <= y.value
             newrow = pd.Series(
                 {"K": K,
                  "Epsilon": eps,
                  "Opt_val": problem.objective.value,
                  "Eval_val": evalvalue,
-                 "satisfy": evalvalue <= problem.objective.value,
+                 "satisfy": evalvalue,
                  "solvetime": problem.solver_stats.solve_time,
                  "setuptime": setuptimes,
                  "clustertime": clustertimes
@@ -148,10 +147,10 @@ if __name__ == '__main__':
     synthetic_returns = pd.read_csv(
         '/scratch/gpfs/iywang/mro_code/portfolio/sp500_synthetic_returns.csv').to_numpy()[:, 1:]
 
-    K_nums = np.array([1, 5, 50, 100, 300, 450, 600, 800, 900])
+    K_nums = np.array([1, 5, 50, 100, 300, 450, 600, 800])
     # np.array([1,10,20,50,100,500,1000]) # different cluster values we consider
     K_tot = K_nums.size  # Total number of clusters we consider
-    N_tot = 900
+    N_tot = 800
     M = 15
     R = 10           # Total times we repeat experiment to estimate final probabilty
     m = 200
@@ -178,5 +177,20 @@ if __name__ == '__main__':
     np.save(Path("/scratch/gpfs/iywang/mro_results/" +
             foldername + "/x_sols.npy"), x_sols)
     dftemp.to_csv('/scratch/gpfs/iywang/mro_results/' + foldername + '/df.csv')
+
+
+    for K_count in range(K_nums):
+        plt.plot(eps_nums, dftemp.sort_values(["K","Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["Opt_val"], linestyle='-', marker = 'o', label="Objective, $K = {}$".format(K_nums[K_count]),alpha = 0.6)
+    plt.xlabel("$\epsilon$")
+    plt.ylabel("In-sample objective value")
+    plt.legend(fontsize = 13, loc = "lower right")
+    plt.savefig("test1.pdf")
+
+    plt.figure(figsize=(10, 6))
+    for K_count in np.arange(0,len(K_nums),1):
+        plt.plot(eps_nums, dftemp.sort_values(["K","Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["satisfy"], label="$\epsilon = {}$".format(K_nums[K_count]), alpha=0.5)
+    plt.xlabel("Number of clusters")
+    plt.ylabel("Probability")
+    plt.savefig("test2.pdf")
 
     print("COMPLETE")

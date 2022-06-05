@@ -157,8 +157,6 @@ def news_experiment(dat, dateval, r, m, a, b, p, prob, N_tot, K_tot, K_nums, eps
                                "satisfy", "solvetime", "clustertime", "setuptime"])
     Data = dat
     Data_eval = dateval
-
-    ######################## Repeat experiment R times ########################
     ######################## solve for various K ########################
     for K_count, K in enumerate(K_nums):
 
@@ -182,7 +180,7 @@ def news_experiment(dat, dateval, r, m, a, b, p, prob, N_tot, K_tot, K_nums, eps
         w_pm.value = wk
         setuptimes = time.time() - tnow
 
-        ######################## solve for various epsilons ########################
+        ############## solve for various epsilons ######################
         for eps_count, eps in enumerate(eps_nums):
             eps_pm.value = eps
             problem.solve(ignore_dpp=True)
