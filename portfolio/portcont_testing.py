@@ -13,7 +13,6 @@ from sklearn.model_selection import train_test_split
 from sklearn.cluster import KMeans
 import cvxpy as cp
 import matplotlib.pyplot as plt
-import pandas as pd
 from pathlib import Path
 import sys
 output_stream = sys.stdout
@@ -115,7 +114,7 @@ def port_experiment(dat, dateval, r, m, prob, N_tot, K_tot, K_nums, eps_tot, eps
         for eps_count, eps in enumerate(eps_nums):
             print(K,eps_count)
             eps_pm.value = eps
-            problem.solve(ignore_dpp=True, solver=cp.MOSEK, verbose=True, mosek_params={
+            problem.solve(ignore_dpp=True, solver=cp.MOSEK,mosek_params={
                           mosek.dparam.optimizer_max_time:  1000.0})
             x_sols[K_count, eps_count, :, r] = x.value
             evalvalue = -5*np.mean(d_eval@x.value) - 5*tao.value <= y.value
@@ -131,19 +130,15 @@ def port_experiment(dat, dateval, r, m, prob, N_tot, K_tot, K_nums, eps_tot, eps
                  })
             df = df.append(newrow, ignore_index=True)
 
-            np.save(Path("/scratch/gpfs/iywang/mro_results/" +
-                    foldername + "/x"+str(r)+".npy"), x_sols)
             df.to_csv('/scratch/gpfs/iywang/mro_results/' +
                       foldername + '/df.csv')
 
     return x_sols, df
 
 
-#mosek_params = {mosek.dparam.optimizer_max_time:  300.0, mosek.iparam.intpnt_solve_form:   mosek.solveform.dual}
-
 
 if __name__ == '__main__':
-    foldername = "portfolio/cont/m200_K900_r10"
+    foldername = "portfolio/cont/m200_K800_r10"
     synthetic_returns = pd.read_csv(
         '/scratch/gpfs/iywang/mro_code/portfolio/sp500_synthetic_returns.csv').to_numpy()[:, 1:]
 
@@ -152,7 +147,7 @@ if __name__ == '__main__':
     K_tot = K_nums.size  # Total number of clusters we consider
     N_tot = 800
     M = 15
-    R = 10           # Total times we repeat experiment to estimate final probabilty
+    R = 10       # Total times we repeat experiment 
     m = 200
     eps_min = -5    # minimum epsilon we consider
     eps_max = -3.5       # maximum epsilon we consider
@@ -178,19 +173,37 @@ if __name__ == '__main__':
             foldername + "/x_sols.npy"), x_sols)
     dftemp.to_csv('/scratch/gpfs/iywang/mro_results/' + foldername + '/df.csv')
 
-
-    for K_count in range(K_nums):
+    plt.rcParams.update({
+        "text.usetex":True,
+        "font.size":18,
+        "font.family": "serif"
+    })
+    
+    plt.figure(figsize=(10, 6))
+    for K_count in np.arange(0,len(K_nums),1):
         plt.plot(eps_nums, dftemp.sort_values(["K","Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["Opt_val"], linestyle='-', marker = 'o', label="Objective, $K = {}$".format(K_nums[K_count]),alpha = 0.6)
-    plt.xlabel("$\epsilon$")
-    plt.ylabel("In-sample objective value")
-    plt.legend(fontsize = 13, loc = "lower right")
-    plt.savefig("test1.pdf")
+    plt.xlabel("$\epsilon^2$")
+    plt.xscale("log")
+    plt.title("In-sample objective value")
+    plt.legend(loc = "lower right")
+    plt.savefig("objectives.pdf")
 
     plt.figure(figsize=(10, 6))
     for K_count in np.arange(0,len(K_nums),1):
-        plt.plot(eps_nums, dftemp.sort_values(["K","Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["satisfy"], label="$\epsilon = {}$".format(K_nums[K_count]), alpha=0.5)
-    plt.xlabel("Number of clusters")
-    plt.ylabel("Probability")
-    plt.savefig("test2.pdf")
+        plt.plot(eps_nums, dftemp.sort_values(["K","Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["satisfy"], label="$K = {}$".format(K_nums[K_count]),linestyle='-', marker='o', alpha=0.5)
+    plt.xlabel("$\epsilon^2$")
+    plt.xscale("log")
+    plt.legend(loc = "lower right")
+    plt.title(r"$1-\beta$ (probability of constraint satisfaction)")
+    plt.savefig("constraint_satisfaction.pdf")
+
+    plt.figure(figsize=(10, 6))
+    for i in np.arange(0,len(eps_nums),3):
+        plt.plot(K_nums, dftemp.sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"], linestyle='-', marker='o', label="$\epsilon = {}$".format(np.round(eps_nums[i], 5)))
+    plt.xlabel("$K$ (Number of clusters)")
+    plt.title("Time (s)")
+    plt.yscale("log")
+    plt.legend(loc = "lower right")
+    plt.savefig("time.pdf")
 
     print("COMPLETE")
