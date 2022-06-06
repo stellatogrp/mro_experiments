@@ -109,7 +109,7 @@ def port_experiment(dat, dateval, r, m, prob, N_tot, K_tot, K_nums, eps_tot, eps
         for eps_count, eps in enumerate(eps_nums):
             eps_pm.value = eps
             problem.solve(ignore_dpp=True, solver=cp.MOSEK, verbose=True, mosek_params={
-                          mosek.dparam.optimizer_max_time:  1000.0})
+                          mosek.dparam.optimizer_max_time:  1200.0})
             x_sols[K_count, eps_count, :, r] = x.value
             evalvalue = -5*np.mean(d_eval@x.value) - 5*tao.value <= y.value
             newrow = pd.Series(
@@ -129,15 +129,15 @@ def port_experiment(dat, dateval, r, m, prob, N_tot, K_tot, K_nums, eps_tot, eps
 
 
 if __name__ == '__main__':
-    foldername = "portfolio/MIP/m50_K300_r10"
+    foldername = "portfolio/MIP/m50_K300_r12"
     synthetic_returns = pd.read_csv(
         '/scratch/gpfs/iywang/mro_code/portfolio/sp500_synthetic_returns.csv').to_numpy()[:, 1:]
 
-    K_nums = np.array([1, 5, 50, 100, 300])
+    K_nums = np.array([1, 5, 50, 100, 150, 300])
     K_tot = K_nums.size  # Total number of clusters we consider
     N_tot = 300
     M = 10
-    R = 10           # Total times we repeat experiment 
+    R = 12           # Total times we repeat experiment 
     m = 50
     eps_min = -5    # minimum epsilon we consider
     eps_max = -3.9       # maximum epsilon we consider
@@ -145,7 +145,7 @@ if __name__ == '__main__':
     eps_nums = 10**(eps_nums)
     eps_tot = M
 
-    dat = synthetic_returns[5000:, :m]
+    dat = synthetic_returns[:5000, :m]
     dateval = synthetic_returns[-5000:, :m]
     njobs = get_n_processes(20)
     results = Parallel(n_jobs=njobs)(delayed(port_experiment)(
@@ -178,7 +178,7 @@ if __name__ == '__main__':
     plt.xscale("log")
     plt.title("In-sample objective value")
     plt.legend(loc = "lower right")
-    plt.savefig("objectives.pdf")
+    plt.savefig("/scratch/gpfs/iywang/mro_code/portfolio/objectives.pdf")
 
     plt.figure(figsize=(10, 6))
     for K_count in np.arange(0,len(K_nums),1):
@@ -187,15 +187,15 @@ if __name__ == '__main__':
     plt.xscale("log")
     plt.legend(loc = "lower right")
     plt.title(r"$1-\beta$ (probability of constraint satisfaction)")
-    plt.savefig("constraint_satisfaction.pdf")
+    plt.savefig("/scratch/gpfs/iywang/mro_code/portfolio/constraint_satisfaction.pdf")
 
     plt.figure(figsize=(10, 6))
-    for i in np.arange(0,len(eps_nums),3):
+    for i in np.arange(1,len(eps_nums),3):
         plt.plot(K_nums, dftemp.sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"], linestyle='-', marker='o', label="$\epsilon = {}$".format(np.round(eps_nums[i], 5)))
     plt.xlabel("$K$ (Number of clusters)")
     plt.title("Time (s)")
     plt.yscale("log")
     plt.legend(loc = "lower right")
-    plt.savefig("time.pdf")
+    plt.savefig("/scratch/gpfs/iywang/mro_code/portfolio/time.pdf")
 
     print("COMPLETE")

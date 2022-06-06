@@ -137,8 +137,8 @@ def evaluate_k(p, x, X, d):
 
 def facility_experiment(r, n, m, Data, Data_eval, prob_facility, N_tot, K_tot, K_nums, eps_tot, eps_nums, foldername):
     '''run the experiment for multiple K and epsilon'''
-    X_sols = np.zeros((K_tot, eps_tot, n, m))
-    x_sols = np.zeros((K_tot, eps_tot, n))
+    #X_sols = np.zeros((K_tot, eps_tot, n, m))
+    #x_sols = np.zeros((K_tot, eps_tot, n))
     df = pd.DataFrame(columns=["K", "Epsilon", "Opt_val", "Eval_val",
                       "Eval_val1", "solvetime", "setuptime", "clustertime"])
 
@@ -172,8 +172,8 @@ def facility_experiment(r, n, m, Data, Data_eval, prob_facility, N_tot, K_tot, K
             eps_pm.value = eps
             problem.solve(verbose=True)
             # , ignore_dpp = True, solver = cp.MOSEK,mosek_params = {mosek.dparam.optimizer_max_time:  1000.0}
-            X_sols[K_count, eps_count, :, :] = X.value
-            x_sols[K_count, eps_count, :] = x.value
+            #X_sols[K_count, eps_count, :, :] = X.value
+            #x_sols[K_count, eps_count, :] = x.value
             evalvalue = evaluate(p_pm, x, X, dat_eval)
             evalvalue1 = evaluate_k(p_pm, x, X, dat_eval)
             newrow = pd.Series(
@@ -195,13 +195,13 @@ def facility_experiment(r, n, m, Data, Data_eval, prob_facility, N_tot, K_tot, K
 
 if __name__ == '__main__':
     print("START")
-    foldername = "facility/m50n10_K100_r20"
+    foldername = "facility/m50n10_K100_r10"
     # different cluster values we consider
-    K_nums = np.array([1, 5, 10, 50, 75,100])
+    K_nums = np.array([1, 5, 10, 50, 100])
     K_tot = K_nums.size  # Total number of clusters we consider
     N_tot = 100
     M = 10
-    R = 20       # Total times we repeat experiment to estimate final probabilty
+    R = 10       # Total times we repeat experiment to estimate final probabilty
     n = 10  # number of facilities
     m = 50  # number of locations
     eps_min = 5      # minimum epsilon we consider
@@ -216,13 +216,13 @@ if __name__ == '__main__':
     results = Parallel(n_jobs=njobs)(delayed(facility_experiment)(r, n, m, Data, Data_eval,
                                                                   prob_facility_separate, N_tot, K_tot, K_nums, eps_tot, eps_nums, foldername) for r in range(R))
 
-    X_sols = np.zeros((K_tot, eps_tot, n, m, R))
-    x_sols = np.zeros((K_tot, eps_tot, n, R))
+    #X_sols = np.zeros((K_tot, eps_tot, n, m, R))
+    #x_sols = np.zeros((K_tot, eps_tot, n, R))
     dftemp = results[0][2]
 
-    for r in range(R):
-        X_sols[:, :, :, :, r] = results[r][0]
-        x_sols[:, :, :, r] = results[r][1]
+    #for r in range(R):
+        #X_sols[:, :, :, :, r] = results[r][0]
+        #x_sols[:, :, :, r] = results[r][1]
     for r in range(1, R):
         dftemp = dftemp.add(results[r][2].reset_index(), fill_value=0)
     dftemp = dftemp/R
