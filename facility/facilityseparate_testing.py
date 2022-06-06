@@ -254,7 +254,7 @@ if __name__ == '__main__':
     plt.title(r"$1-\beta$ (probability of constraint satisfaction)(7)")
     plt.savefig("constraint_satisfaction.pdf")
 
-        plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(10, 6))
     for K_count in np.arange(0,len(K_nums),1):
         plt.plot(eps_nums, dftemp.sort_values(["K","Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["Eval_val1"], label="$K = {}$".format(K_nums[K_count]),linestyle='-', marker='o', alpha=0.5)
     plt.xlabel("$\epsilon^2$")
