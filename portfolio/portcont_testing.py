@@ -42,7 +42,18 @@ def get_n_processes(max_n=np.inf):
 
 
 def cluster_data(D_in, K):
-    '''returns K cluster means after clustering D_in into K clusters'''
+    """Return K cluster means after clustering D_in into K clusters
+    Parameters
+    ----------
+    D_in: array
+        Input dataset, N entries
+    Returns
+    -------
+    Dbar_in: array
+        Output dataset, K entries
+    weights: vector
+        Vector of weights for Dbar_in
+    """    
     N = D_in.shape[0]
     kmeans = KMeans(n_clusters=K).fit(D_in)
     Dbar_in = kmeans.cluster_centers_
@@ -52,7 +63,17 @@ def cluster_data(D_in, K):
 
 
 def createproblem_port(N, m):
-    """Creates the problem in cvxpy, minimize CVaR"""
+    """Create the problem in cvxpy, minimize CVaR
+    Parameters
+    ----------
+    N: int
+        Number of data samples
+    m: int
+        Size of each data sample
+    Returns
+    -------
+    The instance and parameters of the cvxpy problem
+    """
     # PARAMETERS #
     dat = cp.Parameter((N, m))
     eps = cp.Parameter()
@@ -84,7 +105,17 @@ def createproblem_port(N, m):
 
 
 def port_experiment(dat, dateval, r, m, prob, N_tot, K_tot, K_nums, eps_tot, eps_nums, foldername):
-    '''run the experiment for multiple K and epsilon'''
+    """Run the experiment for multiple K and epsilon
+    Parameters
+    ----------
+    Various inputs for combinations of experiments
+    Returns
+    -------
+    x_sols: array
+        The optimal solutions
+    df: dataframe
+        The results of the experiments
+    """
     x_sols = np.zeros((K_tot, eps_tot, m, R))
     Data = dat
     Data_eval = dateval

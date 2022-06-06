@@ -42,7 +42,18 @@ def get_n_processes(max_n=np.inf):
 
 
 def cluster_data(D_in, K):
-    '''returns K cluster means after clustering D_in into K clusters'''
+    """Return K cluster means after clustering D_in into K clusters
+    Parameters
+    ----------
+    D_in: array
+        Input dataset, N entries
+    Returns
+    -------
+    Dbar_in: array
+        Output dataset, K entries
+    weights: vector
+        Vector of weights for Dbar_in
+    """
     N = D_in.shape[0]
     kmeans = KMeans(n_clusters=K).fit(D_in)
     Dbar_in = kmeans.cluster_centers_
@@ -52,7 +63,19 @@ def cluster_data(D_in, K):
 
 
 def prob_facility_separate(K, m, n):
-
+     """Create the problem in cvxpy
+    Parameters
+    ----------
+    K: int
+        Number of data samples
+    m: int
+        Number of customers
+    n: int
+        Number of facilities
+    Returns
+    -------
+    The instance and parameters of the cvxpy problem
+    """
     eps = cp.Parameter()
     d_train = cp.Parameter((K, m))
     wk = cp.Parameter(K)
@@ -84,11 +107,23 @@ def prob_facility_separate(K, m, n):
     return problem, x, X, s, lmbda, d_train, wk, eps, p, c, C
 
 
-def generate_facility_data(num_facilities=10, num_locations=50):
-    '''data for one problem instance of facility problem'''
-    n = num_facilities
-    m = num_locations
-
+def generate_facility_data(n=10, m=50):
+    """Generate data for one problem instance
+    Parameters
+    ----------
+    m: int
+        Number of customers
+    n: int
+        Number of facilities
+    Returns
+    -------
+    c: vector
+        Opening cost of each facility
+    C: array
+        Shipment cost between customers and facilities
+    p: vector
+        Production capacity of each facility
+    """
     # Cost for facility
     c = npr.randint(30, 70, n)
 
@@ -109,14 +144,14 @@ def generate_facility_data(num_facilities=10, num_locations=50):
     return c, C, p
 
 
-def generate_facility_demands(N_tot, m, R_samples=30):
-    '''generate uncertain demand'''
-    d_train = npr.randint(1, 5, (N_tot, m, R_samples))
+def generate_facility_demands(N, m, R):
+    """Generate uncertain demand"""
+    d_train = npr.randint(1, 5, (N, m, R))
     return d_train
 
 
 def evaluate(p, x, X, d):
-    '''evaluate constraint satisfaction'''
+    """Evaluate constraint satisfaction"""
     for ind in range(n):
         if -p.value[ind]*x.value[ind] + np.reshape(np.mean(d, axis=0), (1, m))@(X.value[ind]) >= 0.001:
             return 0
@@ -124,7 +159,7 @@ def evaluate(p, x, X, d):
 
 
 def evaluate_k(p, x, X, d):
-    '''evaluate stricter constraint satisfaction'''
+    """Evaluate stricter constraint satisfaction"""
     maxval = np.zeros((np.shape(d)[0], np.shape(x)[0]))
     for fac in range(np.shape(x)[0]):
         for ind in range(np.shape(d)[0]):
@@ -136,17 +171,26 @@ def evaluate_k(p, x, X, d):
 
 
 def facility_experiment(r, n, m, Data, Data_eval, prob_facility, N_tot, K_tot, K_nums, eps_tot, eps_nums, foldername):
-    '''run the experiment for multiple K and epsilon'''
-    #X_sols = np.zeros((K_tot, eps_tot, n, m))
-    #x_sols = np.zeros((K_tot, eps_tot, n))
+    '''Run the experiment for multiple K and epsilon
+    Parameters
+    ----------
+    Various inputs for combinations of experiments
+    Returns
+    -------
+    x_sols: array
+        The optimal solutions for x
+    X_sols: array
+        The optimal solutions for X
+    df: dataframe
+        The results of the experiments'''
+        
+    X_sols = np.zeros((K_tot, eps_tot, n, m))
+    x_sols = np.zeros((K_tot, eps_tot, n))
     df = pd.DataFrame(columns=["K", "Epsilon", "Opt_val", "Eval_val",
                       "Eval_val1", "solvetime", "setuptime", "clustertime"])
 
     ######################## solve for various K ########################
     for K_count, K in enumerate(K_nums):
-
-        #output_stream.write('Percent Complete %.2f%s\r' % ((K_count)/K_tot*100,'%'))
-        # output_stream.flush()
         if K == N_tot:
             d_train, wk = cluster_data(Data[:, :, r], K)
             clustertimes = 0
@@ -172,8 +216,8 @@ def facility_experiment(r, n, m, Data, Data_eval, prob_facility, N_tot, K_tot, K
             eps_pm.value = eps
             problem.solve(verbose=True)
             # , ignore_dpp = True, solver = cp.MOSEK,mosek_params = {mosek.dparam.optimizer_max_time:  1000.0}
-            #X_sols[K_count, eps_count, :, :] = X.value
-            #x_sols[K_count, eps_count, :] = x.value
+            X_sols[K_count, eps_count, :, :] = X.value
+            x_sols[K_count, eps_count, :] = x.value
             evalvalue = evaluate(p_pm, x, X, dat_eval)
             evalvalue1 = evaluate_k(p_pm, x, X, dat_eval)
             newrow = pd.Series(
@@ -209,20 +253,20 @@ if __name__ == '__main__':
     eps_nums = np.linspace(eps_min, eps_max, M)
     eps_tot = M
     c, C, p = generate_facility_data(n, m)
-    Data = generate_facility_demands(N_tot, m, R_samples=R)
-    Data_eval = generate_facility_demands(N_tot, m, R_samples=R)
+    Data = generate_facility_demands(N_tot, m, R)
+    Data_eval = generate_facility_demands(N_tot, m, R)
 
     njobs = get_n_processes(40)
     results = Parallel(n_jobs=njobs)(delayed(facility_experiment)(r, n, m, Data, Data_eval,
                                                                   prob_facility_separate, N_tot, K_tot, K_nums, eps_tot, eps_nums, foldername) for r in range(R))
 
-    #X_sols = np.zeros((K_tot, eps_tot, n, m, R))
-    #x_sols = np.zeros((K_tot, eps_tot, n, R))
+    X_sols = np.zeros((K_tot, eps_tot, n, m, R))
+    x_sols = np.zeros((K_tot, eps_tot, n, R))
     dftemp = results[0][2]
 
-    #for r in range(R):
-        #X_sols[:, :, :, :, r] = results[r][0]
-        #x_sols[:, :, :, r] = results[r][1]
+    for r in range(R):
+        X_sols[:, :, :, :, r] = results[r][0]
+        x_sols[:, :, :, r] = results[r][1]
     for r in range(1, R):
         dftemp = dftemp.add(results[r][2].reset_index(), fill_value=0)
     dftemp = dftemp/R
