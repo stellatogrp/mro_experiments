@@ -13,8 +13,7 @@ export MOSEKLM_LICENSE_FILE=/scratch/gpfs/iywang/mro_code/mosek/mosek.lic
 
 module purge
 module load anaconda3 
-#module load gurobi/9.5.1
 conda activate mroenv
 
-python facility/facilityseparate_testing.py 
+python facility/facility_testing.py 
 

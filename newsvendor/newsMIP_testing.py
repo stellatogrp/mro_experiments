@@ -43,7 +43,18 @@ def get_n_processes(max_n=np.inf):
 
 
 def cluster_data(D_in, K):
-    '''returns K cluster means after clustering D_in into K clusters'''
+    """Return K cluster means after clustering D_in into K clusters
+    Parameters
+    ----------
+    D_in: array
+        Input dataset, N entries
+    Returns
+    -------
+    Dbar_in: array
+        Output dataset, K entries
+    weights: vector
+        Vector of weights for Dbar_in
+    """
     N = D_in.shape[0]
     kmeans = KMeans(n_clusters=K).fit(D_in)
     Dbar_in = kmeans.cluster_centers_
@@ -52,42 +63,8 @@ def cluster_data(D_in, K):
     return Dbar_in, weights
 
 
-def createproblem_news1(N, m):
-    """Creates the problem in cvxpy, minimize loss"""
-    # m = 10
-    # PARAMETERS #
-    dat = cp.Parameter((N, m))
-    eps = cp.Parameter()
-    w = cp.Parameter(N)
-    p = cp.Parameter(m)
-    a = cp.Parameter(m)
-    b = cp.Parameter(m)
-
-    # VARIABLES #
-    # weights, s_i, lambda, tau
-    q = cp.Variable(m)
-    s = cp.Variable(N)
-    lam = cp.Variable()
-    t = cp.Variable()
-    y = cp.Variable(m)
-    # OBJECTIVE #
-    objective = t + a@q + 0.5*a@y
-
-    # CONSTRAINTS #
-    constraints = [cp.multiply(eps, lam) + w@s <= 0]
-    constraints += [cp.hstack([-t]*N) + dat@(-p) +
-                    cp.hstack([cp.quad_over_lin(p, 4*lam)]*N) <= s]
-    constraints += [-p@q <= t, q - b <= y, 0 <=
-                    y, a@q + 0.5*a@y <= 40, q >= 0, q <= 15*b]
-    constraints += [lam >= 0]
-
-    # PROBLEM #
-    problem = cp.Problem(cp.Minimize(objective), constraints)
-    return problem, q, p, a, b, t, lam, dat, eps, w
-
-
 def createproblem_news(N, m):
-    """Creates the problem in cvxpy, minimize CVaR of loss"""
+    """Create the problem in cvxpy, minimize CVaR of loss"""
     # m = 10
     # PARAMETERS #
     dat = cp.Parameter((N, m))
@@ -144,7 +121,6 @@ def generate_news_params(m=10):
 def generate_news_demands(mu, sig, N_tot, m=10, R_samples=30):
     '''generate uncertain demand'''
     norms = np.random.multivariate_normal(mu, sig, (R_samples, N_tot))
-    #norms = np.random.normal(np.random.uniform(-0.2,0),0.2,(R_samples,N_tot,m))
     d_train = np.exp(norms)
     return d_train
 
@@ -187,8 +163,6 @@ def news_experiment(dat, dateval, r, m, a, b, p, prob, N_tot, K_tot, K_nums, eps
             q_sols[K_count, eps_count, :, r] = q.value
             evalvalue = -50*np.mean(evaldat@p_pm.value) + 50 * \
                 (a@q.value + 0.5*a@y.value) - 40*tao.value - t.value <= 0
-            #evalvalue = -np.mean(evaldat@p_pm.value) + (a@q.value + 0.5*a@y.value) - t.value <= 0
-            #evalvalue = -np.mean(evaldat@p_pm.value) <= t.value
             newrow = pd.Series(
                 {"K": K,
                  "Epsilon": eps,
@@ -239,5 +213,3 @@ if __name__ == '__main__':
     np.save(Path("/scratch/gpfs/iywang/mro_results/" +
             foldername + "/q_sols.npy"), q_sols)
     dftemp.to_csv('/scratch/gpfs/iywang/mro_results/' + foldername + '/df.csv')
-
-    print("COMPLETE")

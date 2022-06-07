@@ -212,7 +212,7 @@ if __name__ == '__main__':
     
     plt.figure(figsize=(10, 6))
     for K_count in np.arange(0,len(K_nums),2):
-        plt.plot(eps_nums, dftemp.sort_values(["K","Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["Opt_val"], linestyle='-', marker = 'o', label="Objective, $K = {}$".format(K_nums[K_count]),alpha = 0.6)
+        plt.plot(eps_nums, dftemp.sort_values(["K","Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["Opt_val"], linestyle='-', marker = 'o', label="$K = {}$".format(K_nums[K_count]),alpha = 0.6)
     plt.xlabel("$\epsilon^2$")
     plt.xscale("log")
     plt.title("In-sample objective value")
