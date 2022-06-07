@@ -183,7 +183,7 @@ def facility_experiment(r, n, m, Data, Data_eval, prob_facility, N_tot, K_tot, K
         The optimal solutions for X
     df: dataframe
         The results of the experiments'''
-        
+
     X_sols = np.zeros((K_tot, eps_tot, n, m))
     x_sols = np.zeros((K_tot, eps_tot, n))
     df = pd.DataFrame(columns=["K", "Epsilon", "Opt_val", "Eval_val",
