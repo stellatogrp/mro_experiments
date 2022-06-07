@@ -15,5 +15,5 @@ module purge
 module load anaconda3 
 conda activate mroenv
 
-python newsvendor/newscont_testing.py 
+python newsvendor/cont/newscont_testing.py 
 
