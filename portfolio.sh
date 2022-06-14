@@ -15,5 +15,5 @@ module purge
 module load anaconda3 
 conda activate mroenv
 
-python portfolio/portMIP_testing.py 
+python portfolio/MIP/portMIP_testing.py 
 
