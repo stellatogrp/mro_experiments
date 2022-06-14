@@ -184,8 +184,8 @@ def facility_experiment(r, n, m, Data, Data_eval, prob_facility, N_tot, K_tot, K
     df: dataframe
         The results of the experiments'''
 
-    X_sols = np.zeros((K_tot, eps_tot, n, m))
-    x_sols = np.zeros((K_tot, eps_tot, n))
+    #X_sols = np.zeros((K_tot, eps_tot, n, m))
+    #x_sols = np.zeros((K_tot, eps_tot, n))
     df = pd.DataFrame(columns=["K", "Epsilon", "Opt_val", "Eval_val",
                       "Eval_val1", "solvetime", "setuptime", "clustertime"])
 
@@ -214,10 +214,10 @@ def facility_experiment(r, n, m, Data, Data_eval, prob_facility, N_tot, K_tot, K
         ############## solve for various epsilons ###################
         for eps_count, eps in enumerate(eps_nums):
             eps_pm.value = eps
-            problem.solve(verbose=True)
+            problem.solve()
             # , ignore_dpp = True, solver = cp.MOSEK,mosek_params = {mosek.dparam.optimizer_max_time:  1000.0}
-            X_sols[K_count, eps_count, :, :] = X.value
-            x_sols[K_count, eps_count, :] = x.value
+            #X_sols[K_count, eps_count, :, :] = X.value
+            #x_sols[K_count, eps_count, :] = x.value
             evalvalue = evaluate(p_pm, x, X, dat_eval)
             evalvalue1 = evaluate_k(p_pm, x, X, dat_eval)
             newrow = pd.Series(
@@ -234,7 +234,7 @@ def facility_experiment(r, n, m, Data, Data_eval, prob_facility, N_tot, K_tot, K
             df.to_csv('/scratch/gpfs/iywang/mro_results/' +
                       foldername + '/df.csv')
 
-    return X_sols, x_sols, df
+    return df
 
 
 if __name__ == '__main__':
@@ -260,21 +260,21 @@ if __name__ == '__main__':
     results = Parallel(n_jobs=njobs)(delayed(facility_experiment)(r, n, m, Data, Data_eval,
                                                                   prob_facility_separate, N_tot, K_tot, K_nums, eps_tot, eps_nums, foldername) for r in range(R))
 
-    X_sols = np.zeros((K_tot, eps_tot, n, m, R))
-    x_sols = np.zeros((K_tot, eps_tot, n, R))
-    dftemp = results[0][2]
+    #X_sols = np.zeros((K_tot, eps_tot, n, m, R))
+    #x_sols = np.zeros((K_tot, eps_tot, n, R))
+    dftemp = results[0]
 
-    for r in range(R):
-        X_sols[:, :, :, :, r] = results[r][0]
-        x_sols[:, :, :, r] = results[r][1]
+    #for r in range(R):
+    #    X_sols[:, :, :, :, r] = results[r][0]
+    #    x_sols[:, :, :, r] = results[r][1]
     for r in range(1, R):
-        dftemp = dftemp.add(results[r][2].reset_index(), fill_value=0)
+        dftemp = dftemp.add(results[r].reset_index(), fill_value=0)
     dftemp = dftemp/R
 
-    np.save(Path("/scratch/gpfs/iywang/mro_results/" +
-            foldername + "/x_sols.npy"), x_sols)
-    np.save(Path("/scratch/gpfs/iywang/mro_results/" +
-            foldername + "/X_sols.npy"), X_sols)
+    #np.save(Path("/scratch/gpfs/iywang/mro_results/" +
+    #        foldername + "/x_sols.npy"), x_sols)
+    #np.save(Path("/scratch/gpfs/iywang/mro_results/" +
+    #        foldername + "/X_sols.npy"), X_sols)
 
     dftemp.to_csv('/scratch/gpfs/iywang/mro_results/' + foldername + '/df.csv')
 

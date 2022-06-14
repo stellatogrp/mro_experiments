@@ -2,8 +2,8 @@
 #SBATCH --job-name=facilitytest
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=25
-#SBATCH --mem-per-cpu=8
+#SBATCH --cpus-per-task=40
+#SBATCH --mem-per-cpu=20
 #SBATCH --time=40:00:00
 #SBATCH -o /scratch/gpfs/iywang/mro_results/facility/m50n10_K100_r10/facility_test_%A.txt
 #SBATCH --mail-type=BEGIN,END,FAIL,TIME_LIMIT
