@@ -28,7 +28,7 @@ for K_count in np.arange(0,len(K_nums),1):
 plt.xlabel("$\epsilon$")
 plt.title("In-sample objective value")
 plt.legend(loc = "lower right")
-plt.save("objectives.pdf")
+plt.savefig("objectives.pdf")
 
 plt.figure(figsize=(10, 6))
 for K_count in np.arange(0,len(K_nums),1):
