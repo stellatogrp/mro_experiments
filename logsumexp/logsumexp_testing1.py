@@ -150,10 +150,11 @@ if __name__ == '__main__':
     foldername = "logsumexp/m30_K90_r50"
     N_tot = 90
     m = 30
-    R = 55
+    R = 30
     K_nums = np.append([1,2,3,4,5,10],np.append(np.arange(20, int(N_tot/2)+1,10), N_tot))
     K_tot = K_nums.size 
-    eps_nums = 10**np.array([-2.5, -2.34, -2.18, -2.02, -1.87,-1.71, -1.55, -1.4, -1.24, -1.14, -1.08, -1, -0.95, -0.9, -0.88, -0.85,-0.82, -0.8, -0.79, -0.77, -0.7, -0.61, -0.1,0])
+    eps_nums = 10**np.array([-3 , -2.79, -2.58, -2.37, -2.17,
+       -1.96, -1.75, -1.55 , -1.34, -1.13, -0.92, -0.72, -0.51, -0.30, -0.1, 0])
     eps_tot = eps_nums.size
 
     njobs = get_n_processes(30)
@@ -165,7 +166,7 @@ if __name__ == '__main__':
         dftemp = dftemp.add(results[r].reset_index(), fill_value=0)
     dftemp = dftemp/R
 
-    dftemp.to_csv('/scratch/gpfs/iywang/mro_results/' + foldername + '/df.csv')
+    dftemp.to_csv('/scratch/gpfs/iywang/mro_results/' + foldername + '/df2.csv')
 
 
     import matplotlib.gridspec as gridspec
@@ -192,7 +193,7 @@ if __name__ == '__main__':
     ax21.set_title("Objective value")
     ax21.legend(bbox_to_anchor=(1.3, .8),fontsize = 14)
     plt.tight_layout()
-    plt.savefig("logtop.pdf")
+    plt.savefig("logtop1.pdf")
     plt.show()
 
 
@@ -221,5 +222,5 @@ if __name__ == '__main__':
     ax4.legend(loc = "lower right", bbox_to_anchor=(1.38, 0.2), fontsize = 14)
     #ax4.legend()
     plt.tight_layout()
-    plt.savefig("logbot.pdf")
+    plt.savefig("logbot1.pdf")
     plt.show()
