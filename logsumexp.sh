@@ -15,5 +15,5 @@ module purge
 module load anaconda3 
 conda activate mroenv
 
-python logsumexp/logsumexp_testing2.py 
+python logsumexp/logsumexp_testing.py 
 
