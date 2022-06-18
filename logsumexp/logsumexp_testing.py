@@ -106,7 +106,7 @@ def minmaxsolve(N,m,w,data,epsilon):
     solvetime += problem1.solver_stats.solve_time
     objs2 = problem1.objective.value
     iters= 1
-    while(np.abs(objs1 - objs2)>= 0.00001 and iters <= 50):
+    while(np.abs(objs1 - objs2)>= 0.0001 and iters <= 50):
         expx.value = np.exp(x.value)
         problem.solve()
         solvetime += problem.solver_stats.solve_time
@@ -126,10 +126,10 @@ def logsumexp_experiment(r, m, N_tot, K_tot, K_nums, eps_tot, eps_nums, folderna
     d2 = data_modes_log(N_tot,m,[1,3,6])
     for Kcount, K in enumerate(K_nums):
         kmeans = KMeans(n_clusters=K).fit(d)
-        weights = np.bincount(kmeans.labels_) / N
+        weights = np.bincount(kmeans.labels_) / N_tot
         for epscount, epsval in enumerate(eps_nums):
             objs_val,x_val,u_val,time,iters = minmaxsolve(K,m,weights,kmeans.cluster_centers_,epsval**2)
-            evalvalue = cp.sum([(1/N)*cp.log_sum_exp(x_val + np.log(d2[k])).value for k in range(N)])
+            evalvalue = cp.sum([(1/N_tot)*cp.log_sum_exp(x_val + np.log(d2[k])).value for k in range(N_tot)])
             newrow = pd.Series(
                 {"r":r,
                 "K": K,
@@ -138,7 +138,7 @@ def logsumexp_experiment(r, m, N_tot, K_tot, K_nums, eps_tot, eps_nums, folderna
                 "Eval_val": evalvalue,
                 "satisfy": evalvalue <= objs_val,
                 "solvetime": time,
-                "bound": (1/(2*N))*kmeans.inertia_,
+                "bound": (1/(2*N_tot))*kmeans.inertia_,
                 "iters": iters
             })
             df = df.append(newrow,ignore_index = True)
@@ -152,7 +152,7 @@ if __name__ == '__main__':
     foldername = "logsumexp/m30_K90_r50"
     N_tot = 90
     m = 30
-    R = 50
+    R = 5
     K_nums = np.append([1,2,3,4,5,10],np.append(np.arange(20, int(N_tot/2)+1,10), N_tot))
     K_tot = K_nums.size 
     eps_nums = 10**np.array([-2.5, -2.34, -2.18, -2.02, -1.87,-1.71, -1.55, -1.4, -1.24, -1.14, -1.08, -1, -0.95, -0.9, -0.88, -0.85,-0.82, -0.8, -0.79, -0.77, -0.7, -0.61, -0.1,0])
@@ -173,7 +173,9 @@ if __name__ == '__main__':
     import matplotlib.gridspec as gridspec
 
     fig, (ax1, ax21) = plt.subplots(1, 2, figsize=(14, 4.5))
-
+    colors = ["tab:blue", "tab:orange", "tab:green",
+          "tab:red", "tab:purple", "tab:brown", "tab:pink", "tab:grey", "tab:olive","tab:blue", "tab:orange", "tab:green",
+          "tab:red", "tab:purple", "tab:brown", "tab:pink", "tab:grey", "tab:olive"]
     styles = ["o",'s',"^","v","<",">"]
     j = 0
     for K_count in [0,2,4,6,8,9]:

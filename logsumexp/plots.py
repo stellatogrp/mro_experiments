@@ -12,6 +12,9 @@ plt.rcParams.update({
 
 
 styles = ["o",'s',"^","v","<",">"]
+colors = ["tab:blue", "tab:orange", "tab:green",
+          "tab:red", "tab:purple", "tab:brown", "tab:pink", "tab:grey", "tab:olive","tab:blue", "tab:orange", "tab:green",
+          "tab:red", "tab:purple", "tab:brown", "tab:pink", "tab:grey", "tab:olive"]
 plt.figure(figsize=(10, 6))
 j = 0
 for K_count in [0,2,4,6,8,9]:
