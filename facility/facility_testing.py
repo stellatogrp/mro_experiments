@@ -215,9 +215,8 @@ def facility_experiment(r, n, m, Data, Data_eval, prob_facility, N_tot, K_tot, K
         for eps_count, eps in enumerate(eps_nums):
             eps_pm.value = eps
             problem.solve()
-            # , ignore_dpp = True, solver = cp.MOSEK,mosek_params = {mosek.dparam.optimizer_max_time:  1000.0}
-            #X_sols[K_count, eps_count, :, :] = X.value
-            #x_sols[K_count, eps_count, :] = x.value
+            X_sols[K_count, eps_count, :, :] = X.value
+            x_sols[K_count, eps_count, :] = x.value
             evalvalue = evaluate(p_pm, x, X, dat_eval)
             evalvalue1 = evaluate_k(p_pm, x, X, dat_eval)
             newrow = pd.Series(
@@ -231,10 +230,10 @@ def facility_experiment(r, n, m, Data, Data_eval, prob_facility, N_tot, K_tot, K
                  "clustertime": clustertimes
                  })
             df = df.append(newrow, ignore_index=True)
-            df.to_csv('/scratch/gpfs/iywang/mro_results/' +
-                      foldername + '/df.csv')
+            #df.to_csv('/scratch/gpfs/iywang/mro_results/' +
+            #          foldername + '/df.csv')
 
-    return df
+    return X_sols, x_sols, df
 
 
 if __name__ == '__main__':
@@ -256,19 +255,19 @@ if __name__ == '__main__':
     Data = generate_facility_demands(N_tot, m, R)
     Data_eval = generate_facility_demands(N_tot, m, R)
 
-    njobs = get_n_processes(40)
+    njobs = get_n_processes(30)
     results = Parallel(n_jobs=njobs)(delayed(facility_experiment)(r, n, m, Data, Data_eval,
                                                                   prob_facility_separate, N_tot, K_tot, K_nums, eps_tot, eps_nums, foldername) for r in range(R))
 
-    #X_sols = np.zeros((K_tot, eps_tot, n, m, R))
-    #x_sols = np.zeros((K_tot, eps_tot, n, R))
-    dftemp = results[0]
+    X_sols = np.zeros((K_tot, eps_tot, n, m, R))
+    x_sols = np.zeros((K_tot, eps_tot, n, R))
+    dftemp = results[0][2]
 
-    #for r in range(R):
-    #    X_sols[:, :, :, :, r] = results[r][0]
-    #    x_sols[:, :, :, r] = results[r][1]
+    for r in range(R):
+        X_sols[:, :, :, :, r] = results[r][0]
+        x_sols[:, :, :, r] = results[r][1]
     for r in range(1, R):
-        dftemp = dftemp.add(results[r].reset_index(), fill_value=0)
+        dftemp = dftemp.add(results[r][2].reset_index(), fill_value=0)
     dftemp = dftemp/R
 
     #np.save(Path("/scratch/gpfs/iywang/mro_results/" +
@@ -277,3 +276,36 @@ if __name__ == '__main__':
     #        foldername + "/X_sols.npy"), X_sols)
 
     dftemp.to_csv('/scratch/gpfs/iywang/mro_results/' + foldername + '/df.csv')
+
+    plt.figure(figsize=(10, 6))
+    for K_count in np.arange(0,len(K_nums),1):
+        plt.plot(eps_nums**0.5, dftemp.sort_values(["K","Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["Opt_val"], linestyle='-', marker = 'o', label="$K = {}$".format(K_nums[K_count]),alpha = 0.6)
+    plt.xlabel("$\epsilon$")
+    plt.title("In-sample objective value")
+    plt.legend(loc = "lower right")
+    plt.savefig("objectives.pdf")
+
+    plt.figure(figsize=(10, 6))
+    for K_count in np.arange(0,len(K_nums),1):
+        plt.plot(eps_nums**0.5, dftemp.sort_values(["K","Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["Eval_val"], label="$K = {}$".format(K_nums[K_count]),linestyle='-', marker='o', alpha=0.5)
+    plt.xlabel("$\epsilon$")
+    plt.legend(loc = "lower right")
+    plt.title(r"$1-\beta$ (probability of constraint satisfaction)(7)")
+    plt.savefig("constraint_satisfaction.pdf")
+
+    plt.figure(figsize=(10, 6))
+    for K_count in np.arange(0,len(K_nums),1):
+        plt.plot(eps_nums**0.5, dftemp.sort_values(["K","Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["Eval_val1"], label="$K = {}$".format(K_nums[K_count]),linestyle='-', marker='o', alpha=0.5)
+    plt.xlabel("$\epsilon$")
+    plt.legend(loc = "lower right")
+    plt.title(r"$1-\beta$ (probability of constraint satisfaction)(8)")
+    plt.savefig("constraint_satisfaction_strict.pdf")
+
+    plt.figure(figsize=(10, 6))
+    for i in np.arange(0,len(eps_nums),3):
+        plt.plot(K_nums, dftemp.sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"], linestyle='-', marker='o', label="$\epsilon = {}$".format(np.round(eps_nums[i]**0.5, 5)))
+    plt.xlabel("$K$ (Number of clusters)")
+    plt.title("Time (s)")
+    plt.yscale("log")
+    plt.legend(loc = "lower right")
+    plt.savefig("time.pdf")

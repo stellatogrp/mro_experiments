@@ -161,8 +161,8 @@ def port_experiment(dat, dateval, r, m, prob, N_tot, K_tot, K_nums, eps_tot, eps
                  })
             df = df.append(newrow, ignore_index=True)
 
-            df.to_csv('/scratch/gpfs/iywang/mro_results/' +
-                      foldername + '/df.csv')
+            #df.to_csv('/scratch/gpfs/iywang/mro_results/' +
+            #          foldername + '/df.csv')
 
     return x_sols, df
 

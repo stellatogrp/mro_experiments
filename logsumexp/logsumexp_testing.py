@@ -46,7 +46,7 @@ def lognormal_scaled(N, m,scale):
 def data_modes_log(N,m,scales):
     modes = len(scales)
     d = np.ones((N+100,m))
-    weights = np.int(np.ceil(N/modes))
+    weights = int(np.ceil(N/modes))
     for i in range(modes):
         d[i*weights:(i+1)*weights,:] = lognormal_scaled(weights,m,scales[i])
     return d[0:N,:]
@@ -142,8 +142,6 @@ def logsumexp_experiment(r, m, N_tot, K_tot, K_nums, eps_tot, eps_nums, folderna
                 "iters": iters
             })
             df = df.append(newrow,ignore_index = True)
-            df.to_csv('/scratch/gpfs/iywang/mro_results/' +
-                      foldername + '/df.csv')
 
     return df
 

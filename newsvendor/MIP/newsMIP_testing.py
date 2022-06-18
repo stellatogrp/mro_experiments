@@ -174,8 +174,8 @@ def news_experiment(dat, dateval, r, m, a, b, p, prob, N_tot, K_tot, K_nums, eps
                  })
             df = df.append(newrow, ignore_index=True)
 
-            df.to_csv('/scratch/gpfs/iywang/mro_results/' +
-                      foldername + '/df.csv')
+            #df.to_csv('/scratch/gpfs/iywang/mro_results/' +
+            #          foldername + '/df.csv')
 
     return q_sols, df
 
