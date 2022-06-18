@@ -150,10 +150,11 @@ if __name__ == '__main__':
     foldername = "logsumexp/m30_K90_r50"
     N_tot = 90
     m = 30
-    R = 55
+    R = 60
     K_nums = np.append([1,2,3,4,5,10],np.append(np.arange(20, int(N_tot/2)+1,10), N_tot))
     K_tot = K_nums.size 
-    eps_nums = 10**np.array([-2.5, -2.34, -2.18, -2.02, -1.87,-1.71, -1.55, -1.4, -1.24, -1.14, -1.08, -1, -0.95, -0.9, -0.88, -0.85,-0.82, -0.8, -0.79, -0.77, -0.7, -0.61, -0.1,0])
+    eps_nums = 10**np.array([-3 , -2.79, -2.58, -2.37, -2.17,
+       -1.96, -1.75, -1.55 , -1.34, -1.13, -0.92, -0.72, -0.51, -0.30, -0.1, 0])
     eps_tot = eps_nums.size
 
     njobs = get_n_processes(30)
@@ -166,60 +167,3 @@ if __name__ == '__main__':
     dftemp = dftemp/R
 
     dftemp.to_csv('/scratch/gpfs/iywang/mro_results/' + foldername + '/df.csv')
-
-
-    import matplotlib.gridspec as gridspec
-
-    fig, (ax1, ax21) = plt.subplots(1, 2, figsize=(14, 4.5))
-    colors = ["tab:blue", "tab:orange", "tab:green",
-          "tab:red", "tab:purple", "tab:brown", "tab:pink", "tab:grey", "tab:olive","tab:blue", "tab:orange", "tab:green",
-          "tab:red", "tab:purple", "tab:brown", "tab:pink", "tab:grey", "tab:olive"]
-    styles = ["o",'s',"^","v","<",">"]
-    j = 0
-    for K_count in [0,2,4,6,8,9]:
-        ax1.plot((np.sort(eps_nums)), dftemp.sort_values(["K","Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["Opt_val"], linestyle='-', marker=styles[j], label="Objective, $K = {}$".format(K_nums[K_count]),alpha = 0.7)
-        ax1.plot((np.sort(eps_nums)),dftemp.sort_values(["K","Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["Eval_val"],color = colors[j], linestyle=':', label = "Expectation, $K = {}$".format(K_nums[K_count]))
-        j+=1
-    ax1.set_xlabel("$\epsilon$")
-    ax1.set_title("In-sample objective and %\n out-of-sample expected values")
-    ax1.set_xscale("log")
-
-    j = 0
-    for K_count in [0,2,5,8,9]:
-        ax21.plot(1 - dftemp.sort_values(["K","Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["satisfy"][0:-1:1],dftemp.sort_values(["K","Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["Opt_val"][0:-1:1],linestyle='-',label="$K = {}$".format(K_nums[K_count]),marker = styles[j], alpha = 0.7)
-        j += 1
-    ax21.set_xlabel(r"$\beta$ (probability of constraint violation)")
-    ax21.set_title("Objective value")
-    ax21.legend(bbox_to_anchor=(1.3, .8),fontsize = 14)
-    plt.tight_layout()
-    plt.savefig("logtop.pdf")
-    plt.show()
-
-
-    fig, (ax31, ax4) = plt.subplots(1, 2, figsize=(14, 4.5))
-
-    j = 0
-    for i in [2,6,9,11,15]:
-        gnval = np.array(dftemp.sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["Opt_val"])[-1]
-        dif = (dftemp.sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["Opt_val"]- gnval)
-        ax31.plot(K_nums,dif,label="$\epsilon = {}$".format(np.round(eps_nums[i], 5)), linestyle='-', marker=styles[j], color = colors[j])
-        ax31.plot(K_nums,(dftemp.sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["bound"]), linestyle='--', color = colors[j],label = "Upper bound")
-        j+=1
-    ax31.set_xlabel("$K$ (number of clusters)")
-    ax31.set_yscale("log")
-    ax31.set_title(r"$\bar{g}^K - \bar{g}^N$")
-
-    #ax31.legend(loc = "lower right")
-
-    j = 0
-    for i in [2,6,9,11,15]:
-        ax4.plot(K_nums, dftemp.sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"], linestyle="-", marker=styles[j],color = colors[j], label="$\epsilon = {}$".format(np.round(np.sort(eps_nums)[i], 5)))
-        j+=1
-    ax4.set_xlabel("$K$ (number of clusters)")
-    ax4.set_title("Time (s)")
-    ax4.set_yscale("log")
-    ax4.legend(loc = "lower right", bbox_to_anchor=(1.38, 0.2), fontsize = 14)
-    #ax4.legend()
-    plt.tight_layout()
-    plt.savefig("logbot.pdf")
-    plt.show()
