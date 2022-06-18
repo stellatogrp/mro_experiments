@@ -38,12 +38,13 @@ def get_n_processes(max_n=np.inf):
     return n_proc
 
 def lognormal_scaled(N, m,scale):
-    """Creates return data, N = sample size, m = data length per sample"""
+    """Creates data, N = sample size, m = data length per sample"""
     R = np.vstack([np.random.normal(
         i*0.012*scale, np.sqrt((0.02**2+(i*0.025)**2)), N) for i in range(1, m+1)])
     return (np.exp(R.transpose()))
 
 def data_modes_log(N,m,scales):
+    "Creates data scaled by given multipliers"
     modes = len(scales)
     d = np.ones((N+100,m))
     weights = int(np.ceil(N/modes))
@@ -52,6 +53,7 @@ def data_modes_log(N,m,scales):
     return d[0:N,:]
 
 def createproblem_max(N, m,w):
+    "Create the maximization problem to test constraint satisfaction"
     # PARAMETERS #
     dat = cp.Parameter((N, m))
     expx = cp.Parameter(m)
@@ -69,6 +71,7 @@ def createproblem_max(N, m,w):
 
 
 def createproblem_min(N, m,w,Uvals,n_planes):
+    "Create minimization problem to ensure constraint satisfaction"
     # PARAMETERS #    
     x = cp.Variable(m)
     t = cp.Variable()
@@ -84,6 +87,7 @@ def createproblem_min(N, m,w,Uvals,n_planes):
   
 
 def minmaxsolve(N,m,w,data,epsilon):
+    "Cutting plane procedure"
     Uvals = {}
     inds = 0
     Uvals[inds] = np.log(data)
