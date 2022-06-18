@@ -145,13 +145,40 @@ def generate_facility_data(n=10, m=50):
 
 
 def generate_facility_demands(N, m, R):
-    """Generate uncertain demand"""
+    """Generate uncertain demand
+    Parameters:
+     ----------
+    N: int
+        Number of data samples
+    m: int
+        Number of facilities
+    R: int
+        Number of sets of data samples
+    Returns:
+    -------
+    d_train: vector
+        Demand vector
+    """
     d_train = npr.randint(1, 5, (N, m, R))
     return d_train
 
 
 def evaluate(p, x, X, d):
-    """Evaluate constraint satisfaction"""
+    """Evaluate constraint satisfaction
+    Parameters
+    ----------
+    p: vector
+        Prices
+    x: vector
+        Decision variables of the optimization problem
+    X: matrix
+        Decision variables of the optimization problem
+    d: matrix
+        Validation data matrix
+    Returns:
+    -------
+    boolean: indicator of constraint satisfaction 
+    """
     for ind in range(n):
         if -p.value[ind]*x.value[ind] + np.reshape(np.mean(d, axis=0), (1, m))@(X.value[ind]) >= 0.001:
             return 0
@@ -159,7 +186,21 @@ def evaluate(p, x, X, d):
 
 
 def evaluate_k(p, x, X, d):
-    """Evaluate stricter constraint satisfaction"""
+    """Evaluate stricter constraint satisfaction
+    Parameters
+    ----------
+    p: vector
+        Prices
+    x: vector
+        Decision variables of the optimization problem
+    X: matrix
+        Decision variables of the optimization problem
+    d: matrix
+        Validation data matrix
+    Returns:
+    -------
+    boolean: indicator of constraint satisfaction 
+    """
     maxval = np.zeros((np.shape(d)[0], np.shape(x)[0]))
     for fac in range(np.shape(x)[0]):
         for ind in range(np.shape(d)[0]):
@@ -182,10 +223,10 @@ def facility_experiment(r, n, m, Data, Data_eval, prob_facility, N_tot, K_tot, K
     X_sols: array
         The optimal solutions for X
     df: dataframe
-        The results of the experiments'''
-
-    #X_sols = np.zeros((K_tot, eps_tot, n, m))
-    #x_sols = np.zeros((K_tot, eps_tot, n))
+        The results of the experiments
+    '''
+    X_sols = np.zeros((K_tot, eps_tot, n, m))
+    x_sols = np.zeros((K_tot, eps_tot, n))
     df = pd.DataFrame(columns=["K", "Epsilon", "Opt_val", "Eval_val",
                       "Eval_val1", "solvetime", "setuptime", "clustertime"])
 
@@ -276,36 +317,3 @@ if __name__ == '__main__':
     #        foldername + "/X_sols.npy"), X_sols)
 
     dftemp.to_csv('/scratch/gpfs/iywang/mro_results/' + foldername + '/df.csv')
-
-    plt.figure(figsize=(10, 6))
-    for K_count in np.arange(0,len(K_nums),1):
-        plt.plot(eps_nums**0.5, dftemp.sort_values(["K","Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["Opt_val"], linestyle='-', marker = 'o', label="$K = {}$".format(K_nums[K_count]),alpha = 0.6)
-    plt.xlabel("$\epsilon$")
-    plt.title("In-sample objective value")
-    plt.legend(loc = "lower right")
-    plt.savefig("objectives.pdf")
-
-    plt.figure(figsize=(10, 6))
-    for K_count in np.arange(0,len(K_nums),1):
-        plt.plot(eps_nums**0.5, dftemp.sort_values(["K","Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["Eval_val"], label="$K = {}$".format(K_nums[K_count]),linestyle='-', marker='o', alpha=0.5)
-    plt.xlabel("$\epsilon$")
-    plt.legend(loc = "lower right")
-    plt.title(r"$1-\beta$ (probability of constraint satisfaction)(7)")
-    plt.savefig("constraint_satisfaction.pdf")
-
-    plt.figure(figsize=(10, 6))
-    for K_count in np.arange(0,len(K_nums),1):
-        plt.plot(eps_nums**0.5, dftemp.sort_values(["K","Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["Eval_val1"], label="$K = {}$".format(K_nums[K_count]),linestyle='-', marker='o', alpha=0.5)
-    plt.xlabel("$\epsilon$")
-    plt.legend(loc = "lower right")
-    plt.title(r"$1-\beta$ (probability of constraint satisfaction)(8)")
-    plt.savefig("constraint_satisfaction_strict.pdf")
-
-    plt.figure(figsize=(10, 6))
-    for i in np.arange(0,len(eps_nums),3):
-        plt.plot(K_nums, dftemp.sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"], linestyle='-', marker='o', label="$\epsilon = {}$".format(np.round(eps_nums[i]**0.5, 5)))
-    plt.xlabel("$K$ (Number of clusters)")
-    plt.title("Time (s)")
-    plt.yscale("log")
-    plt.legend(loc = "lower right")
-    plt.savefig("time.pdf")

@@ -12,7 +12,6 @@ plt.rcParams.update({
 })
 
 K_nums = np.array([1, 5, 50, 100, 150, 300])
-K_tot = K_nums.size  
 N_tot = 300
 M = 10
 R = 12           
@@ -21,7 +20,6 @@ eps_min = -5
 eps_max = -3.9       
 eps_nums = np.linspace(eps_min, eps_max, M)
 eps_nums = 10**(eps_nums)
-eps_tot = M
 
 plt.figure(figsize=(10, 6))
 for K_count in np.arange(0,len(K_nums),1):

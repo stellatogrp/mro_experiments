@@ -8,12 +8,6 @@ import numpy as np
 import cvxpy as cp
 import matplotlib.pyplot as plt
 import pandas as pd
-plt.rcParams.update({
-    "text.usetex":True,
-    "font.size":18,
-    "font.family": "serif"
-})
-
 
 def get_n_processes(max_n=np.inf):
     """Get number of processes from current cps number
@@ -38,13 +32,39 @@ def get_n_processes(max_n=np.inf):
     return n_proc
 
 def lognormal_scaled(N, m,scale):
-    """Creates data, N = sample size, m = data length per sample"""
+    """Creates scaled data
+    Parameters:
+    ----------
+    N: int
+        Number of data samples
+    m: int
+        Size of each data sample
+    Scales: float
+        Multiplier for a single mode
+    Returns:
+    -------
+    d: matrix
+        Scaled data with a single mode
+    """
     R = np.vstack([np.random.normal(
         i*0.012*scale, np.sqrt((0.02**2+(i*0.025)**2)), N) for i in range(1, m+1)])
     return (np.exp(R.transpose()))
 
 def data_modes_log(N,m,scales):
-    "Creates data scaled by given multipliers"
+    """Creates data scaled by given multipliers
+    Parameters:
+    ----------
+    N: int
+        Number of data samples
+    m: int
+        Size of each data sample
+    Scales: vector
+        Multipliers of different modes
+    Returns:
+    -------
+    d: matrix
+        Scaled data with all modes
+    """
     modes = len(scales)
     d = np.ones((N+100,m))
     weights = int(np.ceil(N/modes))
@@ -53,7 +73,19 @@ def data_modes_log(N,m,scales):
     return d[0:N,:]
 
 def createproblem_max(N, m,w):
-    "Create the maximization problem to test constraint satisfaction"
+    """Create the maximization problem to test constraint satisfaction
+    Parameters:
+    ----------
+    N: int
+        Number of data samples
+    m: int
+        Size of each data sample
+    w: vector
+        Weights for each data sample
+    Returns:
+    -------
+    The cvxpy problem and parameters
+    """
     # PARAMETERS #
     dat = cp.Parameter((N, m))
     expx = cp.Parameter(m)
@@ -71,7 +103,23 @@ def createproblem_max(N, m,w):
 
 
 def createproblem_min(N, m,w,Uvals,n_planes):
-    "Create minimization problem to ensure constraint satisfaction"
+    """Create minimization problem to ensure constraint satisfaction
+    Parameters:
+    ----------
+    N: int
+        Number of data samples
+    m: int
+        Size of each data sample
+    w: vector
+        Weights for each data sample
+    Uvals: dict
+        Set of uncertainty realizatoins
+    n_planes: 
+        Number of cutting planes added
+    Returns:
+    -------
+    The cvxpy problem and parameters
+    """
     # PARAMETERS #    
     x = cp.Variable(m)
     t = cp.Variable()
@@ -87,7 +135,30 @@ def createproblem_min(N, m,w,Uvals,n_planes):
   
 
 def minmaxsolve(N,m,w,data,epsilon):
-    "Cutting plane procedure"
+    """Cutting plane procedure
+    Parameters:
+    ----------
+    N: int
+        Number of data samples
+    m: int
+        Size of each data sample
+    w: vector
+        Weights for each data sample
+    data: matrix
+        Input data
+    epsilon: 
+        Input epsilon
+    Returns:
+    -------
+    objs2:
+        Final objective value
+    x.value:
+        Value for variable x
+    solvetime: 
+        Total solvertime 
+    inds: 
+        Number of cutting planes added
+    """
     Uvals = {}
     inds = 0
     Uvals[inds] = np.log(data)
@@ -109,8 +180,7 @@ def minmaxsolve(N,m,w,data,epsilon):
     problem1.solve()
     solvetime += problem1.solver_stats.solve_time
     objs2 = problem1.objective.value
-    iters= 1
-    while(np.abs(objs1 - objs2)>= 0.0001 and iters <= 50):
+    while(np.abs(objs1 - objs2)>= 0.0001 and inds <= 50):
         expx.value = np.exp(x.value)
         problem.solve()
         solvetime += problem.solver_stats.solve_time
@@ -121,10 +191,18 @@ def minmaxsolve(N,m,w,data,epsilon):
         solvetime += problem1.solver_stats.solve_time
         objs1 = objs2
         objs2 = problem1.objective.value
-        iters += 1
-    return objs2, x.value, u.value, solvetime, iters
+    return objs2, x.value, solvetime, inds
     
-def logsumexp_experiment(r, m, N_tot, K_tot, K_nums, eps_tot, eps_nums, foldername):
+def logsumexp_experiment(r, m, N_tot, K_nums, eps_nums, foldername):
+    '''Run the experiment for multiple K and epsilon
+    Parameters
+    ----------
+    Various inputs for combinations of experiments
+    Returns
+    -------
+    df: dataframe
+        The results of the experiments
+    '''
     df = pd.DataFrame(columns = ["r","K","Epsilon","Opt_val","Eval_val","satisfy","solvetime","bound","iters"])
     d = data_modes_log(N_tot,m,[1,3,6])
     d2 = data_modes_log(N_tot,m,[1,3,6])
@@ -132,7 +210,7 @@ def logsumexp_experiment(r, m, N_tot, K_tot, K_nums, eps_tot, eps_nums, folderna
         kmeans = KMeans(n_clusters=K).fit(d)
         weights = np.bincount(kmeans.labels_) / N_tot
         for epscount, epsval in enumerate(eps_nums):
-            objs_val,x_val,u_val,time,iters = minmaxsolve(K,m,weights,kmeans.cluster_centers_,epsval**2)
+            objs_val,x_val,time,iters = minmaxsolve(K,m,weights,kmeans.cluster_centers_,epsval**2)
             evalvalue = cp.sum([(1/N_tot)*cp.log_sum_exp(x_val + np.log(d2[k])).value for k in range(N_tot)])
             newrow = pd.Series(
                 {"r":r,
@@ -154,16 +232,14 @@ if __name__ == '__main__':
     foldername = "logsumexp/m30_K90_r50"
     N_tot = 90
     m = 30
-    R = 60
+    R = 50
     K_nums = np.append([1,2,3,4,5,10],np.append(np.arange(20, int(N_tot/2)+1,10), N_tot))
-    K_tot = K_nums.size 
     eps_nums = 10**np.array([-3 , -2.79, -2.58, -2.37, -2.17,
        -1.96, -1.75, -1.55 , -1.34, -1.13, -0.92, -0.72, -0.51, -0.30, -0.1, 0])
-    eps_tot = eps_nums.size
 
     njobs = get_n_processes(30)
     results = Parallel(n_jobs=njobs)(delayed(logsumexp_experiment)(
-        r, m, N_tot, K_tot, K_nums, eps_tot, eps_nums, foldername) for r in range(R))
+        r, m, N_tot, K_nums, eps_nums, foldername) for r in range(R))
     
     dftemp = results[0]
     for r in range(1, R):

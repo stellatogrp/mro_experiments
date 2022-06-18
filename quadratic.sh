@@ -1,11 +1,11 @@
 #!/bin/bash
-#SBATCH --job-name=newsvendortest
+#SBATCH --job-name=quadratictest
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=20
-#SBATCH --mem-per-cpu=3G
-#SBATCH --time=60:00:00
-#SBATCH -o /scratch/gpfs/iywang/mro_results/newsvendor/cont/test/newsvendor_test_%A.txt
+#SBATCH --mem-per-cpu=10G
+#SBATCH --time=20:00:00
+#SBATCH -o /scratch/gpfs/iywang/mro_results/quadratic_concave/m10_K60_r20/quadratic_test_%A.txt
 #SBATCH --mail-type=BEGIN,END,FAIL,TIME_LIMIT
 #SBATCH --mail-user=iabirina@hotmail.com
 
@@ -15,5 +15,5 @@ module purge
 module load anaconda3 
 conda activate mroenv
 
-python newsvendor/cont/newscont_testing.py 
+python quadratic_concave/quadratic_testing.py 
 
