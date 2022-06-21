@@ -31,7 +31,7 @@ def get_n_processes(max_n=np.inf):
 
     return n_proc
 
-def lognormal_scaled(N, m,scale):
+def dat_scaled(N, m,scale):
     """Creates scaled data
     Parameters:
     ----------
@@ -46,11 +46,10 @@ def lognormal_scaled(N, m,scale):
     d: matrix
         Scaled data with a single mode
     """
-    R = np.vstack([np.random.normal(
-        i*0.012*scale, np.sqrt((0.02**2+(i*0.025)**2)), N) for i in range(1, m+1)])
-    return (np.exp(R.transpose()))
+    R = np.vstack([np.random.uniform(0.01*i*scale,0.01*(i+1)*scale, N) for i in range(1, m+1)])
+    return R.transpose()
 
-def data_modes_log(N,m,scales):
+def data_modes(N,m,scales):
     """Creates data scaled by given multipliers
     Parameters:
     ----------
@@ -69,7 +68,7 @@ def data_modes_log(N,m,scales):
     d = np.ones((N+100,m))
     weights = int(np.ceil(N/modes))
     for i in range(modes):
-        d[i*weights:(i+1)*weights,:] = lognormal_scaled(weights,m,scales[i])
+        d[i*weights:(i+1)*weights,:] = dat_scaled(weights,m,scales[i])
     return d[0:N,:]
 
 def createproblem_max(N, m,w):
@@ -126,7 +125,7 @@ def createproblem_min(N, m,w,Uvals,n_planes):
     objective = t
     
     # CONSTRAINTS #
-    constraints = [cp.sum(x)== 1, x>= 0, x <= 1]
+    constraints = [cp.sum(x) >= 10, x>= 0, x <= 10]
     for index in range(n_planes):
         constraints += [cp.sum([w[k]*cp.log_sum_exp(x + Uvals[index][k]) for k in range(N)]) <= t]
     # PROBLEM #
@@ -204,8 +203,8 @@ def logsumexp_experiment(r, m, N_tot, K_nums, eps_nums, foldername):
         The results of the experiments
     '''
     df = pd.DataFrame(columns = ["r","K","Epsilon","Opt_val","Eval_val","satisfy","solvetime","bound","iters"])
-    d = data_modes_log(N_tot,m,[1,3,6])
-    d2 = data_modes_log(N_tot,m,[1,3,6])
+    d = data_modes(N_tot,m,[1,3,7])
+    d2 = data_modes(N_tot,m,[1,3,7])
     for Kcount, K in enumerate(K_nums):
         kmeans = KMeans(n_clusters=K).fit(d)
         weights = np.bincount(kmeans.labels_) / N_tot
@@ -232,10 +231,12 @@ if __name__ == '__main__':
     foldername = "logsumexp/m30_K90_r50"
     N_tot = 90
     m = 30
-    R = 50
-    K_nums = np.append([1,2,3,4,5,10],np.append(np.arange(20, int(N_tot/2)+1,10), N_tot))
-    eps_nums = 10**np.array([-3 , -2.79, -2.58, -2.37, -2.17,
-       -1.96, -1.75, -1.55 , -1.34, -1.13, -0.92, -0.72, -0.51, -0.30, -0.1, 0])
+    R = 30
+    K_nums = np.append([1,2,3,5,6,7,8,10],np.append(np.arange(20, int(N_tot/2)+1,10), N_tot))
+    eps_nums = np.append(np.logspace(-5.5,-4,20),np.logspace(-3.9,1,10))
+    
+    #eps_nums = 10**np.array([-3 , -2.79, -2.58, -2.37, -2.17,
+    #   -1.96, -1.75, -1.55 , -1.34, -1.13, -0.92, -0.72, -0.51, -0.30, -0.1, 0])
 
     njobs = get_n_processes(30)
     results = Parallel(n_jobs=njobs)(delayed(logsumexp_experiment)(
@@ -247,3 +248,66 @@ if __name__ == '__main__':
     dftemp = dftemp/R
 
     dftemp.to_csv('/scratch/gpfs/iywang/mro_results/' + foldername + '/df.csv')
+
+    plt.rcParams.update({
+    "text.usetex":True,
+    "font.size":18,
+    "font.family": "serif"
+    })
+
+
+    styles = ["o",'s',"^","v","<",">"]
+    colors = ["tab:blue", "tab:orange", "tab:green",
+            "tab:red", "tab:purple", "tab:brown", "tab:pink", "tab:grey", "tab:olive","tab:blue", "tab:orange", "tab:green",
+            "tab:red", "tab:purple", "tab:brown", "tab:pink", "tab:grey", "tab:olive"]
+    plt.figure(figsize=(10, 6))
+    j = 0
+    for K_count in [0,1,2,6,9]:
+        plt.plot((np.sort(eps_nums))[:-1], dftemp.sort_values(["K","Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["Opt_val"][:-1], linestyle='-', marker=styles[j], label="$K = {}$".format(K_nums[K_count]),alpha = 0.7)
+        plt.plot((np.sort(eps_nums))[:-1],dftemp.sort_values(["K","Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["Eval_val"][:-1],color = colors[j], linestyle=':')
+        j+=1
+    plt.xlabel("$\epsilon$")
+    plt.title("In-sample objective and %\n out-of-sample expected values")
+    plt.xscale("log")
+    plt.legend()
+    plt.savefig("objectives.pdf")
+    plt.show()
+
+    plt.figure(figsize=(10, 6))
+    j = 0
+    for K_count in [0,1,2,6,9]:
+        plt.plot(1 - dftemp.sort_values(["K","Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["satisfy"][0:-1:1],dftemp.sort_values(["K","Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["Opt_val"][0:-1:1],linestyle='-',label="$K = {}$".format(K_nums[K_count]),marker = styles[j], alpha = 0.7)
+        j += 1
+    plt.xlabel(r"$\beta$ (probability of constraint violation)")
+    plt.title("Objective value")
+    plt.legend()
+    plt.savefig("constraint_satisfaction.pdf")
+    plt.show()
+
+    plt.figure(figsize=(10, 6))
+    j = 0
+    for i in [2,6,9,11,15]:
+        gnval = np.array(dftemp.sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["Opt_val"])[-1]
+        dif = (dftemp.sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["Opt_val"]- gnval)
+        plt.plot(K_nums,dif,label="$\epsilon = {}$".format(np.round(eps_nums[i], 5)), linestyle='-', marker=styles[j], color = colors[j])
+        plt.plot(K_nums,(dftemp.sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["bound"]), linestyle='--', color = colors[j],label = "Upper bound")
+        j+=1
+    plt.xlabel("$K$ (number of clusters)")
+    plt.yscale("log")
+    plt.title(r"$\bar{g}^K - \bar{g}^N$")
+    plt.legend()
+    plt.savefig("upper_bound_diff.pdf")
+    plt.show()
+
+
+    plt.figure(figsize=(10, 6))
+    j = 0
+    for i in [2,6,9,11,15]:
+        plt.plot(K_nums, dftemp.sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"], linestyle="-", marker=styles[j],color = colors[j], label="$\epsilon = {}$".format(np.round(np.sort(eps_nums)[i], 5)))
+        j+=1
+    plt.xlabel("$K$ (number of clusters)")
+    plt.title("Time (s)")
+    plt.yscale("log")
+    plt.legend()
+    plt.savefig("time.pdf")
+    plt.show()
