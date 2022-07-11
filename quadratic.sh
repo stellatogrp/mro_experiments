@@ -9,11 +9,11 @@
 #SBATCH --mail-type=BEGIN,END,FAIL,TIME_LIMIT
 #SBATCH --mail-user=iabirina@hotmail.com
 
-export MOSEKLM_LICENSE_FILE=/scratch/gpfs/iywang/mro_code/mosek/mosek.lic
+export MOSEKLM_LICENSE_FILE=/scratch/gpfs/iywang/mro_experiments/mosek/mosek.lic
 
 module purge
 module load anaconda3 
 conda activate mroenv
 
-python quadratic_concave/quadratic_testing.py 
+python quadratic_concave/quadratic.py 
 
