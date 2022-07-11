@@ -161,3 +161,4 @@ cython_debug/
 
 # Remove mac stuff
 .DS_Store
+mosek/
