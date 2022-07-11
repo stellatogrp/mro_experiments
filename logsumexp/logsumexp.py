@@ -8,28 +8,9 @@ import numpy as np
 import cvxpy as cp
 import matplotlib.pyplot as plt
 import pandas as pd
-
-def get_n_processes(max_n=np.inf):
-    """Get number of processes from current cps number
-    Parameters
-    ----------
-    max_n: int
-        Maximum number of processes.
-    Returns
-    -------
-    float
-        Number of processes to use.
-    """
-
-    try:
-        # Check number of cpus if we are on a SLURM server
-        n_cpus = int(os.environ["SLURM_CPUS_PER_TASK"])
-    except KeyError:
-        n_cpus = joblib.cpu_count()
-
-    n_proc = max(min(max_n, n_cpus), 1)
-
-    return n_proc
+import sys
+sys.path.append('/scratch/gpfs/iywang/mro_experiments')
+from functions import get_n_processes
 
 def dat_scaled(N, m,scale):
     """Creates scaled data

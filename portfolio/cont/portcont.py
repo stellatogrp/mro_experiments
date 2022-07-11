@@ -15,51 +15,9 @@ import cvxpy as cp
 import matplotlib.pyplot as plt
 from pathlib import Path
 import sys
+sys.path.append('/scratch/gpfs/iywang/mro_experiments')
+from functions import get_n_processes, cluster_data
 output_stream = sys.stdout
-
-
-def get_n_processes(max_n=np.inf):
-    """Get number of processes from current cps number
-    Parameters
-    ----------
-    max_n: int
-        Maximum number of processes.
-    Returns
-    -------
-    float
-        Number of processes to use.
-    """
-
-    try:
-        # Check number of cpus if we are on a SLURM server
-        n_cpus = int(os.environ["SLURM_CPUS_PER_TASK"])
-    except KeyError:
-        n_cpus = joblib.cpu_count()
-
-    n_proc = max(min(max_n, n_cpus), 1)
-
-    return n_proc
-
-
-def cluster_data(D_in, K):
-    """Return K cluster means after clustering D_in into K clusters
-    Parameters
-    ----------
-    D_in: array
-        Input dataset, N entries
-    Returns
-    -------
-    Dbar_in: array
-        Output dataset, K entries
-    weights: vector
-        Vector of weights for Dbar_in
-    """    
-    N = D_in.shape[0]
-    kmeans = KMeans(n_clusters=K).fit(D_in)
-    Dbar_in = kmeans.cluster_centers_
-    weights = np.bincount(kmeans.labels_) / N
-
-    return Dbar_in, weights
 
 
 def createproblem_port(N, m):
@@ -171,7 +129,7 @@ def port_experiment(dat, dateval, r, m, prob, N_tot, K_tot, K_nums, eps_tot, eps
 if __name__ == '__main__':
     foldername = "portfolio/cont/m200_K900_r10"
     synthetic_returns = pd.read_csv(
-        '/scratch/gpfs/iywang/mro_code/portfolio/sp500_synthetic_returns.csv').to_numpy()[:, 1:]
+        '/scratch/gpfs/iywang/mro_experiments/portfolio/sp500_synthetic_returns.csv').to_numpy()[:, 1:]
 
     K_nums = np.array([1, 5, 50, 100, 300, 500, 800,900])
     # np.array([1,10,20,50,100,500,1000]) # different cluster values we consider
