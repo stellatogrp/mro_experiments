@@ -9,8 +9,8 @@ import cvxpy as cp
 import matplotlib.pyplot as plt
 import pandas as pd
 import sys
-sys.path.append('/scratch/gpfs/iywang/mro_experiments')
-from functions import get_n_processes, cluster_data
+from mro.utils import get_n_processes, cluster_data
+
 
 def normal_returns_scaled(N, m,scale):
     """Creates scaled data

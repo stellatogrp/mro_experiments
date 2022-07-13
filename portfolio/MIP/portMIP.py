@@ -15,8 +15,7 @@ import cvxpy as cp
 import matplotlib.pyplot as plt
 from pathlib import Path
 import sys
-sys.path.append('/scratch/gpfs/iywang/mro_experiments')
-from functions import get_n_processes, cluster_data
+from mro.utils import get_n_processes, cluster_data
 output_stream = sys.stdout
 
 def createproblem_portMIP(N, m):

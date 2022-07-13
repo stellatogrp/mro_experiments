@@ -16,8 +16,7 @@ import matplotlib.pyplot as plt
 import sys
 import time
 output_stream = sys.stdout
-sys.path.append('/scratch/gpfs/iywang/mro_experiments')
-from functions import get_n_processes, cluster_data
+from mro.utils import get_n_processes, cluster_data
 
 def prob_facility_separate(K, m, n):
     """Create the problem in cvxpy
