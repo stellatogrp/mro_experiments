@@ -1,4 +1,4 @@
-# Running MRO Experiments
+# Mean Robust Optimization
 This repository is by 
 [Irina Wang](--),
 [Bartolomeo Stellato](https://stellato.io/),
@@ -38,27 +38,27 @@ Continuous portfolio:
 ```
 python portcont.py
 ```
-Sparse portfolio
+Sparse portfolio:
 ```
 python portMIP.py
 ```
-Facility location
+Facility location:
 ```
 python facility.py
 ```
-Continuous newsvendor
+Continuous newsvendor:
 ```
 python main.py
 ```
-Sparse newsvendor
+Sparse newsvendor:
 ```
 python newsMIP.py   
 ```
-Quadratic concave 
+Quadratic concave:
 ```
 python quadratic.py
 ```
-Log-sum-exp concave
+Log-sum-exp concave:
 ```
 python logsumexp.py 
 ```
