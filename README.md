@@ -8,6 +8,8 @@ and contains the Python source code to
 reproduce the experiments in our paper
 "[Mean Robust Optimization](http://arxiv.org/abs/2207.10820)."
 
+If you find this repository helpful in your publications,
+please consider citing our paper.
 
 ## Introduction
 Robust optimization is a tractable and expressive technique for decision-making under uncertainty, but it can lead to overly conservative decisions because of pessimistic assumptions on the uncertain parameters.
