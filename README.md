@@ -1,19 +1,12 @@
 # Mean Robust Optimization
 This repository is by 
-[Irina Wang](--),
+Irina Wang,
 [Bartolomeo Stellato](https://stellato.io/),
-[Cole Becker](--),
+Cole Becker,
 and [Bart Van Parys](https://mitsloan.mit.edu/faculty/directory/bart-p-g-van-parys),
 and contains the Python source code to
 reproduce the experiments in our paper
-"[Mean Robust Optimization](https://arxiv.org/abs/2011.08105)."
-
-If you find this repository helpful in your publications,
-please consider citing our paper.
-
-```
---
-```
+"[Mean Robust Optimization](http://arxiv.org/abs/2207.10820)."
 
 
 ## Introduction
