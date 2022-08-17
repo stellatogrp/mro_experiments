@@ -2,21 +2,63 @@ from joblib import Parallel, delayed
 import os
 import mosek
 import time
-from gurobipy import GRB
-import gurobipy as gp
+#from gurobipy import GRB
+#import gurobipy as gp
 import pandas as pd
 import numpy as np
-import numpy.linalg as npl
-import numpy.random as npr
-import scipy.linalg as la
-from sklearn.model_selection import train_test_split
+#import numpy.linalg as npl
+#import numpy.random as npr
+#import scipy.linalg as la
+#from sklearn.model_selection import train_test_split
 from sklearn.cluster import KMeans
 import cvxpy as cp
 import matplotlib.pyplot as plt
-from pathlib import Path
+#from pathlib import Path
 import sys
-from mro.utils import get_n_processes, cluster_data
+#from mro.utils import get_n_processes, cluster_data
 output_stream = sys.stdout
+
+def get_n_processes(max_n=np.inf):
+    """Get number of processes from current cps number
+    Parameters
+    ----------
+    max_n: int
+        Maximum number of processes.
+    Returns
+    -------
+    float
+        Number of processes to use.
+    """
+
+    try:
+        # Check number of cpus if we are on a SLURM server
+        n_cpus = int(os.environ["SLURM_CPUS_PER_TASK"])
+    except KeyError:
+        n_cpus = joblib.cpu_count()
+
+    n_proc = max(min(max_n, n_cpus), 1)
+
+    return n_proc
+
+def cluster_data(D_in, K):
+    """Return K cluster means after clustering D_in into K clusters
+    Parameters
+    ----------
+    D_in: array
+        Input dataset, N entries
+    Returns
+    -------
+    Dbar_in: array
+        Output dataset, K entries
+    weights: vector
+        Vector of weights for Dbar_in
+    """    
+    N = D_in.shape[0]
+    kmeans = KMeans(n_clusters=K).fit(D_in)
+    Dbar_in = kmeans.cluster_centers_
+    weights = np.bincount(kmeans.labels_) / N
+
+    return Dbar_in, weights
 
 
 def createproblem_port(N, m):
@@ -49,8 +91,10 @@ def createproblem_port(N, m):
 
     # CONSTRAINTS #
     constraints = [cp.multiply(eps, lam) + w@s <= y]
-    constraints += [cp.hstack([a*tao]*N) + a*dat@x +
-                    cp.hstack([cp.quad_over_lin(-a*x, 4*lam)]*N) <= s]
+    constraints += [cp.hstack([a*tao]*N) + a*dat@x <= s]
+    constraints += [cp.norm(-a*x,2) <= lam]
+    #constraints += [cp.hstack([a*tao]*N) + a*dat@x +
+    #                cp.hstack([cp.quad_over_lin(-a*x, 4*lam)]*N) <= s]
     constraints += [cp.sum(x) == 1]
     constraints += [x >= 0, x <= 1]
     # for k in range(2):
@@ -157,6 +201,6 @@ if __name__ == '__main__':
         dftemp = dftemp.add(results[r][1].reset_index(), fill_value=0)
     dftemp = dftemp/R
 
-    np.save(Path("/scratch/gpfs/iywang/mro_results/" +
-            foldername + "/x_sols.npy"), x_sols)
+    #np.save(Path("/scratch/gpfs/iywang/mro_results/" +
+    #        foldername + "/x_sols.npy"), x_sols)
     dftemp.to_csv('/scratch/gpfs/iywang/mro_results/' + foldername + '/df.csv')
