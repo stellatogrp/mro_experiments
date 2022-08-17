@@ -21,8 +21,10 @@ Numerical examples illustrate the high efficiency and performance preservation o
 
 ## Dependencies
 + Python 3.x/numpy/pandas
-+ [PyTorch](https://pytorch.org)
-+ [cvxpylayers](https://github.com/cvxgrp/cvxpylayers)
++ [Cvxpy](https://www.cvxpy.org/index.html)
++ [Mosek](https://www.mosek.com/)
++ [sklearn](https://scikit-learn.org/stable/modules/clustering.html#clustering)
++ [Joblib](https://joblib.readthedocs.io/en/latest/)
 
 ## Instructions
 ### Running experiments
