@@ -12,6 +12,13 @@ import sys
 #from mro.utils import get_n_processes, cluster_data
 output_stream = sys.stdout
 
+parser = argparse.ArgumentParser(description=desc)
+parser.add_argument('--name', type=str, default="", metavar='N')
+arguments = parser.parse_args()
+exp_name = arguments.name
+
+
+
 def get_n_processes(max_n=np.inf):
     """Get number of processes from current cps number
     Parameters
@@ -165,6 +172,9 @@ def port_experiment(dat, dateval, r, m, prob, N_tot, K_tot, K_nums, eps_tot, eps
 
 if __name__ == '__main__':
     foldername = "portfolio/cont/m200_K900_r10"
+
+
+    
     synthetic_returns = pd.read_csv(
         '/scratch/gpfs/iywang/mro_experiments/portfolio/sp500_synthetic_returns.csv').to_numpy()[:, 1:]
 
