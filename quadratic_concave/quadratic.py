@@ -161,6 +161,4 @@ if __name__ == '__main__':
     for r in range(1, R):
         dftemp = dftemp.add(results[r][1].reset_index(), fill_value=0)
     dftemp = dftemp/R
-    np.save(Path("/scratch/gpfs/iywang/mro_results/" +
-            foldername + "/x_sols.npy"), x_sols)
     dftemp.to_csv('/scratch/gpfs/iywang/mro_results/' + foldername + '/df.csv')
