@@ -2,14 +2,8 @@ from joblib import Parallel, delayed
 import os
 import mosek
 import time
-#from gurobipy import GRB
-#import gurobipy as gp
 import pandas as pd
 import numpy as np
-#import numpy.linalg as npl
-#import numpy.random as npr
-#import scipy.linalg as la
-#from sklearn.model_selection import train_test_split
 from sklearn.cluster import KMeans
 import cvxpy as cp
 import matplotlib.pyplot as plt
@@ -181,8 +175,8 @@ if __name__ == '__main__':
     M = 15
     R = 10      # Total times we repeat experiment 
     m = 200
-    eps_min = -5    # minimum epsilon we consider
-    eps_max = -3.5       # maximum epsilon we consider
+    eps_min = -3.5    # minimum epsilon we consider
+    eps_max = -1.5       # maximum epsilon we consider
     eps_nums = np.linspace(eps_min, eps_max, M)
     eps_nums = 10**(eps_nums)
     eps_tot = M
