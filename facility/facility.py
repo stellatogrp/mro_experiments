@@ -2,14 +2,8 @@ from pathlib import Path
 from joblib import Parallel, delayed
 import os
 import mosek
-from gurobipy import GRB
-import gurobipy as gp
 import pandas as pd
 import numpy as np
-import numpy.linalg as npl
-import numpy.random as npr
-import scipy.linalg as la
-from sklearn.model_selection import train_test_split
 from sklearn.cluster import KMeans
 import cvxpy as cp
 import matplotlib.pyplot as plt
