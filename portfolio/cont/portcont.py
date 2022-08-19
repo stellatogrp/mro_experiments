@@ -88,7 +88,7 @@ def createproblem_port(N, m):
     # CONSTRAINTS #
     #constraints = [cp.multiply(eps, lam) + w@s <= y]
     constraints = [w@s <= y]
-    constraints += [cp.hstack([a*tao]*N) + a*dat@x <= s]
+    #constraints += [cp.hstack([a*tao]*N) + a*dat@x <= s]
     constraints += [cp.norm(-a*x,2) <= lam]
     constraints += [cp.hstack([a*tao]*N) + a*dat@x + eps*lam <= s]
     #for k in range(N):
@@ -162,8 +162,7 @@ def port_experiment(dat, dateval, r, m, prob, N_tot, K_tot, K_nums, eps_tot, eps
                  })
             df = df.append(newrow, ignore_index=True)
 
-            #df.to_csv('/scratch/gpfs/iywang/mro_results/' +
-            #          foldername + '/df.csv')
+            #df.to_csv(foldername + '/df.csv')
 
     return x_sols, df
 
@@ -210,5 +209,4 @@ if __name__ == '__main__':
         dftemp = dftemp.add(results[r][1].reset_index(), fill_value=0)
     dftemp = dftemp/R
 
-    #dftemp.to_csv('/scratch/gpfs/iywang/mro_results/' + foldername + '/df.csv')
     dftemp.to_csv(exp_name + '/df.csv')
