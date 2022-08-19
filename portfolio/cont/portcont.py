@@ -79,18 +79,18 @@ def createproblem_port(N, m):
     # weights, s_i, lambda, tau
     x = cp.Variable(m)
     s = cp.Variable(N)
-    lam = cp.Variable(N)
+    lam = cp.Variable()
     tao = cp.Variable()
     y = cp.Variable()
     # OBJECTIVE #
     objective = tao + y
 
     # CONSTRAINTS #
-    constraints = [cp.multiply(eps, lam) + w@s <= y]
-    #constraints = [w@s <= y]
+    #constraints = [cp.multiply(eps, lam) + w@s <= y]
+    constraints = [w@s <= y]
     constraints += [cp.hstack([a*tao]*N) + a*dat@x <= s]
     constraints += [cp.norm(-a*x,2) <= lam]
-    #constraints += [cp.hstack([a*tao]*N) + a*dat@x + eps*lam <= s]
+    constraints += [cp.hstack([a*tao]*N) + a*dat@x + eps*lam <= s]
     #for k in range(N):
     #    constraints += [cp.norm(-a*x,2) <= lam[k]]
     #constraints += [cp.hstack([a*tao]*N) + a*dat@x +
@@ -171,7 +171,7 @@ def port_experiment(dat, dateval, r, m, prob, N_tot, K_tot, K_nums, eps_tot, eps
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(description=desc)
+    parser = argparse.ArgumentParser()
     parser.add_argument('--foldername', type=str, default="/scratch/gpfs/iywang/mro_results/", metavar='N')
     arguments = parser.parse_args()
     exp_name = arguments.foldername
