@@ -1,4 +1,3 @@
-from pathlib import Path
 from joblib import Parallel, delayed
 import os
 import mosek
@@ -6,11 +5,11 @@ import pandas as pd
 import numpy as np
 from sklearn.cluster import KMeans
 import cvxpy as cp
-import matplotlib.pyplot as plt
 import sys
 import time
 output_stream = sys.stdout
 from mro.utils import get_n_processes, cluster_data
+import argparse
 
 def prob_facility_separate(K, m, n):
     """Create the problem in cvxpy
@@ -221,15 +220,17 @@ def facility_experiment(r, n, m, Data, Data_eval, prob_facility, N_tot, K_tot, K
                  "clustertime": clustertimes
                  })
             df = df.append(newrow, ignore_index=True)
-            #df.to_csv('/scratch/gpfs/iywang/mro_results/' +
-            #          foldername + '/df.csv')
+            #df.to_csv(foldername + '/df.csv')
 
     return X_sols, x_sols, df
 
 
 if __name__ == '__main__':
-    print("START")
-    foldername = "facility/m50n10_K100_r10"
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--foldername', type=str, default="/scratch/gpfs/iywang/mro_results/", metavar='N')
+    arguments = parser.parse_args()
+    foldername = arguments.foldername
+    #foldername = "facility/m50n10_K100_r10"
     # different cluster values we consider
     K_nums = np.array([1, 5, 10, 50, 100])
     K_tot = K_nums.size  # Total number of clusters we consider
@@ -261,4 +262,4 @@ if __name__ == '__main__':
         dftemp = dftemp.add(results[r][2].reset_index(), fill_value=0)
     dftemp = dftemp/R
 
-    dftemp.to_csv('/scratch/gpfs/iywang/mro_results/' + foldername + '/df.csv')
+    dftemp.to_csv(foldername + '/df.csv')

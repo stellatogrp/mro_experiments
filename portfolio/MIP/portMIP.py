@@ -7,10 +7,10 @@ import numpy as np
 from sklearn.cluster import KMeans
 import cvxpy as cp
 import matplotlib.pyplot as plt
-from pathlib import Path
 import sys
 from mro.utils import get_n_processes, cluster_data
 output_stream = sys.stdout
+import argparse
 
 def createproblem_portMIP(N, m):
     """Create the problem in cvxpy, minimize CVaR
@@ -100,14 +100,17 @@ def port_experiment(dat, dateval, r, m, prob, N_tot, K_tot, K_nums, eps_tot, eps
                  "setuptime": setuptimes
                  })
             df = df.append(newrow, ignore_index=True)
-            #df.to_csv('/scratch/gpfs/iywang/mro_results/' +
-            #          foldername + '/df.csv')
+            #df.to_csv(foldername + '/df.csv')
 
     return x_sols, df
 
 
 if __name__ == '__main__':
-    foldername = "portfolio/MIP/m50_K300_r12"
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--foldername', type=str, default="/scratch/gpfs/iywang/mro_results/", metavar='N')
+    arguments = parser.parse_args()
+    foldername = arguments.foldername
+    #foldername = "portfolio/MIP/m50_K300_r12"
     synthetic_returns = pd.read_csv(
         '/scratch/gpfs/iywang/mro_experiments/portfolio/sp500_synthetic_returns.csv').to_numpy()[:, 1:]
 
@@ -137,4 +140,4 @@ if __name__ == '__main__':
         dftemp = dftemp.add(results[r][1].reset_index(), fill_value=0)
     dftemp = dftemp/R
 
-    dftemp.to_csv('/scratch/gpfs/iywang/mro_results/' + foldername + '/df.csv')
+    dftemp.to_csv(foldername + '/df.csv')

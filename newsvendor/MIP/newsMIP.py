@@ -1,4 +1,3 @@
-from pathlib import Path
 from joblib import Parallel, delayed
 import os
 import mosek
@@ -6,13 +5,12 @@ import pandas as pd
 import numpy as np
 from sklearn.cluster import KMeans
 import cvxpy as cp
-import matplotlib.pyplot as plt
 import pandas as pd
 import sys
 import time
 output_stream = sys.stdout
 from mro.utils import get_n_processes, cluster_data
-
+import argparse
 
 def createproblem_news(N, m):
     """Create the problem in cvxpy, minimize CVaR of loss"""
@@ -132,7 +130,11 @@ def news_experiment(dat, dateval, r, m, a, b, p, prob, N_tot, K_tot, K_nums, eps
 
 
 if __name__ == '__main__':
-    foldername = "newsvendor/MIP/m40_K500_r20"
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--foldername', type=str, default="/scratch/gpfs/iywang/mro_results/", metavar='N')
+    arguments = parser.parse_args()
+    foldername = arguments.foldername
+    #foldername = "newsvendor/MIP/m40_K500_r20"
     K_nums = np.array([1, 10, 50, 100, 300, 500])
     K_tot = K_nums.size  # Total number of clusters we consider
     N_tot = 500
@@ -161,4 +163,4 @@ if __name__ == '__main__':
         dftemp = dftemp.add(results[r][1].reset_index(), fill_value=0)
     dftemp = dftemp/R
 
-    dftemp.to_csv('/scratch/gpfs/iywang/mro_results/' + foldername + '/df.csv')
+    dftemp.to_csv(foldername + '/df.csv')

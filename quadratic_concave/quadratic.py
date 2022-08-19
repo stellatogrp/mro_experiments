@@ -1,16 +1,16 @@
 from sklearn.cluster import KMeans
-from pathlib import Path
 from joblib import Parallel, delayed
 import os
 import mosek
 import time
 import numpy as np
 import cvxpy as cp
-import matplotlib.pyplot as plt
 import pandas as pd
+import scipy as sc
+from sklearn import datasets
 import sys
 from mro.utils import get_n_processes, cluster_data
-
+import argparse
 
 def normal_returns_scaled(N, m,scale):
     """Creates scaled data
@@ -138,7 +138,12 @@ def quadratic_experiment(A, Ainv, r, m, N_tot, K_nums, eps_nums, foldername):
   
 
 if __name__ == '__main__':
-    foldername = "concave/m10_K60_r20"
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--foldername', type=str, default="/scratch/gpfs/iywang/mro_results/", metavar='N')
+    arguments = parser.parse_args()
+    foldername = arguments.foldername
+
+    #foldername = "concave/m10_K60_r20"
     N_tot = 60
     m = 10
     R = 20
@@ -161,4 +166,4 @@ if __name__ == '__main__':
     for r in range(1, R):
         dftemp = dftemp.add(results[r][1].reset_index(), fill_value=0)
     dftemp = dftemp/R
-    dftemp.to_csv('/scratch/gpfs/iywang/mro_results/' + foldername + '/df.csv')
+    dftemp.to_csv(foldername + '/df.csv')

@@ -15,5 +15,5 @@ module purge
 module load anaconda3 
 conda activate mroenv
 
-python logsumexp/logsumexp.py 
+python logsumexp/logsumexp.py --foldername /scratch/gpfs/iywang/mro_results/logsumexp/m30_K90_r50/
 

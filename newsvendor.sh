@@ -5,7 +5,7 @@
 #SBATCH --cpus-per-task=20
 #SBATCH --mem-per-cpu=3G
 #SBATCH --time=60:00:00
-#SBATCH -o /scratch/gpfs/iywang/mro_results/newsvendor/cont/test/newsvendor_test_%A.txt
+#SBATCH -o /scratch/gpfs/iywang/mro_results/newsvendor/MIP/test/newsvendor_test_%A.txt
 #SBATCH --mail-type=BEGIN,END,FAIL,TIME_LIMIT
 #SBATCH --mail-user=iabirina@hotmail.com
 
@@ -15,5 +15,5 @@ module purge
 module load anaconda3 
 conda activate mroenv
 
-python newsvendor/cont/newscont.py 
+python newsvendor/MIP/newsMIP.py --foldername /scratch/gpfs/iywang/mro_results/newsvendor/MIP/m40_K500_r20
 

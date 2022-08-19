@@ -1,16 +1,14 @@
 from sklearn.cluster import KMeans
-from pathlib import Path
 from joblib import Parallel, delayed
 import os
 import mosek
 import time
 import numpy as np
 import cvxpy as cp
-import matplotlib.pyplot as plt
 import pandas as pd
 import sys
 from mro.utils import get_n_processes, cluster_data
-
+import argparse
 
 def dat_scaled(N, m,scale):
     """Creates scaled data
@@ -209,7 +207,11 @@ def logsumexp_experiment(r, m, N_tot, K_nums, eps_nums, foldername):
 
 
 if __name__ == '__main__':
-    foldername = "logsumexp/m30_K90_r50"
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--foldername', type=str, default="/scratch/gpfs/iywang/mro_results/", metavar='N')
+    arguments = parser.parse_args()
+    foldername = arguments.foldername
+    #foldername = "logsumexp/m30_K90_r50"
     N_tot = 90
     m = 30
     R = 30
@@ -225,5 +227,5 @@ if __name__ == '__main__':
         dftemp = dftemp.add(results[r].reset_index(), fill_value=0)
     dftemp = dftemp/R
 
-    dftemp.to_csv('/scratch/gpfs/iywang/mro_results/' + foldername + '/df.csv')
+    dftemp.to_csv(foldername + '/df.csv')
 

@@ -15,5 +15,5 @@ module purge
 module load anaconda3 
 conda activate mroenv
 
-python quadratic_concave/quadratic.py 
+python quadratic_concave/quadratic.py --foldername /scratch/gpfs/iywang/mro_results/quadratic_concave/m10_K60_r20/
 

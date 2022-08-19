@@ -6,8 +6,6 @@ import pandas as pd
 import numpy as np
 from sklearn.cluster import KMeans
 import cvxpy as cp
-import matplotlib.pyplot as plt
-#from pathlib import Path
 import sys
 #from mro.utils import get_n_processes, cluster_data
 output_stream = sys.stdout
@@ -173,7 +171,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--foldername', type=str, default="/scratch/gpfs/iywang/mro_results/", metavar='N')
     arguments = parser.parse_args()
-    exp_name = arguments.foldername
+    foldername = arguments.foldername
 
     #foldername = "portfolio/cont/m200_K900_r10"
 
@@ -209,4 +207,4 @@ if __name__ == '__main__':
         dftemp = dftemp.add(results[r][1].reset_index(), fill_value=0)
     dftemp = dftemp/R
 
-    dftemp.to_csv(exp_name + '/df.csv')
+    dftemp.to_csv(foldername + '/df.csv')

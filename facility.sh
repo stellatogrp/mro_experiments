@@ -15,5 +15,5 @@ module purge
 module load anaconda3 
 conda activate mroenv
 
-python facility/facility.py 
+python facility/facility.py --foldername /scratch/gpfs/iywang/mro_results/facility/m50n10_K100_r10/
 
