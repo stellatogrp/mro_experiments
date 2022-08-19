@@ -11,12 +11,7 @@ import matplotlib.pyplot as plt
 import sys
 #from mro.utils import get_n_processes, cluster_data
 output_stream = sys.stdout
-
-parser = argparse.ArgumentParser(description=desc)
-parser.add_argument('--name', type=str, default="", metavar='N')
-arguments = parser.parse_args()
-exp_name = arguments.name
-
+import argparse
 
 
 def get_n_processes(max_n=np.inf):
@@ -84,7 +79,7 @@ def createproblem_port(N, m):
     # weights, s_i, lambda, tau
     x = cp.Variable(m)
     s = cp.Variable(N)
-    lam = cp.Variable()
+    lam = cp.Variable(N)
     tao = cp.Variable()
     y = cp.Variable()
     # OBJECTIVE #
@@ -92,8 +87,12 @@ def createproblem_port(N, m):
 
     # CONSTRAINTS #
     constraints = [cp.multiply(eps, lam) + w@s <= y]
+    #constraints = [w@s <= y]
     constraints += [cp.hstack([a*tao]*N) + a*dat@x <= s]
     constraints += [cp.norm(-a*x,2) <= lam]
+    #constraints += [cp.hstack([a*tao]*N) + a*dat@x + eps*lam <= s]
+    #for k in range(N):
+    #    constraints += [cp.norm(-a*x,2) <= lam[k]]
     #constraints += [cp.hstack([a*tao]*N) + a*dat@x +
     #                cp.hstack([cp.quad_over_lin(-a*x, 4*lam)]*N) <= s]
     constraints += [cp.sum(x) == 1]
@@ -171,7 +170,13 @@ def port_experiment(dat, dateval, r, m, prob, N_tot, K_tot, K_nums, eps_tot, eps
 
 
 if __name__ == '__main__':
-    foldername = "portfolio/cont/m200_K900_r10"
+
+    parser = argparse.ArgumentParser(description=desc)
+    parser.add_argument('--foldername', type=str, default="/scratch/gpfs/iywang/mro_results/", metavar='N')
+    arguments = parser.parse_args()
+    exp_name = arguments.foldername
+
+    #foldername = "portfolio/cont/m200_K900_r10"
 
 
     
@@ -195,7 +200,7 @@ if __name__ == '__main__':
     dateval = synthetic_returns[:10000, :m]
     njobs = get_n_processes(20)
     results = Parallel(n_jobs=njobs)(delayed(port_experiment)(
-        dat, dateval, r, m, createproblem_port, N_tot, K_tot, K_nums, eps_tot, eps_nums, foldername) for r in range(R))
+        dat, dateval, r, m, createproblem_port, N_tot, K_tot, K_nums, eps_tot, eps_nums, exp_name) for r in range(R))
 
     x_sols = np.zeros((K_tot, eps_tot, m, R))
     dftemp = results[0][1]
@@ -205,4 +210,5 @@ if __name__ == '__main__':
         dftemp = dftemp.add(results[r][1].reset_index(), fill_value=0)
     dftemp = dftemp/R
 
-    dftemp.to_csv('/scratch/gpfs/iywang/mro_results/' + foldername + '/df.csv')
+    #dftemp.to_csv('/scratch/gpfs/iywang/mro_results/' + foldername + '/df.csv')
+    dftemp.to_csv(exp_name + '/df.csv')
