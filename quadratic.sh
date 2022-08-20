@@ -17,3 +17,4 @@ conda activate mroenv
 
 python quadratic_concave/quadratic.py --foldername /scratch/gpfs/iywang/mro_results/quadratic_concave/m10_K60_r20/
 
+python quadratic_concave/plots.py --foldername /scratch/gpfs/iywang/mro_results/quadratic_concave/m10_K60_r20/

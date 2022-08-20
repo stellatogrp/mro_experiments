@@ -17,3 +17,4 @@ conda activate mroenv
 
 python logsumexp/logsumexp.py --foldername /scratch/gpfs/iywang/mro_results/logsumexp/m30_K90_r50/
 
+#python logsumexp/plots.py --foldername /scratch/gpfs/iywang/mro_results/logsumexp/m30_K90_r50/

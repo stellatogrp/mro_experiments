@@ -2,8 +2,13 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import numpy.linalg as npl
+import argparse 
 
-dftemp = pd.read_csv('df.csv')
+parser = argparse.ArgumentParser()
+parser.add_argument('--foldername', type=str, default="/scratch/gpfs/iywang/mro_results/", metavar='N')
+arguments = parser.parse_args()
+foldername = arguments.foldername
+dftemp = pd.read_csv(foldername + 'df.csv')
 
 plt.rcParams.update({
     "text.usetex":True,
@@ -18,16 +23,16 @@ N_tot = 900
 M = 15
 R = 10        
 m = 200
-eps_min = -5    
-eps_max = -3.5   
+eps_min = -3.5    
+eps_max = -1.5   
 eps_nums = np.linspace(eps_min, eps_max, M)
-eps_nums = 10**(eps_nums)
+eps_nums = 10**eps_nums
 eps_tot = M
 
 
 plt.figure(figsize=(10, 6))
 for K_count in np.arange(0,len(K_nums),2):
-    plt.plot(eps_nums**0.5, dftemp.sort_values(["K","Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["Opt_val"], linestyle='-', marker = 'o', label="$K = {}$".format(K_nums[K_count]),alpha = 0.6)
+    plt.plot(eps_nums, dftemp.sort_values(["K","Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["Opt_val"], linestyle='-', marker = 'o', label="$K = {}$".format(K_nums[K_count]),alpha = 0.6)
 plt.xlabel("$\epsilon$")
 plt.xscale("log")
 plt.title("In-sample objective value")
@@ -36,7 +41,7 @@ plt.savefig("objectives.pdf")
 
 plt.figure(figsize=(10, 6))
 for K_count in np.arange(0,len(K_nums),2):
-    plt.plot(eps_nums**0.5, dftemp.sort_values(["K","Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["satisfy"], label="$K = {}$".format(K_nums[K_count]),linestyle='-', marker='o', alpha=0.5)
+    plt.plot(eps_nums, dftemp.sort_values(["K","Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["satisfy"], label="$K = {}$".format(K_nums[K_count]),linestyle='-', marker='o', alpha=0.5)
 plt.xlabel("$\epsilon$")
 plt.xscale("log")
 plt.legend(loc = "lower right")
@@ -45,7 +50,7 @@ plt.savefig("constraint_satisfaction.pdf")
 
 plt.figure(figsize=(10, 6))
 for i in np.arange(0,len(eps_nums),3):
-    plt.plot(K_nums, dftemp.sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"], linestyle='-', marker='o', label="$\epsilon = {}$".format(np.round(eps_nums[i]**0.5, 5)))
+    plt.plot(K_nums, dftemp.sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"], linestyle='-', marker='o', label="$\epsilon = {}$".format(np.round(eps_nums[i], 5)))
 plt.xlabel("$K$ (Number of clusters)")
 plt.title("Time (s)")
 plt.yscale("log")

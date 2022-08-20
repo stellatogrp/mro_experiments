@@ -8,9 +8,51 @@ from sklearn.cluster import KMeans
 import cvxpy as cp
 import matplotlib.pyplot as plt
 import sys
-from mro.utils import get_n_processes, cluster_data
+#from mro.utils import get_n_processes, cluster_data
 output_stream = sys.stdout
 import argparse
+
+def get_n_processes(max_n=np.inf):
+    """Get number of processes from current cps number
+    Parameters
+    ----------
+    max_n: int
+        Maximum number of processes.
+    Returns
+    -------
+    float
+        Number of processes to use.
+    """
+
+    try:
+        # Check number of cpus if we are on a SLURM server
+        n_cpus = int(os.environ["SLURM_CPUS_PER_TASK"])
+    except KeyError:
+        n_cpus = joblib.cpu_count()
+
+    n_proc = max(min(max_n, n_cpus), 1)
+
+    return n_proc
+
+def cluster_data(D_in, K):
+    """Return K cluster means after clustering D_in into K clusters
+    Parameters
+    ----------
+    D_in: array
+        Input dataset, N entries
+    Returns
+    -------
+    Dbar_in: array
+        Output dataset, K entries
+    weights: vector
+        Vector of weights for Dbar_in
+    """    
+    N = D_in.shape[0]
+    kmeans = KMeans(n_clusters=K).fit(D_in)
+    Dbar_in = kmeans.cluster_centers_
+    weights = np.bincount(kmeans.labels_) / N
+
+    return Dbar_in, weights
 
 def createproblem_portMIP(N, m):
     """Create the problem in cvxpy, minimize CVaR
@@ -42,9 +84,11 @@ def createproblem_portMIP(N, m):
     objective = tao + y
 
     # CONSTRAINTS #
-    constraints = [cp.multiply(eps, lam) + w@s <= y]
-    constraints += [cp.hstack([a*tao]*N) + a*dat@x +
-                    cp.hstack([cp.quad_over_lin(-a*x, 4*lam)]*N) <= s]
+    constraints = [w@s <= y]
+    #constraints += [cp.hstack([a*tao]*N) + a*dat@x +
+    #                cp.hstack([cp.quad_over_lin(-a*x, 4*lam)]*N) + eps*lam <= s]
+    constraints += [cp.norm(-a*x,2) <= lam]
+    constraints += [cp.hstack([a*tao]*N) + a*dat@x + eps*lam <= s]
     constraints += [cp.sum(x) == 1]
     constraints += [x >= 0, x <= 1]
     constraints += [lam >= 0,y>=0]
@@ -67,7 +111,7 @@ def port_experiment(dat, dateval, r, m, prob, N_tot, K_tot, K_nums, eps_tot, eps
         The results of the experiments
     """
     x_sols = np.zeros((K_tot, eps_tot, m, R))
-    df = pd.DataFrame(columns=["K", "Epsilon", "Opt_val", "Eval_val",
+    df = pd.DataFrame(columns=["R", "K", "Epsilon", "Opt_val", "Eval_val",
                                "satisfy", "solvetime", "setuptime"])
     Data = dat
     Data_eval = dateval
@@ -87,11 +131,12 @@ def port_experiment(dat, dateval, r, m, prob, N_tot, K_tot, K_nums, eps_tot, eps
         for eps_count, eps in enumerate(eps_nums):
             eps_pm.value = eps
             problem.solve(ignore_dpp=True, solver=cp.MOSEK, verbose=True, mosek_params={
-                          mosek.dparam.optimizer_max_time:  1200.0})
+                          mosek.dparam.optimizer_max_time:  1500.0})
             x_sols[K_count, eps_count, :, r] = x.value
             evalvalue = -5*np.mean(d_eval@x.value) - 5*tao.value <= y.value
             newrow = pd.Series(
-                {"K": K,
+                {"R": r,
+                 "K": K,
                  "Epsilon": eps,
                  "Opt_val": problem.objective.value,
                  "Eval_val": evalvalue,
@@ -120,8 +165,8 @@ if __name__ == '__main__':
     M = 10
     R = 12           # Total times we repeat experiment 
     m = 50
-    eps_min = -5    # minimum epsilon we consider
-    eps_max = -3.9       # maximum epsilon we consider
+    eps_min = -3.5    # minimum epsilon we consider
+    eps_max = -1.5       # maximum epsilon we consider
     eps_nums = np.linspace(eps_min, eps_max, M)
     eps_nums = 10**(eps_nums)
     eps_tot = M
@@ -139,5 +184,7 @@ if __name__ == '__main__':
     for r in range(1, R):
         dftemp = dftemp.add(results[r][1].reset_index(), fill_value=0)
     dftemp = dftemp/R
-
     dftemp.to_csv(foldername + '/df.csv')
+    
+    all = pd.concat([results[r][1] for r in range(R)])
+    all.to_csv(foldername + '/df_all.csv')

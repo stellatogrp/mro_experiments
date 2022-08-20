@@ -84,9 +84,7 @@ def createproblem_port(N, m):
     objective = tao + y
 
     # CONSTRAINTS #
-    #constraints = [cp.multiply(eps, lam) + w@s <= y]
     constraints = [w@s <= y]
-    #constraints += [cp.hstack([a*tao]*N) + a*dat@x <= s]
     constraints += [cp.norm(-a*x,2) <= lam]
     constraints += [cp.hstack([a*tao]*N) + a*dat@x + eps*lam <= s]
     #for k in range(N):
@@ -95,8 +93,6 @@ def createproblem_port(N, m):
     #                cp.hstack([cp.quad_over_lin(-a*x, 4*lam)]*N) <= s]
     constraints += [cp.sum(x) == 1]
     constraints += [x >= 0, x <= 1]
-    # for k in range(2):
-    #    constraints += [cp.sum(x[k*np.ceil(m/2):(k+1)*np.ceil(m/2)]) <= 0.50]
     constraints += [lam >= 0, y >=0]
     # PROBLEM #
     problem = cp.Problem(cp.Minimize(objective), constraints)
@@ -197,7 +193,7 @@ if __name__ == '__main__':
     dateval = synthetic_returns[:10000, :m]
     njobs = get_n_processes(20)
     results = Parallel(n_jobs=njobs)(delayed(port_experiment)(
-        dat, dateval, r, m, createproblem_port, N_tot, K_tot, K_nums, eps_tot, eps_nums, exp_name) for r in range(R))
+        dat, dateval, r, m, createproblem_port, N_tot, K_tot, K_nums, eps_tot, eps_nums, foldername) for r in range(R))
 
     x_sols = np.zeros((K_tot, eps_tot, m, R))
     dftemp = results[0][1]

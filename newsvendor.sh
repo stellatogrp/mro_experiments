@@ -17,3 +17,4 @@ conda activate mroenv
 
 python newsvendor/MIP/newsMIP.py --foldername /scratch/gpfs/iywang/mro_results/newsvendor/MIP/m40_K500_r20
 
+python newsvendor/MIP/plots.py --foldername /scratch/gpfs/iywang/mro_results/newsvendor/MIP/m40_K500_r20

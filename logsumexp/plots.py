@@ -2,13 +2,24 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import numpy.linalg as npl
+import argparse 
 
-dftemp = pd.read_csv('df.csv')
+parser = argparse.ArgumentParser()
+parser.add_argument('--foldername', type=str, default="/scratch/gpfs/iywang/mro_results/", metavar='N')
+arguments = parser.parse_args()
+foldername = arguments.foldername 
+
+dftemp = pd.read_csv(foldername+ 'df.csv')
 plt.rcParams.update({
 "text.usetex":True,
 "font.size":18,
 "font.family": "serif"
 })
+N_tot = 90
+m = 30
+R = 30
+K_nums = np.append([1,2,3,5,6,7,8,10],np.append(np.arange(20, int(N_tot/2)+1,10), N_tot))
+eps_nums = np.append(np.logspace(-5.5,-4,20),np.logspace(-3.9,1,10))
 
 
 styles = ["o",'s',"^","v","<",">"]
