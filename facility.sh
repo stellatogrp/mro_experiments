@@ -17,5 +17,5 @@ conda activate mroenv
 
 python facility/facility.py --foldername /scratch/gpfs/iywang/mro_results/facility/m50n10_K100_r10/
 
-python facility/plots.py --foldername /scratch/gpfs/iywang/mro_results/facility/m50n10_K100_r10/
+#python facility/plots.py --foldername /scratch/gpfs/iywang/mro_results/facility/m50n10_K100_r10/
 

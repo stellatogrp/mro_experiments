@@ -8,8 +8,50 @@ import cvxpy as cp
 import sys
 import time
 output_stream = sys.stdout
-from mro.utils import get_n_processes, cluster_data
+#from mro.utils import get_n_processes, cluster_data
 import argparse
+
+def get_n_processes(max_n=np.inf):
+    """Get number of processes from current cps number
+    Parameters
+    ----------
+    max_n: int
+        Maximum number of processes.
+    Returns
+    -------
+    float
+        Number of processes to use.
+    """
+
+    try:
+        # Check number of cpus if we are on a SLURM server
+        n_cpus = int(os.environ["SLURM_CPUS_PER_TASK"])
+    except KeyError:
+        n_cpus = joblib.cpu_count()
+
+    n_proc = max(min(max_n, n_cpus), 1)
+
+    return n_proc
+
+def cluster_data(D_in, K):
+    """Return K cluster means after clustering D_in into K clusters
+    Parameters
+    ----------
+    D_in: array
+        Input dataset, N entries
+    Returns
+    -------
+    Dbar_in: array
+        Output dataset, K entries
+    weights: vector
+        Vector of weights for Dbar_in
+    """    
+    N = D_in.shape[0]
+    kmeans = KMeans(n_clusters=K).fit(D_in)
+    Dbar_in = kmeans.cluster_centers_
+    weights = np.bincount(kmeans.labels_) / N
+
+    return Dbar_in, weights
 
 def prob_facility_separate(K, m, n):
     """Create the problem in cvxpy
@@ -45,10 +87,15 @@ def prob_facility_separate(K, m, n):
     constraints = []
     for j in range(m):
         constraints += [cp.sum(X[:, j]) == 1]
+    #for i in range(n):
+    #    constraints += [cp.multiply(eps, lmbda[i]) + wk @ s[i] <= 0]
+    #    constraints += [cp.hstack([-p[i]*x[i]]*K) + d_train@X[i] +
+    #                    cp.hstack([cp.quad_over_lin(X[i], 4*lmbda[i])]*K) <= s[i]]
     for i in range(n):
         constraints += [cp.multiply(eps, lmbda[i]) + wk @ s[i] <= 0]
-        constraints += [cp.hstack([-p[i]*x[i]]*K) + d_train@X[i] +
-                        cp.hstack([cp.quad_over_lin(X[i], 4*lmbda[i])]*K) <= s[i]]
+        constraints += [cp.hstack([-p[i]*x[i]]*K) + d_train@X[i] <= s[i]]
+        constraints += [cp.norm(X[i],2) <= lmbda[i]]
+
     constraints += [X >= 0, lmbda >= 0]
 
     problem = cp.Problem(objective, constraints)
@@ -74,20 +121,20 @@ def generate_facility_data(n=10, m=50):
         Production capacity of each facility
     """
     # Cost for facility
-    c = npr.randint(30, 70, n)
+    c = np.random.randint(30, 70, n)
 
     # Cost for shipment
-    fac_loc = npr.randint(0, 15, size=(n, 2))
-    cus_loc = npr.randint(0, 15, size=(m, 2))
+    fac_loc = np.random.randint(0, 15, size=(n, 2))
+    cus_loc = np.random.randint(0, 15, size=(m, 2))
     rho = 4
 
     C = np.zeros((n, m))
     for i in range(n):
         for j in range(m):
-            C[i, j] = npl.norm(fac_loc[i, :] - cus_loc[j, :])
+            C[i, j] = np.linalg.norm(fac_loc[i, :] - cus_loc[j, :])
 
     # Capacities for each facility
-    p = npr.randint(10, 50, n)
+    p = np.random.randint(10, 50, n)
 
     # Past demands of customer (past uncertain data)
     return c, C, p
@@ -174,9 +221,11 @@ def facility_experiment(r, n, m, Data, Data_eval, prob_facility, N_tot, K_tot, K
     df: dataframe
         The results of the experiments
     '''
-    X_sols = np.zeros((K_tot, eps_tot, n, m))
-    x_sols = np.zeros((K_tot, eps_tot, n))
-    df = pd.DataFrame(columns=["K", "Epsilon", "Opt_val", "Eval_val",
+    #X_sols = np.zeros((K_tot, eps_tot, n, m))
+    #x_sols = np.zeros((K_tot, eps_tot, n))
+    X_sols = 0
+    x_sols = 0
+    df = pd.DataFrame(columns=["R","K", "Epsilon", "Opt_val", "Eval_val",
                       "Eval_val1", "solvetime", "setuptime", "clustertime"])
 
     ######################## solve for various K ########################
@@ -205,12 +254,13 @@ def facility_experiment(r, n, m, Data, Data_eval, prob_facility, N_tot, K_tot, K
         for eps_count, eps in enumerate(eps_nums):
             eps_pm.value = eps
             problem.solve()
-            X_sols[K_count, eps_count, :, :] = X.value
-            x_sols[K_count, eps_count, :] = x.value
+            #X_sols[K_count, eps_count, :, :] = X.value
+            #x_sols[K_count, eps_count, :] = x.value
             evalvalue = evaluate(p_pm, x, X, dat_eval)
             evalvalue1 = evaluate_k(p_pm, x, X, dat_eval)
             newrow = pd.Series(
-                {"K": K,
+                {"R": r,
+                 "K": K,
                  "Epsilon": eps,
                  "Opt_val": problem.objective.value,
                  "Eval_val": evalvalue,
@@ -239,8 +289,11 @@ if __name__ == '__main__':
     R = 10       # Total times we repeat experiment to estimate final probabilty
     n = 10  # number of facilities
     m = 50  # number of locations
-    eps_min = 5      # minimum epsilon we consider
-    eps_max = 30         # maximum epsilon we consider
+    #eps_min = 5      # minimum epsilon we consider
+    #eps_max = 30         # maximum epsilon we consider
+    eps_min = 1      # minimum epsilon we consider
+    eps_max = 10 
+
     eps_nums = np.linspace(eps_min, eps_max, M)
     eps_tot = M
     c, C, p = generate_facility_data(n, m)
@@ -251,15 +304,18 @@ if __name__ == '__main__':
     results = Parallel(n_jobs=njobs)(delayed(facility_experiment)(r, n, m, Data, Data_eval,
                                                                   prob_facility_separate, N_tot, K_tot, K_nums, eps_tot, eps_nums, foldername) for r in range(R))
 
-    X_sols = np.zeros((K_tot, eps_tot, n, m, R))
-    x_sols = np.zeros((K_tot, eps_tot, n, R))
+    #X_sols = np.zeros((K_tot, eps_tot, n, m, R))
+    #x_sols = np.zeros((K_tot, eps_tot, n, R))
     dftemp = results[0][2]
 
-    for r in range(R):
-        X_sols[:, :, :, :, r] = results[r][0]
-        x_sols[:, :, :, r] = results[r][1]
+    #for r in range(R):
+    #    X_sols[:, :, :, :, r] = results[r][0]
+    #    x_sols[:, :, :, r] = results[r][1]
     for r in range(1, R):
         dftemp = dftemp.add(results[r][2].reset_index(), fill_value=0)
     dftemp = dftemp/R
 
     dftemp.to_csv(foldername + '/df.csv')
+    
+    all = pd.concat([results[r][2] for r in range(R)])
+    all.to_csv(foldername + '/df_all.csv')
