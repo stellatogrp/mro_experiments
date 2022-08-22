@@ -155,7 +155,7 @@ def generate_facility_demands(N, m, R):
     d_train: vector
         Demand vector
     """
-    d_train = npr.randint(1, 5, (N, m, R))
+    d_train = np.random.randint(1, 5, (N, m, R))
     return d_train
 
 
@@ -282,13 +282,13 @@ if __name__ == '__main__':
     foldername = arguments.foldername
     #foldername = "facility/m50n10_K100_r10"
     # different cluster values we consider
-    K_nums = np.array([1, 5, 10, 50, 100])
+    K_nums = np.array([1, 5, 10, 50, 100,200])
     K_tot = K_nums.size  # Total number of clusters we consider
-    N_tot = 100
+    N_tot = 200
     M = 10
     R = 10       # Total times we repeat experiment to estimate final probabilty
-    n = 10  # number of facilities
-    m = 50  # number of locations
+    n = 12  # number of facilities
+    m = 60  # number of locations
     #eps_min = 5      # minimum epsilon we consider
     #eps_max = 30         # maximum epsilon we consider
     eps_min = 1      # minimum epsilon we consider
