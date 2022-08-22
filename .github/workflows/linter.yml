@@ -15,9 +15,7 @@ jobs:
       - name: Lint Code
         uses: github/super-linter@v4
         env:
-          # lint all files (we can disable it later to lint only new and updated files)
-          # https://github.com/github/super-linter/wiki#only-linting-new-files
-          VALIDATE_ALL_CODEBASE: true
+          VALIDATE_ALL_CODEBASE: false
           VALIDATE_BASH: false  # do not check SLURM files
           VALIDATE_PYTHON: true
           VALIDATE_PYTHON_FLAKE8: true
