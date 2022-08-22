@@ -17,12 +17,12 @@ plt.rcParams.update({
 "font.family": "serif"
 })
 
-K_nums = np.array([1, 5, 10, 50, 100])
+K_nums = np.array([1, 5, 10, 50, 100, 200])
 K_tot = K_nums.size  # Total number of clusters we consider
-N_tot = 100
+N_tot = 200
 M = 10
-n = 10  # number of facilities
-m = 50  # number of locations
+n = 12  # number of facilities
+m = 60  # number of locations
 R = 10
 eps_min = 1      # minimum epsilon we consider
 eps_max = 10         # maximum epsilon we consider
@@ -102,11 +102,11 @@ ax3.legend()
 
 
 labelprint = 1
-for i in [2,3,5,7,9]:
+for i in np.arange(0,len(eps_nums),3):
     if labelprint == 1:
-        ax4.fill_between(K_nums, np.quantile([df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"] for r in range(R)],0.25,axis = 0), np.quantile([df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"] for r in range(2)],0.75,axis = 0), alpha = 0.1, label = "0.25 to 0.75 quantiles")
+        ax4.fill_between(K_nums, np.quantile([df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"] for r in range(R)],0.25,axis = 0), np.quantile([df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"] for r in range(2)],0.75,axis = 0), alpha = 0.2, label = "0.25 to 0.75 quantiles")
     else:
-        ax4.fill_between(K_nums, np.quantile([df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"] for r in range(R)],0.25,axis = 0), np.quantile([df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"] for r in range(2)],0.75,axis = 0), alpha = 0.1)
+        ax4.fill_between(K_nums, np.quantile([df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"] for r in range(R)],0.25,axis = 0), np.quantile([df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"] for r in range(2)],0.75,axis = 0), alpha = 0.2)
     labelprint = 0
     ax4.plot(K_nums, dftemp.sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"], linestyle='-', marker='o', label="$\epsilon = {}$".format(np.round(eps_nums[i]**0.5, 5)))
 
