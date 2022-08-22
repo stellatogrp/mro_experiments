@@ -91,14 +91,14 @@ plt.rcParams.update({
     "font.family" : "serif"
 })
 
-for K_count in [0,1,2,3,5]:
+for K_count in [0,1,2,4,5]:
     ax1.plot(eps_nums, dftemp.sort_values(["K","Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["Opt_val"], linestyle='-', marker = 'o', label="$K = {}$".format(K_nums[K_count]),alpha = 0.6)
 ax1.set_xlabel("$\epsilon$")
 ax1.set_xscale("log")
 ax1.set_title("In-sample objective value")
 #ax1.legend(loc = "lower right")
 
-for K_count in [0,1,2,3,5]:
+for K_count in [0,1,2,4,5]:
     ax2.plot(eps_nums, dftemp.sort_values(["K","Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["satisfy"], label="$K = {}$".format(K_nums[K_count]),linestyle='-', marker='o', alpha=0.5)
 ax2.set_xlabel("$\epsilon$")
 ax2.set_xscale("log")
@@ -106,13 +106,16 @@ ax2.legend(loc = "lower right")
 ax2.set_title(r"$1-\beta$ (probability of constraint satisfaction)")
 
 labelprint = 1
-for i in np.arange(5,len(eps_nums)-2,1):
+for i in np.arange(5,len(eps_nums)-3,1):
     if labelprint == 1:
         ax3.fill_between(K_nums, np.quantile([df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"] for r in range(R)],0.25,axis = 0), np.quantile([df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"] for r in range(2)],0.75,axis = 0), alpha = 0.1, label = "0.25 to 0.75 quantiles")
     else:
         ax3.fill_between(K_nums, np.quantile([df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"] for r in range(R)],0.25,axis = 0), np.quantile([df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"] for r in range(2)],0.75,axis = 0), alpha = 0.1)
     labelprint = 0
     ax3.plot(K_nums, dftemp.sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"], linestyle='-', marker='o', label="$\epsilon = {}$".format(np.round(eps_nums[i], 5)))
+i = len(eps_nums)-3
+ax3.fill_between(K_nums[0:-1], np.quantile([df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"][0:-1] for r in range(R)],0.25,axis = 0), np.quantile([df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"][0:-1] for r in range(2)],0.75,axis = 0), alpha = 0.1)
+ax3.plot(K_nums[0:-1], dftemp.sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"][0:-1], linestyle='-', marker='o', label="$\epsilon = {}$".format(np.round(eps_nums[i], 5)))
 i = len(eps_nums)-2
 ax3.fill_between(K_nums[0:2], np.quantile([df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"][0:2] for r in range(R)],0.25,axis = 0), np.quantile([df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"][0:2] for r in range(2)],0.75,axis = 0), alpha = 0.1)
 ax3.plot(K_nums[0:2], dftemp.sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"][0:2], linestyle='-', marker='o', label="$\epsilon = {}$".format(np.round(eps_nums[i], 5)))

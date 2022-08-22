@@ -92,7 +92,7 @@ def createproblem_portMIP(N, m):
     constraints += [cp.sum(x) == 1]
     constraints += [x >= 0, x <= 1]
     constraints += [lam >= 0,y>=0]
-    constraints += [x - z <= 0, cp.sum(z) <= 5]
+    constraints += [x - z <= 0, cp.sum(z) <= 8]
     # PROBLEM #
     problem = cp.Problem(cp.Minimize(objective), constraints)
     return problem, x, s, tao,y, lam, dat, eps, w
@@ -117,7 +117,7 @@ def port_experiment(dat, dateval, r, m, prob, N_tot, K_tot, K_nums, eps_tot, eps
     Data_eval = dateval
 
    ######################## solve for various K ########################
-    for K_count, K in enumerate(K_nums):
+    for K_count, K in enumerate(np.flip(K_nums)):
         tnow = time.time()
         d_train, wk = cluster_data(Data[(N_tot*r):(N_tot*(r+1))], K)
         d_eval = Data_eval[(N_tot*r):(N_tot*(r+1))]
@@ -163,7 +163,7 @@ if __name__ == '__main__':
     K_tot = K_nums.size  # Total number of clusters we consider
     N_tot = 300
     M = 10
-    R = 12           # Total times we repeat experiment 
+    R = 12          # Total times we repeat experiment 
     m = 50
     eps_min = -3.5    # minimum epsilon we consider
     eps_max = -1.5       # maximum epsilon we consider
