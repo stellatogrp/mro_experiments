@@ -85,14 +85,14 @@ def createproblem_portMIP(N, m):
 
     # CONSTRAINTS #
     constraints = [w@s <= y]
-    constraints += [cp.hstack([a*tao]*N) + a*dat@x +
-                    cp.hstack([cp.quad_over_lin(-a*x, 4*lam)]*N) + eps*lam <= s]
-    #constraints += [cp.norm(-a*x,2) <= lam]
-    #constraints += [cp.hstack([a*tao]*N) + a*dat@x + eps*lam <= s]
+    #constraints += [cp.hstack([a*tao]*N) + a*dat@x +
+    #                cp.hstack([cp.quad_over_lin(-a*x, 4*lam)]*N) + eps*lam <= s]
+    constraints += [cp.norm(-a*x,2) <= lam]
+    constraints += [cp.hstack([a*tao]*N) + a*dat@x + eps*lam <= s]
     constraints += [cp.sum(x) == 1]
     constraints += [x >= 0, x <= 1]
     constraints += [lam >= 0,y>=0]
-    constraints += [x - z <= 0, cp.sum(z) <= 5]
+    constraints += [x - z <= 0, cp.sum(z) <= 15]
     # PROBLEM #
     problem = cp.Problem(cp.Minimize(objective), constraints)
     return problem, x, s, tao,y, lam, dat, eps, w
@@ -165,8 +165,8 @@ if __name__ == '__main__':
     M = 10
     R = 12          # Total times we repeat experiment 
     m = 50
-    eps_min = -5    # minimum epsilon we consider
-    eps_max = -3.5       # maximum epsilon we consider
+    eps_min = -3.5    # minimum epsilon we consider
+    eps_max = -1.5       # maximum epsilon we consider
     eps_nums = np.linspace(eps_min, eps_max, M)
     eps_nums = 10**(eps_nums)
     eps_tot = M
