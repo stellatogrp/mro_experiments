@@ -79,7 +79,6 @@ def prob_facility_separate(K, m, n):
     lmbda = cp.Variable(n)
     #s = cp.Variable(K)
     s = cp.Variable((n, K))
-    t = cp.Variable()
 
     objective = cp.Minimize(cp.trace(C.T @ X) + c@x)
     # cp.Minimize(t)
@@ -282,9 +281,9 @@ if __name__ == '__main__':
     foldername = arguments.foldername
     #foldername = "facility/m50n10_K100_r10"
     # different cluster values we consider
-    K_nums = np.array([1, 5, 10, 50, 100,200])
+    K_nums = np.array([1, 5, 10, 50, 100,200,300])
     K_tot = K_nums.size  # Total number of clusters we consider
-    N_tot = 200
+    N_tot = 300
     M = 10
     R = 10       # Total times we repeat experiment to estimate final probabilty
     n = 12  # number of facilities

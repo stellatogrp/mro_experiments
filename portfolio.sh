@@ -16,9 +16,9 @@ module load anaconda3
 conda activate mroenv
 
 
-#python portfolio/MIP/portMIP.py --foldername /scratch/gpfs/iywang/mro_results/portfolio/MIP/m50_K300_r12/
+python portfolio/MIP/portMIP.py --foldername /scratch/gpfs/iywang/mro_results/portfolio/MIP/m50_K300_r12/
 
-python portfolio/MIP/plots.py --foldername /scratch/gpfs/iywang/mro_results/portfolio/MIP/m50_K300_r12/
+#python portfolio/MIP/plots.py --foldername /scratch/gpfs/iywang/mro_results/portfolio/MIP/m50_K300_r12/
 
 
 #python portfolio/cont/portcont.py --foldername /scratch/gpfs/iywang/mro_results/portfolio/cont/m200_K900_r10/
