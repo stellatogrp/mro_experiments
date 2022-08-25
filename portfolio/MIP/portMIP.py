@@ -75,29 +75,31 @@ def createproblem_portMIP(N, m):
     # VARIABLES #
     # weights, s_i, lambda, tau
     x = cp.Variable(m)
-    s = cp.Variable(N)
+    #s = cp.Variable(N)
+    s = 0
     lam = cp.Variable()
     z = cp.Variable(m, boolean=True)
-    tao = cp.Variable()
-    t = cp.Variable()
+    tau = cp.Variable()
+    #t = cp.Variable()
     y = cp.Variable()
     # OBJECTIVE #
-    objective = tao + y
+    objective = tau + y
 
     # CONSTRAINTS #
-    constraints = [w@s <= y]
-    constraints += [cp.hstack([a*tao]*N) + a*dat@x +
-                    cp.hstack([t]*N) + eps*lam <= s]
-    constraints += [cp.quad_over_lin(-a*x, 4*lam) <= t]
+    #constraints = [w@s <= y]
+    #constraints += [cp.hstack([a*tau]*N) + a*dat@x +
+    #                cp.hstack([t]*N) + eps*lam <= s]
+    #constraints += [cp.quad_over_lin(-a*x, 4*lam) <= t]
+    constraints = [a*tau+cp.quad_over_lin(-a*x, 4*lam) + eps*lam + (a*x)@(w@dat)<= y]
     #constraints += [cp.norm(-a*x,2) <= lam]
-    #constraints += [cp.hstack([a*tao]*N) + a*dat@x + eps*lam <= s]
+    #constraints += [cp.hstack([a*tau]*N) + a*dat@x + eps*lam <= s]
     constraints += [cp.sum(x) == 1]
     constraints += [x >= 0, x <= 1]
     constraints += [lam >= 0,y>=0]
     constraints += [x - z <= 0, cp.sum(z) <= 5]
     # PROBLEM #
     problem = cp.Problem(cp.Minimize(objective), constraints)
-    return problem, x, s, tao,y, lam, dat, eps, w
+    return problem, x, s, tau,y, lam, dat, eps, w
 
 
 def port_experiment(dat, dateval, r, m, prob, N_tot, K_tot, K_nums, eps_tot, eps_nums, foldername):
@@ -124,7 +126,7 @@ def port_experiment(dat, dateval, r, m, prob, N_tot, K_tot, K_nums, eps_tot, eps
         d_train, wk = cluster_data(Data[(N_tot*r):(N_tot*(r+1))], K)
         d_eval = Data_eval[(N_tot*r):(N_tot*(r+1))]
         assert(d_train.shape == (K, m))
-        problem, x, s, tao,y, lmbda, data_train_pm, eps_pm, w_pm = prob(K, m)
+        problem, x, s, tau,y, lmbda, data_train_pm, eps_pm, w_pm = prob(K, m)
         data_train_pm.value = d_train
         w_pm.value = wk
         setuptimes = time.time() - tnow
@@ -135,7 +137,7 @@ def port_experiment(dat, dateval, r, m, prob, N_tot, K_tot, K_nums, eps_tot, eps
             problem.solve(ignore_dpp=True, solver=cp.MOSEK, verbose=True, mosek_params={
                           mosek.dparam.optimizer_max_time:  1500.0})
             x_sols[K_count, eps_count, :, r] = x.value
-            evalvalue = -5*np.mean(d_eval@x.value) - 5*tao.value <= y.value
+            evalvalue = -5*np.mean(d_eval@x.value) - 5*tau.value <= y.value
             newrow = pd.Series(
                 {"R": r,
                  "K": K,
@@ -173,8 +175,8 @@ if __name__ == '__main__':
     eps_nums = 10**(eps_nums)
     eps_tot = M
 
-    dat = synthetic_returns[:5000, :m]
-    dateval = synthetic_returns[-5000:, :m]
+    dateval = synthetic_returns[:5000, :m]
+    dat = synthetic_returns[-5000:, :m]
     njobs = get_n_processes(20)
     results = Parallel(n_jobs=njobs)(delayed(port_experiment)(
         dat, dateval, r, m, createproblem_portMIP, N_tot, K_tot, K_nums, eps_tot, eps_nums, foldername) for r in range(R))

@@ -24,9 +24,9 @@ M = 10
 n = 12  # number of facilities
 m = 60  # number of locations
 R = 10
-eps_min = 1      # minimum epsilon we consider
-eps_max = 10         # maximum epsilon we consider
-eps_nums = np.linspace(eps_min, eps_max, M)
+eps_min = 5      # minimum epsilon we consider
+eps_max = 30         # maximum epsilon we consider
+eps_nums = np.linspace(eps_min, eps_max, M)**0.5
 eps_tot = M
 
 plt.figure(figsize=(10, 6))
@@ -64,3 +64,57 @@ plt.savefig("time.pdf")
 
 
 
+plt.rcParams.update({
+    "text.usetex": True,
+    "font.size": 16,
+    'xtick.labelsize': 16,
+    'ytick.labelsize': 16,
+    "font.family" : "serif"
+
+})
+
+
+import matplotlib.gridspec as gridspec
+
+plt.figure(figsize=(12, 8))
+gs = gridspec.GridSpec(4, 4)
+
+ax1 = plt.subplot(gs[:2, :2])
+ax2 = plt.subplot(gs[:2, 2:])
+ax3 = plt.subplot(gs[2:4, :2])
+ax4 = plt.subplot(gs[2:4, 2:])
+
+for K_count in [0, 2,4,5,6]:
+    ax1.plot(eps_nums, dftemp.sort_values(["K","Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["Opt_val"], linestyle='-', marker = 'o', label="$K = {}$".format(K_nums[K_count]),alpha = 0.6)
+ax1.set_xlabel("$\epsilon$")
+ax1.set_title("Objective value")
+
+
+for K_count in [0,2,4,5,6]:
+    ax2.plot(eps_nums, dftemp.sort_values(["K","Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["Eval_val"], label="$K = {}$".format(K_nums[K_count]),linestyle='-', marker='o', alpha=0.5)
+ax2.set_xlabel("$\epsilon$")
+ax2.set_title(r"$1-\beta$ (probability of constraint satisfaction)*")
+
+for K_count in [0,2,4,5,6]:
+    ax3.plot(eps_nums, dftemp.sort_values(["K","Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["Eval_val1"], label="$K = {}$".format(K_nums[K_count]),linestyle='-', marker='o', alpha=0.5)
+ax3.set_xlabel("$\epsilon$")
+ax3.set_title(r"$1-\beta$ (probability of constraint satisfaction)**")
+ax3.legend()
+
+
+labelprint = 1
+for i in [0,2,4,6,8]:
+    if labelprint == 1:
+        ax4.fill_between(K_nums, np.quantile([df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"] for r in range(R)],0.25,axis = 0), np.quantile([df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"] for r in range(2)],0.75,axis = 0), alpha = 0.2, label = "0.25 to 0.75 quantiles")
+    else:
+        ax4.fill_between(K_nums, np.quantile([df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"] for r in range(R)],0.25,axis = 0), np.quantile([df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"] for r in range(2)],0.75,axis = 0), alpha = 0.2)
+    labelprint = 0
+    ax4.plot(K_nums, dftemp.sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"], linestyle='-', marker='o', label="$\epsilon = {}$".format(np.round(eps_nums[i], 5)))
+
+ax4.set_xlabel("$K$ (number of clusters)")
+ax4.set_title("Time (s)")
+ax4.set_yscale("log")
+ax4.legend(fontsize = 13)
+
+plt.tight_layout()
+plt.savefig("facilitytop1.pdf")

@@ -9,8 +9,8 @@ parser.add_argument('--foldername', type=str, default="/scratch/gpfs/iywang/mro_
 arguments = parser.parse_args()
 foldername = arguments.foldername
 
-dftemp = pd.read_csv(foldername + 'df.csv')
-df = pd.read_csv(foldername + 'df_all.csv')
+dftemp = pd.read_csv(foldername + 'new_dfs/df3.csv')
+df = pd.read_csv(foldername + 'new_dfs/df_all3.csv')
 
 
 plt.rcParams.update({
@@ -44,7 +44,7 @@ plt.xlabel("$\epsilon$")
 plt.xscale("log")
 plt.title("In-sample objective value")
 plt.legend(loc = "lower right")
-plt.savefig("objectives.pdf")
+#plt.savefig("objectives.pdf")
 
 plt.figure(figsize=(10, 6))
 for K_count in np.arange(0,len(K_nums),1):
@@ -53,7 +53,7 @@ plt.xlabel("$\epsilon$")
 plt.xscale("log")
 plt.legend(loc = "lower right")
 plt.title(r"$1-\beta$ (probability of constraint satisfaction)")
-plt.savefig("constraint_satisfaction.pdf")
+#plt.savefig("constraint_satisfaction.pdf")
 
 
 plt.figure(figsize=(10, 6))
@@ -69,7 +69,7 @@ plt.xlabel("$K$ (Number of clusters)")
 plt.title("Time (s)")
 plt.yscale("log")
 plt.legend(loc = "lower right")
-plt.savefig("time.pdf")
+#plt.savefig("time.pdf")
 
 
 
@@ -105,23 +105,48 @@ ax2.legend(loc = "lower right")
 ax2.set_title(r"$1-\beta$ (probability of constraint satisfaction)")
 
 labelprint = 1
-for i in np.arange(5,len(eps_nums),1):
+for i in [3,4,5,6]:
     if labelprint == 1:
-        ax3.fill_between(K_nums, np.quantile([df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"] for r in range(R)],0.25,axis = 0), np.quantile([df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"] for r in range(2)],0.75,axis = 0), alpha = 0.1, label = "0.25 to 0.75 quantiles")
+        ax3.fill_between(K_nums, np.quantile([df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"] for r in range(R)],0.25,axis = 0)/(np.array(dftemp.sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"])[-1]), np.quantile([df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"] for r in range(R)],0.75,axis = 0)/(np.array(dftemp.sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"])[-1]), alpha = 0.1, label = "0.25 to 0.75 quantiles")
     else:
-        ax3.fill_between(K_nums, np.quantile([df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"] for r in range(R)],0.25,axis = 0), np.quantile([df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"] for r in range(2)],0.75,axis = 0), alpha = 0.1)
+        ax3.fill_between(K_nums, np.quantile([df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"] for r in range(R)],0.25,axis = 0)/(np.array(dftemp.sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"])[-1]), np.quantile([df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"] for r in range(R)],0.75,axis = 0)/(np.array(dftemp.sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"])[-1]), alpha = 0.1)
     labelprint = 0
-    ax3.plot(K_nums, dftemp.sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"], linestyle='-', marker='o', label="$\epsilon = {}$".format(np.round(eps_nums[i], 5)))
-#i = len(eps_nums)-2
-#ax3.fill_between(K_nums[0:2], np.quantile([df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"][0:2] for r in range(R)],0.25,axis = 0), np.quantile([df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"][0:2] for r in range(2)],0.75,axis = 0), alpha = 0.1)
-#ax3.plot(K_nums[0:2], dftemp.sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"][0:2], linestyle='-', marker='o', label="$\epsilon = {}$".format(np.round(eps_nums[i], 5)))
-#i = len(eps_nums)-1
-#ax3.fill_between(K_nums[0:2], np.quantile([df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"][0:2] for r in range(R)],0.25,axis = 0), np.quantile([df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"][0:2] for r in range(2)],0.75,axis = 0), alpha = 0.1)
-#ax3.plot(K_nums[0:2], dftemp.sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"][0:2], linestyle='-', marker='o', label="$\epsilon = {}$".format(np.round(eps_nums[i], 5))) 
+    ax3.plot(K_nums, np.array(dftemp.sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"])/(np.array(dftemp.sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"])[-1]), linestyle='-', marker='o', label="$\epsilon = {}$".format(np.round(eps_nums[i], 5)))
+
 ax3.set_xlabel("$K$ (Number of clusters)")
-ax3.set_ylabel("Time (s)")
-ax3.set_yscale("log")
-ax3.legend(loc = "lower right")
+ax3.set_ylabel("Time (normalized by average time for each $\epsilon$)")
+#ax3.set_yscale("log")
+ax3.legend(fontsize = 13)
 
 plt.tight_layout()
-plt.savefig("portMIP1.pdf")
+plt.savefig("portMIP_simp_normalized.pdf")
+
+plt.figure(figsize=(10, 6))
+labelprint = 1
+for i in [3,4,5,6]:
+    if labelprint == 1:
+        plt.fill_between(K_nums, np.quantile([np.array(df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"])[-1] - np.array(df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"]) for r in range(R)],0.25,axis = 0), np.quantile([np.array(df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"])[-1] - np.array(df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"]) for r in range(R)],0.75,axis = 0), alpha = 0.1, label = "0.25 to 0.75 quantiles")
+    else:
+        plt.fill_between(K_nums, np.quantile([np.array(df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"])[-1] - np.array(df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"]) for r in range(R)],0.25,axis = 0), np.quantile([np.array(df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"])[-1] - np.array(df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"]) for r in range(R)],0.75,axis = 0), alpha = 0.1)
+    labelprint = 0
+    plt.plot(K_nums,np.array(dftemp.sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"])[-1] - np.array(dftemp.sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"]), linestyle='-', marker='o', label="$\epsilon = {}$".format(np.round(eps_nums[i], 5)))
+plt.xlabel("$K$ (Number of clusters)")
+plt.ylabel("Time reduction compared to $K = N$ (s)")
+plt.yscale("log")
+plt.legend(fontsize = 16)
+plt.savefig("timediff_simp.pdf")
+
+plt.figure(figsize=(10, 6))
+labelprint = 1
+for i in [3,4,5,6]:
+    if labelprint == 1:
+        plt.fill_between(K_nums, np.quantile([np.array(df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"])[-1] - np.array(df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"]) for r in range(R)],0.25,axis = 0)/(np.array(dftemp.sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"])[-1]), np.quantile([np.array(df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"])[-1] - np.array(df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"]) for r in range(R)],0.75,axis = 0)/(np.array(dftemp.sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"])[-1]), alpha = 0.1, label = "0.25 to 0.75 quantiles")
+    else:
+        plt.fill_between(K_nums, np.quantile([np.array(df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"])[-1] - np.array(df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"]) for r in range(R)],0.25,axis = 0)/(np.array(dftemp.sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"])[-1]), np.quantile([np.array(df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"])[-1] - np.array(df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"]) for r in range(R)],0.75,axis = 0)/(np.array(dftemp.sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"])[-1]), alpha = 0.1)
+    labelprint = 0
+    plt.plot(K_nums,(np.array(dftemp.sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"])[-1] - np.array(dftemp.sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"]))/(np.array(dftemp.sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"])[-1]), linestyle='-', marker='o', label="$\epsilon = {}$".format(np.round(eps_nums[i], 5)))
+plt.xlabel("$K$ (Number of clusters)")
+plt.ylabel("Time reduction compared to $K = N$ (normalized)")
+#plt.yscale("log")
+plt.legend(fontsize = 16)
+plt.savefig("timediff_simp_normalized.pdf")

@@ -78,7 +78,8 @@ def prob_facility_separate(K, m, n):
     X = cp.Variable((n, m))
     lmbda = cp.Variable(n)
     #s = cp.Variable(K)
-    s = cp.Variable((n, K))
+    #s = cp.Variable((n, K))
+    s = 0
 
     objective = cp.Minimize(cp.trace(C.T @ X) + c@x)
     # cp.Minimize(t)
@@ -90,10 +91,14 @@ def prob_facility_separate(K, m, n):
     #    constraints += [cp.multiply(eps, lmbda[i]) + wk @ s[i] <= 0]
     #    constraints += [cp.hstack([-p[i]*x[i]]*K) + d_train@X[i] +
     #                    cp.hstack([cp.quad_over_lin(X[i], 4*lmbda[i])]*K) <= s[i]]
+    #for i in range(n):
+    #    constraints += [cp.multiply(eps, lmbda[i]) + wk @ s[i] <= 0]
+    #    constraints += [cp.hstack([-p[i]*x[i]]*K) + d_train@X[i] <= s[i]]
+    #    constraints += [cp.norm(X[i],2) <= lmbda[i]]
+
     for i in range(n):
-        constraints += [cp.multiply(eps, lmbda[i]) + wk @ s[i] <= 0]
-        constraints += [cp.hstack([-p[i]*x[i]]*K) + d_train@X[i] <= s[i]]
-        constraints += [cp.norm(X[i],2) <= lmbda[i]]
+        constraints += [eps*lmbda[i] + cp.quad_over_lin(X[i], 4*lmbda[i]) - p[i]*x[i] + wk @ (d_train@X[i]) <= 0]
+        #constraints += [cp.norm(X[i],2) <= lmbda[i]]
 
     constraints += [X >= 0, lmbda >= 0]
 
@@ -228,7 +233,7 @@ def facility_experiment(r, n, m, Data, Data_eval, prob_facility, N_tot, K_tot, K
                       "Eval_val1", "solvetime", "setuptime", "clustertime"])
 
     ######################## solve for various K ########################
-    for K_count, K in enumerate(K_nums):
+    for K_count, K in enumerate(np.flip(K_nums)):
         if K == N_tot:
             d_train, wk = cluster_data(Data[:, :, r], K)
             clustertimes = 0
@@ -252,7 +257,8 @@ def facility_experiment(r, n, m, Data, Data_eval, prob_facility, N_tot, K_tot, K
         ############## solve for various epsilons ###################
         for eps_count, eps in enumerate(eps_nums):
             eps_pm.value = eps
-            problem.solve()
+            problem.solve(solver=cp.MOSEK, verbose=True, mosek_params={
+                          mosek.dparam.optimizer_max_time:  1500.0})
             #X_sols[K_count, eps_count, :, :] = X.value
             #x_sols[K_count, eps_count, :] = x.value
             evalvalue = evaluate(p_pm, x, X, dat_eval)
@@ -279,7 +285,6 @@ if __name__ == '__main__':
     parser.add_argument('--foldername', type=str, default="/scratch/gpfs/iywang/mro_results/", metavar='N')
     arguments = parser.parse_args()
     foldername = arguments.foldername
-    #foldername = "facility/m50n10_K100_r10"
     # different cluster values we consider
     K_nums = np.array([1, 5, 10, 50, 100,200,300])
     K_tot = K_nums.size  # Total number of clusters we consider
@@ -288,10 +293,9 @@ if __name__ == '__main__':
     R = 10       # Total times we repeat experiment to estimate final probabilty
     n = 12  # number of facilities
     m = 60  # number of locations
-    #eps_min = 5      # minimum epsilon we consider
-    #eps_max = 30         # maximum epsilon we consider
-    eps_min = 1      # minimum epsilon we consider
-    eps_max = 10 
+    eps_min = 5      # minimum epsilon we consider
+    eps_max = 30         # maximum epsilon we consider
+
 
     eps_nums = np.linspace(eps_min, eps_max, M)
     eps_tot = M
