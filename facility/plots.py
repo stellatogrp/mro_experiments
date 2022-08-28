@@ -17,16 +17,16 @@ plt.rcParams.update({
 "font.family": "serif"
 })
 
-K_nums = np.array([1, 5, 10, 50, 100, 200,300])
+K_nums = np.array([1, 5, 10, 50, 75,150])
 K_tot = K_nums.size  # Total number of clusters we consider
-N_tot = 300
+N_tot = 150
 M = 10
-n = 12  # number of facilities
-m = 60  # number of locations
+n = 10  # number of facilities
+m = 50  # number of locations
 R = 10
-eps_min = 5      # minimum epsilon we consider
-eps_max = 30         # maximum epsilon we consider
-eps_nums = np.linspace(eps_min, eps_max, M)**0.5
+eps_min = 1      # minimum epsilon we consider
+eps_max = 10         # maximum epsilon we consider
+eps_nums = np.linspace(eps_min, eps_max, M)
 eps_tot = M
 
 plt.figure(figsize=(10, 6))
@@ -35,7 +35,7 @@ for K_count in np.arange(0,len(K_nums),1):
 plt.xlabel("$\epsilon$")
 plt.title("In-sample objective value")
 plt.legend(loc = "lower right")
-plt.savefig("objectives.pdf")
+#plt.savefig("objectives.pdf")
 
 plt.figure(figsize=(10, 6))
 for K_count in np.arange(0,len(K_nums),1):
@@ -43,7 +43,7 @@ for K_count in np.arange(0,len(K_nums),1):
 plt.xlabel("$\epsilon$")
 plt.legend(loc = "lower right")
 plt.title(r"$1-\beta$ (probability of constraint satisfaction)(*)")
-plt.savefig("constraint_satisfaction.pdf")
+#plt.savefig("constraint_satisfaction.pdf")
 
 plt.figure(figsize=(10, 6))
 for K_count in np.arange(0,len(K_nums),1):
@@ -51,7 +51,7 @@ for K_count in np.arange(0,len(K_nums),1):
 plt.xlabel("$\epsilon$")
 plt.legend(loc = "lower right")
 plt.title(r"$1-\beta$ (probability of constraint satisfaction)(**)")
-plt.savefig("constraint_satisfaction_strict.pdf")
+#plt.savefig("constraint_satisfaction_strict.pdf")
 
 plt.figure(figsize=(10, 6))
 for i in np.arange(0,len(eps_nums),3):
@@ -60,7 +60,7 @@ plt.xlabel("$K$ (Number of clusters)")
 plt.title("Time (s)")
 plt.yscale("log")
 plt.legend(loc = "lower right")
-plt.savefig("time.pdf")
+#plt.savefig("time.pdf")
 
 
 

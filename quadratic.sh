@@ -3,7 +3,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=20
-#SBATCH --mem-per-cpu=10G
+#SBATCH --mem-per-cpu=3G
 #SBATCH --time=20:00:00
 #SBATCH -o /scratch/gpfs/iywang/mro_results/quadratic_concave/m10_K60_r20/quadratic_test_%A.txt
 #SBATCH --mail-type=BEGIN,END,FAIL,TIME_LIMIT
@@ -17,4 +17,4 @@ conda activate mroenv
 
 python quadratic_concave/quadratic.py --foldername /scratch/gpfs/iywang/mro_results/quadratic_concave/m10_K60_r20/
 
-python quadratic_concave/plots.py --foldername /scratch/gpfs/iywang/mro_results/quadratic_concave/m10_K60_r20/
+#python quadratic_concave/plots.py --foldername /scratch/gpfs/iywang/mro_results/quadratic_concave/m10_K60_r20/

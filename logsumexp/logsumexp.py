@@ -7,8 +7,30 @@ import numpy as np
 import cvxpy as cp
 import pandas as pd
 import sys
-from mro.utils import get_n_processes, cluster_data
+#from mro.utils import get_n_processes, cluster_data
 import argparse
+
+def get_n_processes(max_n=np.inf):
+    """Get number of processes from current cps number
+    Parameters
+    ----------
+    max_n: int
+        Maximum number of processes.
+    Returns
+    -------
+    float
+        Number of processes to use.
+    """
+
+    try:
+        # Check number of cpus if we are on a SLURM server
+        n_cpus = int(os.environ["SLURM_CPUS_PER_TASK"])
+    except KeyError:
+        n_cpus = joblib.cpu_count()
+
+    n_proc = max(min(max_n, n_cpus), 1)
+
+    return n_proc
 
 def dat_scaled(N, m,scale):
     """Creates scaled data
@@ -74,11 +96,41 @@ def createproblem_max(N, m,w):
     objective = cp.sum([w[k]*cp.log(u[k]@expx) for k in range(N)])
     # CONSTRAINTS #
     constraints = [cp.sum([cp.quad_over_lin(u[k]-dat[k], 1/w[k]) for k in range(N)])<= eps]
+    #constraints += [u>= 0, u <= 3]
 
     # PROBLEM #
     problem = cp.Problem(cp.Maximize(objective), constraints)
     return problem, u,expx,dat,eps
 
+def createproblem_max1(N, m,w):
+    """Create the maximization problem to test constraint satisfaction
+    Parameters:
+    ----------
+    N: int
+        Number of data samples
+    m: int
+        Size of each data sample
+    w: vector
+        Weights for each data sample
+    Returns:
+    -------
+    The cvxpy problem and parameters
+    """
+    # PARAMETERS #
+    dat = cp.Parameter((N, m))
+    expx = cp.Parameter(m)
+    eps = cp.Parameter()
+    
+    u = cp.Variable((N,m))
+    
+    objective = cp.sum([w[k]*cp.log(u[k]@expx) for k in range(N)])
+    # CONSTRAINTS #
+    constraints = [cp.sum([cp.quad_over_lin(u[k]-dat[k], 1/w[k]) for k in range(N)])<= eps]
+    constraints += [u>= 0, u <= 2.5]
+
+    # PROBLEM #
+    problem = cp.Problem(cp.Maximize(objective), constraints)
+    return problem, u,expx,dat,eps
 
 def createproblem_min(N, m,w,Uvals,n_planes):
     """Create minimization problem to ensure constraint satisfaction
@@ -112,7 +164,7 @@ def createproblem_min(N, m,w,Uvals,n_planes):
     return problem, x
   
 
-def minmaxsolve(N,m,w,data,epsilon):
+def minmaxsolve(N,m,w,data,epsilon, probmin, probmax):
     """Cutting plane procedure
     Parameters:
     ----------
@@ -142,11 +194,11 @@ def minmaxsolve(N,m,w,data,epsilon):
     Uvals[inds] = np.log(data)
     inds += 1
     solvetime = 0
-    problem1, x= createproblem_min(N, m,w,Uvals,inds)
+    problem1, x= probmin(N, m,w,Uvals,inds)
     problem1.solve()
     objs1 = problem1.objective.value
     solvetime += problem1.solver_stats.solve_time
-    problem, u,expx,dat,eps= createproblem_max(N, m,w)
+    problem, u,expx,dat,eps= probmax(N, m,w)
     dat.value = data
     eps.value = epsilon
     expx.value = np.exp(x.value)
@@ -154,7 +206,7 @@ def minmaxsolve(N,m,w,data,epsilon):
     solvetime += problem.solver_stats.solve_time
     Uvals[inds] = np.log(u.value)
     inds += 1
-    problem1, x= createproblem_min(N, m,w,Uvals,inds)
+    problem1, x= probmin(N, m,w,Uvals,inds)
     problem1.solve()
     solvetime += problem1.solver_stats.solve_time
     objs2 = problem1.objective.value
@@ -164,7 +216,7 @@ def minmaxsolve(N,m,w,data,epsilon):
         solvetime += problem.solver_stats.solve_time
         Uvals[inds] = np.log(u.value)
         inds += 1
-        problem1, x= createproblem_min(N, m,w,Uvals,inds)
+        problem1, x= probmin(N, m,w,Uvals,inds)
         problem1.solve()
         solvetime += problem1.solver_stats.solve_time
         objs1 = objs2
@@ -187,8 +239,25 @@ def logsumexp_experiment(r, m, N_tot, K_nums, eps_nums, foldername):
     for Kcount, K in enumerate(K_nums):
         kmeans = KMeans(n_clusters=K).fit(d)
         weights = np.bincount(kmeans.labels_) / N_tot
+        if K == N_tot:
+            for epscount, epsval in enumerate(eps_nums):
+                objs_val,x_val,time,iters = minmaxsolve(K,m,weights,kmeans.cluster_centers_,epsval**2,createproblem_min,createproblem_max1)
+                evalvalue = cp.sum([(1/N_tot)*cp.log_sum_exp(x_val + np.log(d2[k])).value for k in range(N_tot)])
+                newrow = pd.Series(
+                    {"r":r,
+                    "K": 9999,
+                    "Epsilon": epsval,
+                    "Opt_val": objs_val,
+                    "Eval_val": evalvalue,
+                    "satisfy": evalvalue <= objs_val,
+                    "solvetime": time,
+                    "bound": (1/(2*N_tot))*kmeans.inertia_,
+                    "iters": iters
+                })
+                df = df.append(newrow,ignore_index = True)
+
         for epscount, epsval in enumerate(eps_nums):
-            objs_val,x_val,time,iters = minmaxsolve(K,m,weights,kmeans.cluster_centers_,epsval**2)
+            objs_val,x_val,time,iters = minmaxsolve(K,m,weights,kmeans.cluster_centers_,epsval**2,createproblem_min,createproblem_max)
             evalvalue = cp.sum([(1/N_tot)*cp.log_sum_exp(x_val + np.log(d2[k])).value for k in range(N_tot)])
             newrow = pd.Series(
                 {"r":r,
@@ -202,7 +271,6 @@ def logsumexp_experiment(r, m, N_tot, K_nums, eps_nums, foldername):
                 "iters": iters
             })
             df = df.append(newrow,ignore_index = True)
-
     return df
 
 
@@ -211,12 +279,11 @@ if __name__ == '__main__':
     parser.add_argument('--foldername', type=str, default="/scratch/gpfs/iywang/mro_results/", metavar='N')
     arguments = parser.parse_args()
     foldername = arguments.foldername
-    #foldername = "logsumexp/m30_K90_r50"
     N_tot = 90
     m = 30
     R = 30
-    K_nums = np.append([1,2,3,5,6,7,8,10],np.append(np.arange(20, int(N_tot/2)+1,10), N_tot))
-    eps_nums = np.append(np.logspace(-5.5,-4,20),np.logspace(-3.9,1,10))
+    K_nums = np.array([1,2,3,5,6,7,8,10,20,40,90])
+    eps_nums = np.append(np.logspace(-4.5,-3.5,10),np.logspace(-3.48,1,10))
     
     njobs = get_n_processes(30)
     results = Parallel(n_jobs=njobs)(delayed(logsumexp_experiment)(

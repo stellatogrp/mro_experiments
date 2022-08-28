@@ -7,52 +7,9 @@ import numpy as np
 from sklearn.cluster import KMeans
 import cvxpy as cp
 import sys
-#from mro.utils import get_n_processes, cluster_data
+from mro.utils import get_n_processes, cluster_data
 output_stream = sys.stdout
 import argparse
-
-
-def get_n_processes(max_n=np.inf):
-    """Get number of processes from current cps number
-    Parameters
-    ----------
-    max_n: int
-        Maximum number of processes.
-    Returns
-    -------
-    float
-        Number of processes to use.
-    """
-
-    try:
-        # Check number of cpus if we are on a SLURM server
-        n_cpus = int(os.environ["SLURM_CPUS_PER_TASK"])
-    except KeyError:
-        n_cpus = joblib.cpu_count()
-
-    n_proc = max(min(max_n, n_cpus), 1)
-
-    return n_proc
-
-def cluster_data(D_in, K):
-    """Return K cluster means after clustering D_in into K clusters
-    Parameters
-    ----------
-    D_in: array
-        Input dataset, N entries
-    Returns
-    -------
-    Dbar_in: array
-        Output dataset, K entries
-    weights: vector
-        Vector of weights for Dbar_in
-    """    
-    N = D_in.shape[0]
-    kmeans = KMeans(n_clusters=K).fit(D_in)
-    Dbar_in = kmeans.cluster_centers_
-    weights = np.bincount(kmeans.labels_) / N
-
-    return Dbar_in, weights
 
 
 def createproblem_port(N, m):
@@ -76,27 +33,29 @@ def createproblem_port(N, m):
     # VARIABLES #
     # weights, s_i, lambda, tau
     x = cp.Variable(m)
-    s = cp.Variable(N)
+    #s = cp.Variable(N)
+    s = 0
     lam = cp.Variable()
-    tao = cp.Variable()
+    tau = cp.Variable()
     y = cp.Variable()
     # OBJECTIVE #
-    objective = tao + y
+    objective = tau + y
 
     # CONSTRAINTS #
-    constraints = [w@s <= y]
+    #constraints = [w@s <= y]
     #constraints += [cp.norm(-a*x,2) <= lam]
-    #constraints += [cp.hstack([a*tao]*N) + a*dat@x + eps*lam <= s]
+    #constraints += [cp.hstack([a*tau]*N) + a*dat@x + eps*lam <= s]
     #for k in range(N):
     #    constraints += [cp.norm(-a*x,2) <= lam[k]]
-    constraints += [cp.hstack([a*tao]*N) + a*dat@x +
-                    cp.hstack([cp.quad_over_lin(-a*x, 4*lam)]*N) + eps*lam <= s]
+    #constraints += [cp.hstack([a*tau]*N) + a*dat@x +
+    #                cp.hstack([cp.quad_over_lin(-a*x, 4*lam)]*N) + eps*lam <= s]
+    constraints = [a*tau+cp.quad_over_lin(-a*x, 4*lam) + eps*lam + (a*x)@(w@dat)<= y]
     constraints += [cp.sum(x) == 1]
     constraints += [x >= 0, x <= 1]
     constraints += [lam >= 0, y >=0]
     # PROBLEM #
     problem = cp.Problem(cp.Minimize(objective), constraints)
-    return problem, x, s, tao, y, lam, dat, eps, w
+    return problem, x, s, tau, y, lam, dat, eps, w
 
 
 def port_experiment(dat, dateval, r, m, prob, N_tot, K_tot, K_nums, eps_tot, eps_nums, foldername):
@@ -131,7 +90,7 @@ def port_experiment(dat, dateval, r, m, prob, N_tot, K_tot, K_nums, eps_tot, eps
 
         d_eval = Data_eval[(N_tot*r):(N_tot*(r+1))]
         tnow = time.time()
-        problem, x, s, tao,y, lmbda, data_train_pm, eps_pm, w_pm = prob(K, m)
+        problem, x, s, tau,y, lmbda, data_train_pm, eps_pm, w_pm = prob(K, m)
         data_train_pm.value = d_train
         w_pm.value = wk
         setuptimes = time.time() - tnow
@@ -143,7 +102,7 @@ def port_experiment(dat, dateval, r, m, prob, N_tot, K_tot, K_nums, eps_tot, eps
             problem.solve(ignore_dpp=True, solver=cp.MOSEK,mosek_params={
                           mosek.dparam.optimizer_max_time:  1000.0})
             x_sols[K_count, eps_count, :, r] = x.value
-            evalvalue = -5*np.mean(d_eval@x.value) - 5*tao.value <= y.value
+            evalvalue = -5*np.mean(d_eval@x.value) - 5*tau.value <= y.value
             newrow = pd.Series(
                 {"K": K,
                  "Epsilon": eps,
@@ -183,8 +142,8 @@ if __name__ == '__main__':
     M = 15
     R = 10      # Total times we repeat experiment 
     m = 200
-    eps_min = -5    # minimum epsilon we consider
-    eps_max = -3.5       # maximum epsilon we consider
+    eps_min = -4.5    # minimum epsilon we consider
+    eps_max = -3.9       # maximum epsilon we consider
     eps_nums = np.linspace(eps_min, eps_max, M)
     eps_nums = 10**(eps_nums)
     eps_tot = M
@@ -204,3 +163,6 @@ if __name__ == '__main__':
     dftemp = dftemp/R
 
     dftemp.to_csv(foldername + '/df.csv')
+
+    all = pd.concat([results[r][1] for r in range(R)])
+    all.to_csv(foldername + '/df_all.csv')

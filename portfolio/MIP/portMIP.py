@@ -75,8 +75,60 @@ def createproblem_portMIP(N, m):
     # VARIABLES #
     # weights, s_i, lambda, tau
     x = cp.Variable(m)
+    s = cp.Variable(N)
+    lam = cp.Variable(N)
+    z = cp.Variable(m, boolean=True)
+    tau = cp.Variable()
+    #t = cp.Variable()
+    y = cp.Variable()
+    gam= cp.Variable((N,2*m))
+    d_r = np.concatenate(([np.ones(m),np.ones(m)] ))
+    C_r = np.vstack([np.eye(m), -np.eye(m)])
+    # OBJECTIVE #
+    objective = tau + y
+
+    # CONSTRAINTS #
+    constraints = [w@s <= y]
+    #constraints += [cp.hstack([a*tau]*N) + a*dat@x +
+    #                cp.hstack([t]*N) + eps*lam <= s]
+    #constraints += [cp.quad_over_lin(-a*x, 4*lam) <= t]
+    #constraints = [a*tau+cp.quad_over_lin(-a*x, 4*lam) + eps*lam + (a*x)@#(w@dat)<= y]
+    
+    for k in range(N):
+        constraints += [a*tau + a*dat[k]@x +  gam[k]@(d_r - C_r@dat[k]) + eps*lam[k] <= s[k]]
+        constraints += [cp.norm(C_r.T@gam[k] + a*x,2) <= lam[k]]
+    constraints += [cp.sum(x) == 1]
+    constraints += [x >= 0, x <= 1]
+    constraints += [lam >= 0,y>=0]
+    constraints += [x - z <= 0, cp.sum(z) <= 5, gam >=0]
+    # PROBLEM #
+    problem = cp.Problem(cp.Minimize(objective), constraints)
+    return problem, x, s, tau,y, lam, dat, eps, w
+
+
+def createproblem_portMIP_max(N, m):
+    """Create the problem in cvxpy, minimize CVaR
+    Parameters
+    ----------
+    N: int
+        Number of data samples
+    m: int
+        Size of each data sample
+    Returns
+    -------
+    The instance and parameters of the cvxpy problem
+    """
+    # PARAMETERS #
+    dat = cp.Parameter((N, m))
+    eps = cp.Parameter()
+    w = cp.Parameter(N)
+    a = -5
+
+    # VARIABLES #
+    # weights, s_i, lambda, tau
+    x = cp.Variable(m)
     #s = cp.Variable(N)
-    s = 0
+    s= 0
     lam = cp.Variable()
     z = cp.Variable(m, boolean=True)
     tau = cp.Variable()
@@ -90,9 +142,11 @@ def createproblem_portMIP(N, m):
     #constraints += [cp.hstack([a*tau]*N) + a*dat@x +
     #                cp.hstack([t]*N) + eps*lam <= s]
     #constraints += [cp.quad_over_lin(-a*x, 4*lam) <= t]
-    constraints = [a*tau+cp.quad_over_lin(-a*x, 4*lam) + eps*lam + (a*x)@(w@dat)<= y]
-    #constraints += [cp.norm(-a*x,2) <= lam]
-    #constraints += [cp.hstack([a*tau]*N) + a*dat@x + eps*lam <= s]
+    #constraints = [a*tau+cp.quad_over_lin(-a*x, 4*lam) + eps*lam + (a*x)@#(w@dat)<= y]
+    constraints = [a*tau + eps*lam + (a*x)@(w@dat)<= y]
+    #for k in range(N):
+    #    constraints += [a*tau + a*dat[k]@x + eps*lam <= s[k]]
+    constraints += [cp.norm(a*x,2) <= lam]
     constraints += [cp.sum(x) == 1]
     constraints += [x >= 0, x <= 1]
     constraints += [lam >= 0,y>=0]
@@ -116,20 +170,40 @@ def port_experiment(dat, dateval, r, m, prob, N_tot, K_tot, K_nums, eps_tot, eps
     """
     x_sols = np.zeros((K_tot, eps_tot, m, R))
     df = pd.DataFrame(columns=["R", "K", "Epsilon", "Opt_val", "Eval_val",
-                               "satisfy", "solvetime", "setuptime"])
+                               "satisfy", "solvetime"])
     Data = dat
     Data_eval = dateval
 
    ######################## solve for various K ########################
     for K_count, K in enumerate(np.flip(K_nums)):
-        tnow = time.time()
         d_train, wk = cluster_data(Data[(N_tot*r):(N_tot*(r+1))], K)
         d_eval = Data_eval[(N_tot*r):(N_tot*(r+1))]
         assert(d_train.shape == (K, m))
+
+        if (K ==N_tot):
+            problem, x, s, tau,y, lmbda, data_train_pm, eps_pm, w_pm = createproblem_portMIP_max(K, m)
+            data_train_pm.value = d_train
+            w_pm.value = wk
+            ############## solve for various epsilons ###################
+            for eps_count, eps in enumerate(eps_nums):
+                eps_pm.value = eps
+                problem.solve(ignore_dpp=True, solver=cp.MOSEK, verbose=True, mosek_params={
+                            mosek.dparam.optimizer_max_time:  1500.0})
+                evalvalue = -5*np.mean(d_eval@x.value) - 5*tau.value <= y.value
+                newrow = pd.Series(
+                    {"R": r,
+                    "K": 9999,
+                    "Epsilon": eps,
+                    "Opt_val": problem.objective.value,
+                    "Eval_val": evalvalue,
+                    "satisfy": evalvalue,
+                    "solvetime": problem.solver_stats.solve_time,
+                    })
+                df = df.append(newrow, ignore_index=True)
+
         problem, x, s, tau,y, lmbda, data_train_pm, eps_pm, w_pm = prob(K, m)
         data_train_pm.value = d_train
         w_pm.value = wk
-        setuptimes = time.time() - tnow
 
         ############## solve for various epsilons ###################
         for eps_count, eps in enumerate(eps_nums):
@@ -146,11 +220,10 @@ def port_experiment(dat, dateval, r, m, prob, N_tot, K_tot, K_nums, eps_tot, eps
                  "Eval_val": evalvalue,
                  "satisfy": evalvalue,
                  "solvetime": problem.solver_stats.solve_time,
-                 "setuptime": setuptimes
                  })
             df = df.append(newrow, ignore_index=True)
             #df.to_csv(foldername + '/df.csv')
-
+        problem = cp.Problem(cp.Minimize(0))
     return x_sols, df
 
 
@@ -163,14 +236,14 @@ if __name__ == '__main__':
     synthetic_returns = pd.read_csv(
         '/scratch/gpfs/iywang/mro_experiments/portfolio/sp500_synthetic_returns.csv').to_numpy()[:, 1:]
 
-    K_nums = np.array([1, 5, 50, 100, 150, 300])
+    K_nums = np.array([1, 5, 50, 100])
     K_tot = K_nums.size  # Total number of clusters we consider
-    N_tot = 300
+    N_tot = 100
     M = 10
     R = 12          # Total times we repeat experiment 
-    m = 50
-    eps_min = -5    # minimum epsilon we consider
-    eps_max = -3.5       # maximum epsilon we consider
+    m = 30
+    eps_min = -3.5    # minimum epsilon we consider
+    eps_max = -1.5       # maximum epsilon we consider
     eps_nums = np.linspace(eps_min, eps_max, M)
     eps_nums = 10**(eps_nums)
     eps_tot = M
@@ -188,7 +261,7 @@ if __name__ == '__main__':
     for r in range(1, R):
         dftemp = dftemp.add(results[r][1].reset_index(), fill_value=0)
     dftemp = dftemp/R
-    dftemp.to_csv(foldername + '/df.csv')
+    dftemp.to_csv(foldername + '/df2.csv')
     
     all = pd.concat([results[r][1] for r in range(R)])
-    all.to_csv(foldername + '/df_all.csv')
+    all.to_csv(foldername + '/df_all2.csv')

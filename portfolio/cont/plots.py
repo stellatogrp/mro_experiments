@@ -23,10 +23,10 @@ N_tot = 900
 M = 15
 R = 10        
 m = 200
-eps_min = -3.5    
-eps_max = -1.5   
+eps_min = -4.5    
+eps_max = -3.9   
 eps_nums = np.linspace(eps_min, eps_max, M)
-eps_nums = 10**eps_nums
+eps_nums = (10**eps_nums)**0.5
 eps_tot = M
 
 

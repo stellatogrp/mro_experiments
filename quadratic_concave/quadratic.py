@@ -9,8 +9,30 @@ import pandas as pd
 import scipy as sc
 from sklearn import datasets
 import sys
-from mro.utils import get_n_processes, cluster_data
+#from mro.utils import get_n_processes, cluster_data
 import argparse
+
+def get_n_processes(max_n=np.inf):
+    """Get number of processes from current cps number
+    Parameters
+    ----------
+    max_n: int
+        Maximum number of processes.
+    Returns
+    -------
+    float
+        Number of processes to use.
+    """
+
+    try:
+        # Check number of cpus if we are on a SLURM server
+        n_cpus = int(os.environ["SLURM_CPUS_PER_TASK"])
+    except KeyError:
+        n_cpus = joblib.cpu_count()
+
+    n_proc = max(min(max_n, n_cpus), 1)
+
+    return n_proc
 
 def normal_returns_scaled(N, m,scale):
     """Creates scaled data
@@ -79,6 +101,7 @@ def createproblem_quad(N, m,A):
     lam = cp.Variable()
     z = cp.Variable((N, m))
     y = cp.Variable((N,m*m))
+    #h = cp.Variable(m,boolean = True)
 
     # OBJECTIVE #
     objective = cp.multiply(eps, lam) + s@w
@@ -92,6 +115,7 @@ def createproblem_quad(N, m,A):
         constraints += [cp.sum([y[k,ind*(m):(ind+1)*m] for ind in range(m)],axis = 0)== z[k]]
     constraints += [x >= 0, x <= 1]
     constraints += [lam >= 0]
+    #constraints += [x - h <= 0, cp.sum(h) <= 5]
 
     # PROBLEM #
     problem = cp.Problem(cp.Minimize(objective), constraints)
@@ -107,24 +131,25 @@ def quadratic_experiment(A, Ainv, r, m, N_tot, K_nums, eps_nums, foldername):
     df: dataframe
         The results of the experiments
     '''
-    df = pd.DataFrame(columns = ["r","K","Epsilon","Opt_val","Eval_val","satisfy","solvetime","bound"])
-    xsols = np.zeros((len(K_nums),len(eps_nums),m, R))
+    df = pd.DataFrame(columns = ["R","K","Epsilon","Opt_val","Eval_val","satisfy","solvetime","bound"])
+    #xsols = np.zeros((len(K_nums),len(eps_nums),m, R))
+    xsols = 0
     d = data_modes(N_tot,m,[1,5,15,25,40])
     d2 = data_modes(N_tot,m,[1,5,15,25,40])
     for Kcount, K in enumerate(K_nums):
         kmeans = KMeans(n_clusters=K).fit(d)
         weights = np.bincount(kmeans.labels_) / N_tot
         for epscount, epsval in enumerate(eps_nums):
-            problem, x, s, lam, dat, eps, w = createproblem_quadnew(K, m, Ainv)
+            problem, x, s, lam, dat, eps, w = createproblem_quad(K, m, Ainv)
             eps.value = epsval**2
             dat.value = kmeans.cluster_centers_
             w.value = weights
             problem.solve()
             evalvalue = np.mean(-0.5*(d2@np.sum([A[i]*x.value[i] for i in range(m)],axis = 0))@(d2.T))
-            xsols[Kcount, epscount, :, r] = x.value
+            #xsols[Kcount, epscount, :, r] = x.value
             L = np.linalg.norm(np.sum([A[i]*x.value[i] for i in range(m)],axis = 0),2)
             newrow = pd.Series(
-                {"r":r,
+                {"R":r,
                  "K": K,
                  "Epsilon": epsval,
                  "Opt_val": problem.objective.value,
@@ -134,6 +159,7 @@ def quadratic_experiment(A, Ainv, r, m, N_tot, K_nums, eps_nums, foldername):
                  "bound": (L/(2*N_tot))*kmeans.inertia_
             })
             df = df.append(newrow,ignore_index = True)
+            problem = 0
     return xsols, df
   
 
@@ -143,10 +169,9 @@ if __name__ == '__main__':
     arguments = parser.parse_args()
     foldername = arguments.foldername
 
-    #foldername = "concave/m10_K60_r20"
     N_tot = 60
     m = 10
-    R = 20
+    R = 30
     K_nums = [1,2,3,4,5,10,30,60]
     A = {}
     Ainv = {}
@@ -155,15 +180,20 @@ if __name__ == '__main__':
         Ainv[i] = sc.linalg.sqrtm(np.linalg.inv(A[i])) 
     eps_nums = np.array([0.01, 0.015, 0.023, 0.036, 0.055, 0.085, 0.13, 0.20, 0.30, 0.5, 0.7,1, 1.2, 1.4, 1.43, 1.47, 1.51, 1.55, 1.58, 1.62, 1.66, 1.7, 1.73, 1.77, 1.81, 1.85, 1.88, 1.92, 1.96, 2, 2.02, 2.07, 2.11, 2.15, 2.18, 2.22, 2.26, 2.3, 2.5, 2.7,3,4,9,10])
 
+    #eps_nums = np.concatenate((np.logspace(-2,0.4,20), np.array([3,4,7,9,10])))
+
     njobs = get_n_processes(30)
     results = Parallel(n_jobs=njobs)(delayed(quadratic_experiment)(
         A, Ainv, r, m, N_tot, K_nums, eps_nums, foldername) for r in range(R))
     
-    x_sols = np.zeros((len(K_nums),len(eps_nums),m, R))
+    #x_sols = np.zeros((len(K_nums),len(eps_nums),m, R))
     dftemp = results[0][1]
-    for r in range(R):
-        x_sols += results[r][0]
+    #for r in range(R):
+    #    x_sols += results[r][0]
     for r in range(1, R):
         dftemp = dftemp.add(results[r][1].reset_index(), fill_value=0)
     dftemp = dftemp/R
     dftemp.to_csv(foldername + '/df.csv')
+
+    all = pd.concat([results[r][1] for r in range(R)])
+    all.to_csv(foldername + '/df_all.csv')
