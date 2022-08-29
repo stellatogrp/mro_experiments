@@ -2,6 +2,8 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import argparse 
+from mpl_toolkits.axes_grid1.inset_locator import zoomed_inset_axes
+from mpl_toolkits.axes_grid1.inset_locator import mark_inset
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--foldername', type=str, default="/scratch/gpfs/iywang/mro_results/", metavar='N')
@@ -32,16 +34,27 @@ colors = ["tab:blue", "tab:orange", "tab:green",
           "tab:red", "tab:purple", "tab:brown", "tab:pink", "tab:grey", "tab:olive","tab:blue", "tab:orange", "tab:green",
           "tab:red", "tab:purple", "tab:brown", "tab:pink", "tab:grey", "tab:olive"]
 j = 0
-for K_count in [0,2,4,5,6]:
+for K_count in [0,1,3,5,6]:
     ax1.plot(np.array(eps_nums), dftemp.sort_values(["K","Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["Opt_val"], linestyle='-', marker=styles[j], label="Objective, $K = {}$".format(K_nums[K_count]),alpha = 0.7)
     ax1.plot(np.array(eps_nums),dftemp.sort_values(["K","Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["Eval_val"],color = colors[j], linestyle=':', label = "Expectation, $K = {}$".format(K_nums[K_count]))
     j+=1
 ax1.set_xlabel("$\epsilon$")
 ax1.set_title("In-sample objective and %\n out-of-sample expected values")
 ax1.set_xscale("log")
+axins = zoomed_inset_axes(ax1, 6, loc="upper left")
+axins.set_xlim(10**(-3.5), 10e-4)
+axins.set_ylim(-18,-14)
+j = 0
+for K_count in [0,1,3,5,6]:
+    axins.plot(np.array(eps_nums), dftemp.sort_values(["K","Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["Opt_val"],color = colors[j])
+    axins.plot(np.array(eps_nums), dftemp.sort_values(["K","Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["Eval_val"],linestyle=':',color = colors[j])
+    j+=1
+axins.set_xticks(ticks=[])
+axins.set_yticks(ticks=[])
+mark_inset(ax1, axins, loc1=3, loc2=4, fc="none", ec="0.5")
 
 j = 0
-for K_count in [0,2,4,5]:
+for K_count in [0,1,3,5]:
     ax21.plot(1 - dftemp.sort_values(["K","Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["satisfy"][0:-1:1],dftemp.sort_values(["K","Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["Opt_val"][0:-1:1],linestyle='-',label="$K = {}$".format(K_nums[K_count]),marker = styles[j], alpha = 0.7)
     j += 1
 K_count = 6
