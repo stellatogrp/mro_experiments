@@ -15,7 +15,7 @@ module purge
 module load anaconda3 
 conda activate mroenv
 
-python capital_budgeting/capital.py --foldername /scratch/gpfs/iywang/mro_results/capital/m12_K50_r30/
+python capital_budgeting/capital1.py --foldername /scratch/gpfs/iywang/mro_results/capital/m12_K50_r30/
 
 #python capital_budgeting/plots.py --foldername /scratch/gpfs/iywang/mro_results/capital/m12_K50_r30/
 
