@@ -126,7 +126,7 @@ def createproblem_max1(N, m,w):
     objective = cp.sum([w[k]*cp.log(u[k]@expx) for k in range(N)])
     # CONSTRAINTS #
     constraints = [cp.sum([cp.quad_over_lin(u[k]-dat[k], 1/w[k]) for k in range(N)])<= eps]
-    constraints += [u>= 0, u <= 2.5]
+    constraints += [u>= 0, u <= 4]
 
     # PROBLEM #
     problem = cp.Problem(cp.Maximize(objective), constraints)
@@ -271,6 +271,7 @@ def logsumexp_experiment(r, m, N_tot, K_nums, eps_nums, foldername):
                 "iters": iters
             })
             df = df.append(newrow,ignore_index = True)
+            df.to_csv(foldername + '/df1_' + str(r) + '.csv')
     return df
 
 
@@ -279,11 +280,11 @@ if __name__ == '__main__':
     parser.add_argument('--foldername', type=str, default="/scratch/gpfs/iywang/mro_results/", metavar='N')
     arguments = parser.parse_args()
     foldername = arguments.foldername
-    N_tot = 90
-    m = 30
-    R = 30
-    K_nums = np.array([1,2,3,5,6,7,8,10,20,40,90])
-    eps_nums = np.append(np.logspace(-4.5,-3.5,10),np.logspace(-3.48,1,10))
+    N_tot = 150
+    m = 35
+    R = 20
+    K_nums = np.array([1,2,3,5,6,7,8,10,20,50,75,150])
+    eps_nums = np.append(np.logspace(-5.2,-3.5,15),np.logspace(-3.45,1,10))
     
     njobs = get_n_processes(30)
     results = Parallel(n_jobs=njobs)(delayed(logsumexp_experiment)(
@@ -294,5 +295,5 @@ if __name__ == '__main__':
         dftemp = dftemp.add(results[r].reset_index(), fill_value=0)
     dftemp = dftemp/R
 
-    dftemp.to_csv(foldername + '/df.csv')
+    dftemp.to_csv(foldername + '/df1.csv')
 

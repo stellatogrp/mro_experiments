@@ -261,7 +261,7 @@ if __name__ == '__main__':
     for r in range(1, R):
         dftemp = dftemp.add(results[r][1].reset_index(), fill_value=0)
     dftemp = dftemp/R
-    dftemp.to_csv(foldername + '/df2.csv')
+    dftemp.to_csv(foldername + '/df.csv')
     
     all = pd.concat([results[r][1] for r in range(R)])
-    all.to_csv(foldername + '/df_all2.csv')
+    all.to_csv(foldername + '/df_all.csv')

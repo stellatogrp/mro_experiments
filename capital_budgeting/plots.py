@@ -11,8 +11,8 @@ arguments = parser.parse_args()
 foldername = arguments.foldername
 
 dftemp = pd.read_csv(foldername+'df4_final.csv')
-dftemp["Opt_val"] = dftemp["Opt_val"]+105
-dftemp["Eval_val"] = dftemp["Eval_val"]+105
+dftemp["Opt_val"] = dftemp["Opt_val"] -105
+dftemp["Eval_val"] = dftemp["Eval_val"] -105
 
 m= 12
 N_tot = 50
@@ -43,7 +43,7 @@ ax1.set_title("In-sample objective and %\n out-of-sample expected values")
 ax1.set_xscale("log")
 axins = zoomed_inset_axes(ax1, 6, loc="upper left")
 axins.set_xlim(10**(-3.5), 10e-4)
-axins.set_ylim(-18,-14)
+axins.set_ylim(-123,-119)
 j = 0
 for K_count in [0,1,3,5,6]:
     axins.plot(np.array(eps_nums), dftemp.sort_values(["K","Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["Opt_val"],color = colors[j])
@@ -61,10 +61,7 @@ K_count = 6
 ax21.plot(1 - dftemp.sort_values(["K","Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["satisfy"][0:-1:1],dftemp.sort_values(["K","Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["Opt_val"][0:-1:1],linestyle='-',label="$K = 50^*$",marker = styles[j], alpha = 0.7)
 ax21.set_xlabel(r"$\beta$ (probability of constraint violation)")
 ax21.set_title("Objective value")
-#ax21.set_xlim([-0.025,10**(-0.25)])
-ax21.set_ylim([-18,-14])
-#plt.xscale("log")
-#plt.yscale("log")
+ax21.set_ylim([-123,-119])
 ax21.legend(bbox_to_anchor=(1, 0.75),fontsize = 14)
 plt.tight_layout()
 plt.savefig("capitaltop.pdf")
@@ -81,12 +78,9 @@ for i in np.arange(3,len(eps_nums)-3,8):
     ax31.plot(K_nums[:-2],(dftemp.sort_values(["Epsilon","K"])[i*len(K_nums):(i+1)*len(K_nums)]["bound2"][:-2]), linestyle='--', color = colors[j],label = "Upper bound")
     j+=1
 ax31.set_xlabel("$K$ (number of clusters)")
-#ax31.set_ylim([10**-2,2*10**2])
 ax31.set_yscale("log")
 ax31.set_title(r"$\bar{g}^K - g^N$")
 
-#ax32.legend()
-#ax31.legend(loc = "lower right")
 
 j = 0
 for i in np.arange(3,len(eps_nums)-3,8):

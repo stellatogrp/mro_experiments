@@ -198,13 +198,13 @@ if __name__ == '__main__':
     #eps_nums = np.concatenate((np.logspace(-4.5,-2.95,15), np.logspace(-2.9,-1.9,15),np.logspace(-1.8,0,8),np.logspace(0.1,1,3)))
     #R = 20
 
-    m = 15
-    N_tot = 100
-    T = 7
-    F = np.vstack([np.random.uniform(1,5+0.04*t,m) for t in range(T+1)]).T
+    m = 12
+    N_tot = 80
+    T = 5
+    F = np.vstack([np.random.uniform(1,5+0.04*t,m) for t in range(T+1)]).T 
     h = np.random.uniform(1,3,m)
-    K_nums = [1,2,5,10,25,50,100]
-    theta = 15
+    K_nums = [1,2,5,10,25,40,80]
+    theta = 12
     eps_nums = np.concatenate((np.logspace(-4.5,-2.95,15), np.logspace(-2.9,-1.9,15),np.logspace(-1.8,0,8),np.logspace(0.1,1,3)))
     R = 20
     
@@ -219,7 +219,7 @@ if __name__ == '__main__':
     for r in range(1, R):
         dftemp = dftemp.add(results[r][1].reset_index(), fill_value=0)
     dftemp = dftemp/R
-    dftemp.to_csv(foldername + '/df1.csv')
+    dftemp.to_csv(foldername + '/df2.csv')
 
     all = pd.concat([results[r][1] for r in range(R)])
-    all.to_csv(foldername + '/df_all1.csv')
+    all.to_csv(foldername + '/df_all2.csv')

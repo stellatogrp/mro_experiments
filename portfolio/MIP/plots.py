@@ -32,17 +32,12 @@ eps_nums = (10**(eps_nums))
 plt.figure(figsize=(10, 6))
 labelprint =1
 for K_count in np.arange(0,len(K_nums)-1,1):
-    if labelprint == 1:
-        plt.fill_between(eps_nums, np.quantile([df[df["R"]==r].sort_values(["K","Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["Opt_val"] for r in range(R)],0.25,axis = 0), np.quantile([df[df["R"]==r].sort_values(["K","Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["Opt_val"] for r in range(R)],0.75,axis = 0),label="0.25 to 0.75 quantiles", alpha = 0.05)
-    else: 
-        plt.fill_between(eps_nums, np.quantile([df[df["R"]==r].sort_values(["K","Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["Opt_val"] for r in range(R)],0.25,axis = 0), np.quantile([df[df["R"]==r].sort_values(["K","Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["Opt_val"] for r in range(R)],0.75,axis = 0), alpha = 0.05)
-    labelprint = 0
     plt.plot(eps_nums, dftemp.sort_values(["K","Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["Opt_val"], linestyle='-', marker = 'o', label="$K = {}$".format(K_nums[K_count]),alpha = 0.6)
 plt.xlabel("$\epsilon$")
 plt.xscale("log")
 plt.title("In-sample objective value")
 plt.legend(loc = "lower right")
-#plt.savefig("objectives.pdf")
+plt.savefig("objectives.pdf")
 
 plt.figure(figsize=(10, 6))
 for K_count in np.arange(0,len(K_nums),1):
@@ -51,23 +46,17 @@ plt.xlabel("$\epsilon$")
 plt.xscale("log")
 plt.legend(loc = "lower right")
 plt.title(r"$1-\beta$ (probability of constraint satisfaction)")
-#plt.savefig("constraint_satisfaction.pdf")
+plt.savefig("constraint_satisfaction.pdf")
 
 
 plt.figure(figsize=(10, 6))
-labelprint = 1
 for i in np.arange(5,len(eps_nums),1):
-    if labelprint == 1:
-        plt.fill_between(K_nums[:-1], np.quantile([df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums):((i+1)*len(K_nums)-1)]["solvetime"] for r in range(R)],0.25,axis = 0), np.quantile([df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums):((i+1)*len(K_nums)-1)]["solvetime"] for r in range(2)],0.75,axis = 0), alpha = 0.1, label = "0.25 to 0.75 quantiles")
-    else:
-        plt.fill_between(K_nums[:-1], np.quantile([df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums):((i+1)*len(K_nums)-1)]["solvetime"] for r in range(R)],0.25,axis = 0), np.quantile([df[df["R"]==r].sort_values(["Epsilon","K"])[i*len(K_nums[:-1]):((i+1)*len(K_nums)-1)]["solvetime"] for r in range(2)],0.75,axis = 0), alpha = 0.1)
-    labelprint = 0
     plt.plot(K_nums[:-1], dftemp.sort_values(["Epsilon","K"])[i*len(K_nums):((i+1)*len(K_nums)-1)]["solvetime"], linestyle='-', marker='o', label="$\epsilon = {}$".format(np.round(eps_nums[i], 5)))
 plt.xlabel("$K$ (Number of clusters)")
 plt.title("Time (s)")
 plt.yscale("log")
 plt.legend(loc = "lower right")
-#plt.savefig("time.pdf")
+plt.savefig("time.pdf")
 
 import matplotlib.gridspec as gridspec
 
@@ -83,7 +72,6 @@ for K_count in [0,1,2,3,4]:
 ax1.set_xlabel("$\epsilon$")
 ax1.set_xscale("log")
 ax1.set_title("In-sample objective value")
-#ax1.legend(loc = "lower right")
 
 for K_count in [0,1,2,3]:
     ax2.plot(eps_nums, dftemp.sort_values(["K","Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["satisfy"], label="$K = {}$".format(K_nums[K_count]),linestyle='-', marker='o', alpha=0.5)
