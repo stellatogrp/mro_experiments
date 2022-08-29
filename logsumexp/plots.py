@@ -63,7 +63,7 @@ for i in np.arange(0,len(eps_nums),5):
     j+=1
 plt.xlabel("$K$ (number of clusters)")
 plt.yscale("log")
-plt.title(r"$\bar{g}^K - \bar{g}^N$")
+plt.title(r"$\bar{g}^K - g^N$")
 plt.legend()
 #plt.savefig("upper_bound_diff.pdf")
 plt.show()
@@ -126,7 +126,7 @@ for i in [13,17,18,20,21]:
     j+=1
 ax31.set_xlabel("$K$ (number of clusters)")
 ax31.set_yscale("log")
-ax31.set_title(r"$\bar{g}^K - \bar{g}^N$")
+ax31.set_title(r"$\bar{g}^K - g^N$")
 
 j = 0
 for i in [13,17,18,20,21]:

@@ -83,7 +83,7 @@ for i in np.arange(3,len(eps_nums)-3,8):
 ax31.set_xlabel("$K$ (number of clusters)")
 #ax31.set_ylim([10**-2,2*10**2])
 ax31.set_yscale("log")
-ax31.set_title(r"$\bar{g}^K - \bar{g}^N$")
+ax31.set_title(r"$\bar{g}^K - g^N$")
 
 #ax32.legend()
 #ax31.legend(loc = "lower right")
