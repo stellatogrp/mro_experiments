@@ -12,6 +12,7 @@ import sys
 #from mro.utils import get_n_processes, cluster_data
 import argparse
 
+
 def get_n_processes(max_n=np.inf):
     """Get number of processes from current cps number
     Parameters
@@ -34,7 +35,8 @@ def get_n_processes(max_n=np.inf):
 
     return n_proc
 
-def normal_returns_scaled(N, m,scale):
+
+def normal_returns_scaled(N, m, scale):
     """Creates scaled data
     Parameters:
     ----------
@@ -48,12 +50,13 @@ def normal_returns_scaled(N, m,scale):
     -------
     d: matrix
         Scaled data with a single mode
-    """    
+    """
     R = np.vstack([np.random.normal(
         i*0.03*scale, np.sqrt((0.02**2+(i*0.025)**2)), N) for i in range(1, m+1)])
     return (R.transpose())
 
-def data_modes(N,m,scales):
+
+def data_modes(N, m, scales):
     """Creates data scaled by given multipliers
     Parameters:
     ----------
@@ -69,13 +72,15 @@ def data_modes(N,m,scales):
         Scaled data with all modes
     """
     modes = len(scales)
-    d = np.zeros((N+100,m))
+    d = np.zeros((N+100, m))
     weights = int(np.ceil(N/modes))
     for i in range(modes):
-        d[i*weights:(i+1)*weights,:] = normal_returns_scaled(weights,m,scales[i])
-    return d[0:N,:]
+        d[i*weights:(i+1)*weights,
+          :] = normal_returns_scaled(weights, m, scales[i])
+    return d[0:N, :]
 
-def createproblem_quad(N, m,A):
+
+def createproblem_quad(N, m, A):
     """Create the problem in cvxpy
     Parameters
     ----------
@@ -100,7 +105,7 @@ def createproblem_quad(N, m,A):
     s = cp.Variable(N)
     lam = cp.Variable()
     z = cp.Variable((N, m))
-    y = cp.Variable((N,m*m))
+    y = cp.Variable((N, m*m))
     #h = cp.Variable(m,boolean = True)
 
     # OBJECTIVE #
@@ -109,10 +114,12 @@ def createproblem_quad(N, m,A):
     # CONSTRAINTS #
     constraints = []
     for k in range(N):
-        constraints += [cp.sum([cp.quad_over_lin(A[ind]@(y[k,ind*(m):(ind+1)*m]), 2*x[ind]) for ind in range(m)]) - dat[k]@z[k] + cp.quad_over_lin(z[k], 4*lam) <= s[k]]
+        constraints += [cp.sum([cp.quad_over_lin(A[ind]@(y[k, ind*(m):(ind+1)*m]), 2*x[ind])
+                               for ind in range(m)]) - dat[k]@z[k] + cp.quad_over_lin(z[k], 4*lam) <= s[k]]
     constraints += [cp.sum(x) == 1]
     for k in range(N):
-        constraints += [cp.sum([y[k,ind*(m):(ind+1)*m] for ind in range(m)],axis = 0)== z[k]]
+        constraints += [cp.sum([y[k, ind*(m):(ind+1)*m]
+                               for ind in range(m)], axis=0) == z[k]]
     constraints += [x >= 0, x <= 1]
     constraints += [lam >= 0]
     #constraints += [x - h <= 0, cp.sum(h) <= 5]
@@ -120,6 +127,7 @@ def createproblem_quad(N, m,A):
     # PROBLEM #
     problem = cp.Problem(cp.Minimize(objective), constraints)
     return problem, x, s, lam, dat, eps, w
+
 
 def quadratic_experiment(A, Ainv, r, m, N_tot, K_nums, eps_nums, foldername):
     '''Run the experiment for multiple K and epsilon
@@ -131,11 +139,12 @@ def quadratic_experiment(A, Ainv, r, m, N_tot, K_nums, eps_nums, foldername):
     df: dataframe
         The results of the experiments
     '''
-    df = pd.DataFrame(columns = ["R","K","Epsilon","Opt_val","Eval_val","satisfy","solvetime","bound"])
+    df = pd.DataFrame(columns=["R", "K", "Epsilon", "Opt_val",
+                      "Eval_val", "satisfy", "solvetime", "bound"])
     #xsols = np.zeros((len(K_nums),len(eps_nums),m, R))
     xsols = 0
-    d = data_modes(N_tot,m,[1,5,15,25,40])
-    d2 = data_modes(N_tot,m,[1,5,15,25,40])
+    d = data_modes(N_tot, m, [1, 5, 15, 25, 40])
+    d2 = data_modes(N_tot, m, [1, 5, 15, 25, 40])
     for Kcount, K in enumerate(K_nums):
         kmeans = KMeans(n_clusters=K).fit(d)
         weights = np.bincount(kmeans.labels_) / N_tot
@@ -145,11 +154,13 @@ def quadratic_experiment(A, Ainv, r, m, N_tot, K_nums, eps_nums, foldername):
             dat.value = kmeans.cluster_centers_
             w.value = weights
             problem.solve()
-            evalvalue = np.mean(-0.5*(d2@np.sum([A[i]*x.value[i] for i in range(m)],axis = 0))@(d2.T))
+            evalvalue = np.mean(-0.5*(d2@np.sum([A[i]*x.value[i]
+                                for i in range(m)], axis=0))@(d2.T))
             #xsols[Kcount, epscount, :, r] = x.value
-            L = np.linalg.norm(np.sum([A[i]*x.value[i] for i in range(m)],axis = 0),2)
+            L = np.linalg.norm(np.sum([A[i]*x.value[i]
+                               for i in range(m)], axis=0), 2)
             newrow = pd.Series(
-                {"R":r,
+                {"R": r,
                  "K": K,
                  "Epsilon": epsval,
                  "Opt_val": problem.objective.value,
@@ -157,38 +168,40 @@ def quadratic_experiment(A, Ainv, r, m, N_tot, K_nums, eps_nums, foldername):
                  "satisfy": evalvalue <= problem.objective.value,
                  "solvetime": problem.solver_stats.solve_time,
                  "bound": (L/(2*N_tot))*kmeans.inertia_
-            })
-            df = df.append(newrow,ignore_index = True)
+                 })
+            df = df.append(newrow, ignore_index=True)
             problem = 0
     return xsols, df
-  
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--foldername', type=str, default="/scratch/gpfs/iywang/mro_results/", metavar='N')
+    parser.add_argument('--foldername', type=str,
+                        default="/scratch/gpfs/iywang/mro_results/", metavar='N')
     arguments = parser.parse_args()
     foldername = arguments.foldername
 
     N_tot = 60
     m = 10
     R = 30
-    K_nums = [1,2,3,4,5,10,30,60]
+    K_nums = [1, 2, 3, 4, 5, 10, 30, 60]
     A = {}
     Ainv = {}
     for i in range(m):
         A[i] = datasets.make_spd_matrix(m)
-        Ainv[i] = sc.linalg.sqrtm(np.linalg.inv(A[i])) 
-    eps_nums = np.array([0.01, 0.015, 0.023, 0.036, 0.055, 0.085, 0.13, 0.20, 0.30, 0.5, 0.7,1, 1.2, 1.4, 1.43, 1.47, 1.51, 1.55, 1.58, 1.62, 1.66, 1.7, 1.73, 1.77, 1.81, 1.85, 1.88, 1.92, 1.96, 2, 2.02, 2.07, 2.11, 2.15, 2.18, 2.22, 2.26, 2.3, 2.5, 2.7,3,4,9,10])
+        Ainv[i] = sc.linalg.sqrtm(np.linalg.inv(A[i]))
+    eps_nums = np.array([0.01, 0.015, 0.023, 0.036, 0.055, 0.085, 0.13, 0.20, 0.30, 0.5, 0.7, 1, 1.2, 1.4, 1.43, 1.47, 1.51, 1.55, 1.58,
+                        1.62, 1.66, 1.7, 1.73, 1.77, 1.81, 1.85, 1.88, 1.92, 1.96, 2, 2.02, 2.07, 2.11, 2.15, 2.18, 2.22, 2.26, 2.3, 2.5, 2.7, 3, 4, 9, 10])
 
     #eps_nums = np.concatenate((np.logspace(-2,0.4,20), np.array([3,4,7,9,10])))
 
     njobs = get_n_processes(30)
     results = Parallel(n_jobs=njobs)(delayed(quadratic_experiment)(
         A, Ainv, r, m, N_tot, K_nums, eps_nums, foldername) for r in range(R))
-    
+
     #x_sols = np.zeros((len(K_nums),len(eps_nums),m, R))
     dftemp = results[0][1]
-    #for r in range(R):
+    # for r in range(R):
     #    x_sols += results[r][0]
     for r in range(1, R):
         dftemp = dftemp.add(results[r][1].reset_index(), fill_value=0)

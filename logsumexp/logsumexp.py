@@ -134,7 +134,7 @@ def createproblem_max1(N, m, w):
     # CONSTRAINTS #
     constraints = [cp.sum([cp.quad_over_lin(u[k]-dat[k], 1/w[k])
                           for k in range(N)]) <= eps]
-    constraints += [u >= 0, u <= 1.6]
+    constraints += [u >= 0, u <= 2.4]
 
     # PROBLEM #
     problem = cp.Problem(cp.Maximize(objective), constraints)
@@ -297,10 +297,10 @@ if __name__ == '__main__':
                         default="/scratch/gpfs/iywang/mro_results/", metavar='N')
     arguments = parser.parse_args()
     foldername = arguments.foldername
-    N_tot = 120
-    m = 20
-    R = 20
-    K_nums = np.array([1, 2, 3, 5, 6, 7, 8, 10, 20, 40, 60, 120])
+    N_tot = 90
+    m = 30
+    R = 30
+    K_nums = np.array([1, 2, 3, 5, 6, 7, 8, 10, 20, 40, 90])
     eps_nums = np.append(np.logspace(-5.2, -4, 15), np.logspace(-3.9, 1, 10))
 
     njobs = get_n_processes(30)
