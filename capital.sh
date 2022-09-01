@@ -2,8 +2,8 @@
 #SBATCH --job-name=capitaltest
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=15
-#SBATCH --mem-per-cpu=50G
+#SBATCH --cpus-per-task=4
+#SBATCH --mem-per-cpu=60G
 #SBATCH --time=20:00:00
 #SBATCH -o /scratch/gpfs/iywang/mro_results/capital/m12_K50_r30/capital_test_%A.txt
 #SBATCH --mail-type=BEGIN,END,FAIL,TIME_LIMIT
