@@ -12,7 +12,7 @@ parser.add_argument('--foldername', type=str,
 arguments = parser.parse_args()
 foldername = arguments.foldername
 
-dftemp = pd.read_csv(foldername+'df4_final.csv')
+dftemp = pd.read_csv(foldername+'df.csv')
 
 
 m = 12
@@ -72,7 +72,7 @@ ax21.set_title("Objective value")
 ax21.set_ylim([-12.3, -11.9])
 ax21.legend(bbox_to_anchor=(1, 0.75), fontsize=14)
 plt.tight_layout()
-plt.savefig("capitaltop1.pdf")
+plt.savefig("capitaltop.pdf")
 plt.show()
 
 
@@ -105,5 +105,5 @@ ax4.set_yscale("log")
 ax4.legend(loc="lower right", bbox_to_anchor=(1.36, 0.2), fontsize=14)
 
 plt.tight_layout()
-plt.savefig("capitalbot1.pdf")
+plt.savefig("capitalbot.pdf")
 plt.show()
