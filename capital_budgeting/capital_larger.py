@@ -71,7 +71,7 @@ def createproblem(N, m, T, F, h, w):
 
     for k in range(N):
         constraints += [cp.sum(-z[k, :]) + cone[k, :]@t_vec3 - F[:, 0]@x - z[k]@dat[k] +
-                        cp.quad_over_lin(z[k] + C_r.T@gam[k], 4*lam) + gam[k]@(d_r - C_r@dat[k]) <= s[k]]
+                        cp.quad_over_lin(-z[k] + C_r.T@gam[k], 4*lam) + gam[k]@(d_r - C_r@dat[k]) <= s[k]]
 
         for j in range(m):
             constraints += [cp.sum(y[k, (j*(T)):(j+1)*(T)]) == z[k, j]]
@@ -177,7 +177,7 @@ def capital_experiment(R, r, m, N_tot, K_nums, eps_nums, T, h, F):
                         "bound2": (L2/(2*N_tot))*kmeans.inertia_
                      })
                 df = df.append(newrow, ignore_index=True)
-                df.to_csv(foldername + '/df25_' + str(r) + '.csv')
+                df.to_csv(foldername + '/df26_' + str(r) + '.csv')
         problem, x, dat, eps = createproblem(K, m, T, F, h, weights)
         dat.value = kmeans.cluster_centers_
         for epscount, epsval in enumerate(eps_nums):
@@ -199,7 +199,7 @@ def capital_experiment(R, r, m, N_tot, K_nums, eps_nums, T, h, F):
                  "bound2": (L2/(2*N_tot))*kmeans.inertia_
                  })
             df = df.append(newrow, ignore_index=True)
-            df.to_csv(foldername + '/df25_' + str(r) + '.csv')
+            df.to_csv(foldername + '/df26_' + str(r) + '.csv')
     return xsols, df
 
 
@@ -276,7 +276,7 @@ if __name__ == '__main__':
     for r in range(1, R):
         dftemp = dftemp.add(results[r][1].reset_index(), fill_value=0)
     dftemp = dftemp/R
-    dftemp.to_csv(foldername + '/df25.1.csv')
+    dftemp.to_csv(foldername + '/df26.1.csv')
 
     #all = pd.concat([results[r][1] for r in range(R)])
     #all.to_csv(foldername + '/df_all1.csv')
