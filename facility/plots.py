@@ -10,7 +10,7 @@ parser.add_argument('--foldername', type=str,
 arguments = parser.parse_args()
 foldername = arguments.foldername
 
-dftemp = pd.read_csv(foldername+'df6.csv')
+dftemp = pd.read_csv(foldername+'df.csv')
 
 plt.rcParams.update({
     "text.usetex": True,
@@ -53,33 +53,22 @@ ax1.set_xlabel("$\epsilon$")
 ax1.set_xscale("log")
 ax1.set_title("Objective value")
 
-# ax2.plot(1 - dftemp.sort_values(["K", "Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["Eval_val"][0:-1:1], dftemp.sort_values(["K", "Epsilon"])[
-#    0*len(eps_nums):(0+1)*len(eps_nums)]["Opt_val"][0:-1:1], linestyle='-', label="$K = 1^*$", marker='v', alpha=0.7)
+
 ax2.plot(eps_nums, dftemp.sort_values(["K", "Epsilon"])[0*len(eps_nums):(1)*len(
     eps_nums)]["Eval_val"], label="$K = 1^*$", linestyle='-', marker='v', alpha=0.5)
 for K_count in [1, 2, 4, 5]:
-    # ax2.plot(1 - dftemp.sort_values(["K", "Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["Eval_val"][0:-1:1], dftemp.sort_values(["K", "Epsilon"])[
-    #    K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["Opt_val"][0:-1:1], linestyle='-', label="$K = {}$".format(K_nums[K_count]), marker='v', alpha=0.7)
     ax2.plot(eps_nums, dftemp.sort_values(["K", "Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(
         eps_nums)]["Eval_val"], label="$K = {}$".format(K_nums[K_count]), linestyle='-', marker='v', alpha=0.5)
 ax2.set_xlabel("$\epsilon$")
 ax2.set_title(r"$1-\beta$ (probability of constraint satisfaction)*")
-#ax2.set_title("Objective value")
-#ax2.set_ylim([315, 325])
-#ax2.set_xlabel(r"$\beta$ (probability of constraint violation)*")
 ax2.set_xscale("log")
 ax2.legend()
 
 for K_count in [0, 1, 2, 4, 5]:
-    # ax3.plot(1 - dftemp.sort_values(["K", "Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["Eval_val1"][0:-1:1], dftemp.sort_values(["K", "Epsilon"])[
-    # K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["Opt_val"][0:-1:1], linestyle='-', label="$K = {}$".format(K_nums[K_count]), marker='v', alpha=0.7)
     ax3.plot(eps_nums, dftemp.sort_values(["K", "Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(
         eps_nums)]["Eval_val1"], label="$K = {}$".format(K_nums[K_count]), linestyle='-', marker='v', alpha=0.5)
-#ax3.set_ylim([330, 390])
-#ax3.set_title("Objective value")
-#ax3.set_xlabel(r"$\beta$ (probability of constraint violation)**")
 ax3.set_xlabel("$\epsilon$")
-ax3.set_title(r"$1-\beta$ (probability of constraint satisfaction)*")
+ax3.set_title(r"$1-\beta$ (probability of constraint satisfaction)**")
 
 ord = 0
 for i in [0, 10, 18, 22]:
@@ -97,4 +86,4 @@ ax4.set_yscale("log")
 ax4.legend(fontsize=13)
 
 plt.tight_layout()
-plt.savefig("facilitytop.pdf")
+plt.savefig(foldername + "facilitytop.pdf")

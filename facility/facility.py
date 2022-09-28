@@ -1,59 +1,13 @@
+from mro.utils import get_n_processes, cluster_data
 import argparse
 from joblib import Parallel, delayed
 import os
 import mosek
 import pandas as pd
 import numpy as np
-from sklearn.cluster import KMeans
 import cvxpy as cp
 import sys
-import time
 output_stream = sys.stdout
-# from mro.utils import get_n_processes, cluster_data
-
-
-def get_n_processes(max_n=np.inf):
-    """Get number of processes from current cps number
-    Parameters
-    ----------
-    max_n: int
-        Maximum number of processes.
-    Returns
-    -------
-    float
-        Number of processes to use.
-    """
-
-    try:
-        # Check number of cpus if we are on a SLURM server
-        n_cpus = int(os.environ["SLURM_CPUS_PER_TASK"])
-    except KeyError:
-        n_cpus = joblib.cpu_count()
-
-    n_proc = max(min(max_n, n_cpus), 1)
-
-    return n_proc
-
-
-def cluster_data(D_in, K):
-    """Return K cluster means after clustering D_in into K clusters
-    Parameters
-    ----------
-    D_in: array
-        Input dataset, N entries
-    Returns
-    -------
-    Dbar_in: array
-        Output dataset, K entries
-    weights: vector
-        Vector of weights for Dbar_in
-    """
-    N = D_in.shape[0]
-    kmeans = KMeans(n_clusters=K).fit(D_in)
-    Dbar_in = kmeans.cluster_centers_
-    weights = np.bincount(kmeans.labels_) / N
-
-    return Dbar_in, weights
 
 
 def prob_facility_separate(K, m, n):
@@ -356,11 +310,11 @@ if __name__ == '__main__':
     arguments = parser.parse_args()
     foldername = arguments.foldername
     # different cluster values we consider
-    K_nums = np.array([1, 5, 10, 25, 50])
+    K_nums = np.array([1, 5, 10, 25, 50, 100])
     K_tot = K_nums.size  # Total number of clusters we consider
-    N_tot = 50
+    N_tot = 100
     M = 10
-    R = 15       # Total times we repeat experiment to estimate final probabilty
+    R = 10       # Total times we repeat experiment to estimate final probabilty
     n = 5  # number of facilities
     m = 25  # number of locations
     eps_min = 1      # minimum epsilon we consider
@@ -377,13 +331,8 @@ if __name__ == '__main__':
     results = Parallel(n_jobs=njobs)(delayed(facility_experiment)(r, n, m, Data, Data_eval,
                                                                   prob_facility_separate, N_tot, K_tot, K_nums, eps_tot, eps_nums, foldername) for r in range(R))
 
-    # X_sols = np.zeros((K_tot, eps_tot, n, m, R))
-    # x_sols = np.zeros((K_tot, eps_tot, n, R))
     dftemp = results[0][2]
 
-    # for r in range(R):
-    #    X_sols[:, :, :, :, r] = results[r][0]
-    #    x_sols[:, :, :, r] = results[r][1]
     for r in range(1, R):
         dftemp = dftemp.add(results[r][2].reset_index(), fill_value=0)
     dftemp = dftemp/R

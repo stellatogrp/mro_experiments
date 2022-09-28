@@ -1,0 +1,8 @@
+numpy
+scipy
+cvxpy
+matplotlib
+sklearn
+joblib
+mosek
+argparse

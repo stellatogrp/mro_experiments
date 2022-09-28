@@ -10,14 +10,7 @@ parser.add_argument('--foldername', type=str,
 arguments = parser.parse_args()
 foldername = arguments.foldername
 
-dftemp = pd.read_csv(foldername + 'df_1.csv')
-# for r in range(1, 27):
-#    dftemp = dftemp.add(pd.read_csv(foldername + 'df' +
-#                        str(r)+'.csv').reset_index(), fill_value=0)
-#dftemp = dftemp/27
-
-#dftemp = dftemp[dftemp["K"]!= 60]
-
+dftemp = pd.read_csv(foldername + 'df.csv')
 plt.rcParams.update({
     "text.usetex": True,
     "font.size": 18,
@@ -59,10 +52,10 @@ for K_count in [0, 1, 4, 6, 7]:
 ax21.set_xlabel(r"$\beta$ (probability of constraint violation)")
 ax21.set_title("Objective value")
 ax21.set_xlim([-0.025, 10**(-0.25)])
-ax21.set_ylim([-75, -50])
+ax21.set_ylim([-102, -90])
 ax21.legend(bbox_to_anchor=(1, 0.35), fontsize=14)
 plt.tight_layout()
-plt.savefig("quadratictop.png")
+plt.savefig("quadratictop.pdf")
 plt.show()
 
 
@@ -78,8 +71,6 @@ for i in [8, 10, 18, 24]:
         np.round(eps_nums[i], 5)), linestyle='-', marker=styles[j], color=colors[j])
     ax31.plot(K_nums[:-1], (dftemp.sort_values(["Epsilon", "K"])[
               i*len(K_nums):(i+1)*len(K_nums)]["bound"])[:-1], linestyle='--', color=colors[j], label="Upper bound")
-    ax31.plot(K_nums[:-1], (-dftemp.sort_values(["Epsilon", "K"])[
-              i*len(K_nums):(i+1)*len(K_nums)]["bound2"])[:-1], linestyle=':', color=colors[j], label="Lower bound")
     j += 1
 ax31.set_xlabel("$K$ (number of clusters)")
 ax31.set_yscale("log")
