@@ -1,5 +1,5 @@
 # Mean Robust Optimization
-This repository is by 
+This repository is by
 [Irina Wang](https://sites.google.com/view/irina-wang),
 Cole Becker,
 [Bart Van Parys](https://mitsloan.mit.edu/faculty/directory/bart-p-g-van-parys),
@@ -20,7 +20,7 @@ We show finite-sample performance guarantees and conditions for which clustering
 Numerical examples illustrate the high efficiency and performance preservation of our approach.
 
 ## Dependencies
-Install dependencies with 
+Install dependencies with
 ```
 pip install -r requirements.txt
 ```

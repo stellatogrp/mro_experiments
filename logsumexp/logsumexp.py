@@ -1,14 +1,12 @@
-from sklearn.cluster import KMeans
-from joblib import Parallel, delayed
-import os
-import mosek
-import time
-import numpy as np
-import cvxpy as cp
-import pandas as pd
-import sys
-from mro.utils import get_n_processes
 import argparse
+
+import cvxpy as cp
+import numpy as np
+import pandas as pd
+from joblib import Parallel, delayed
+from sklearn.cluster import KMeans
+
+from mro.utils import get_n_processes
 
 
 def data_modes(N, m, scales):
@@ -59,7 +57,7 @@ def createproblem_max(N, m, w):
     # CONSTRAINTS #
     constraints = [cp.sum([cp.quad_over_lin(u[k]-dat[k], 1/w[k])
                           for k in range(N)]) <= eps]
-    #constraints += [u >= 0]
+    # constraints += [u >= 0]
 
     # PROBLEM #
     problem = cp.Problem(cp.Maximize(objective), constraints)
@@ -78,7 +76,7 @@ def createproblem_min(N, m, w, Uvals, n_planes):
         Weights for each data sample
     Uvals: dict
         Set of uncertainty realizatoins
-    n_planes: 
+    n_planes:
         Number of cutting planes added
     Returns:
     -------
@@ -111,7 +109,7 @@ def minmaxsolve(N, m, w, data, epsilon, probmin, probmax):
         Weights for each data sample
     data: matrix
         Input data
-    epsilon: 
+    epsilon:
         Input epsilon
     Returns:
     -------
@@ -119,9 +117,9 @@ def minmaxsolve(N, m, w, data, epsilon, probmin, probmax):
         Final objective value
     x.value:
         Value for variable x
-    solvetime: 
-        Total solvertime 
-    inds: 
+    solvetime:
+        Total solvertime
+    inds:
         Number of cutting planes added
     """
     Uvals = {}
@@ -178,9 +176,11 @@ def logsumexp_experiment(r, m, N_tot, K_nums, eps_nums, foldername):
         weights = np.bincount(kmeans.labels_) / N_tot
         for epscount, epsval in enumerate(eps_nums):
             objs_val, x_val, time, iters = minmaxsolve(
-                K, m, weights, kmeans.cluster_centers_, epsval**2, createproblem_min, createproblem_max)
+                K, m, weights, kmeans.cluster_centers_, epsval**2, createproblem_min,
+                createproblem_max)
             evalvalue = cp.sum(
-                [(1/N_tot)*cp.log_sum_exp(x_val + np.log(d2[k])).value for k in range(N_tot)])
+                [(1/N_tot)*cp.log_sum_exp(x_val + np.log(d2[k])).value
+                 for k in range(N_tot)])
             expx = np.exp(x_val)
             L = expx@expx / \
                 (np.min([expx@d[k]

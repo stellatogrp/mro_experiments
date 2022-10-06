@@ -12,10 +12,9 @@
 export MOSEKLM_LICENSE_FILE=/scratch/gpfs/iywang/mro_experiments/mosek/mosek.lic
 
 module purge
-module load anaconda3 
+module load anaconda3
 conda activate mroenv
 
 python capital_budgeting/capital_larger.py --foldername /scratch/gpfs/iywang/mro_results/capital/m12_K50_r30/
 
 #python capital_budgeting/plots.py --foldername /scratch/gpfs/iywang/mro_results/capital/m12_K50_r20/
-

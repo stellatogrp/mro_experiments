@@ -1,6 +1,9 @@
 import os
+
+import joblib
 import numpy as np
 from sklearn.cluster import KMeans
+
 
 def get_n_processes(max_n=np.inf):
     """Get number of processes from current cps number
@@ -24,6 +27,7 @@ def get_n_processes(max_n=np.inf):
 
     return n_proc
 
+
 def cluster_data(D_in, K):
     """Return K cluster means after clustering D_in into K clusters
     Parameters
@@ -36,7 +40,7 @@ def cluster_data(D_in, K):
         Output dataset, K entries
     weights: vector
         Vector of weights for Dbar_in
-    """    
+    """
     N = D_in.shape[0]
     kmeans = KMeans(n_clusters=K).fit(D_in)
     Dbar_in = kmeans.cluster_centers_

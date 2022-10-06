@@ -1,16 +1,14 @@
-from sklearn.cluster import KMeans
-from joblib import Parallel, delayed
-import os
-import mosek
-import time
-import numpy as np
+import argparse
+
 import cvxpy as cp
+import numpy as np
 import pandas as pd
 import scipy as sc
+from joblib import Parallel, delayed
 from sklearn import datasets
-import sys
+from sklearn.cluster import KMeans
+
 from mro.utils import get_n_processes
-import argparse
 
 
 def normal_returns_scaled(N, m, scale):
@@ -83,7 +81,7 @@ def createproblem_quad(N, m, A):
     lam = cp.Variable()
     z = cp.Variable((N, m))
     y = cp.Variable((N, m*m))
-    #h = cp.Variable(m,boolean = True)
+    # h = cp.Variable(m,boolean = True)
 
     # OBJECTIVE #
     objective = cp.multiply(eps, lam) + s@w
@@ -92,14 +90,15 @@ def createproblem_quad(N, m, A):
     constraints = []
     for k in range(N):
         constraints += [cp.sum([cp.quad_over_lin(A[ind]@(y[k, ind*(m):(ind+1)*m]), 2*x[ind])
-                               for ind in range(m)]) - dat[k]@z[k] + cp.quad_over_lin(z[k], 4*lam) <= s[k]]
+                                for ind in range(m)])
+                        - dat[k]@z[k] + cp.quad_over_lin(z[k], 4*lam) <= s[k]]
     constraints += [cp.sum(x) == 1]
     for k in range(N):
         constraints += [cp.sum([y[k, ind*(m):(ind+1)*m]
                                for ind in range(m)], axis=0) == z[k]]
     constraints += [x >= 0, x <= 1]
     constraints += [lam >= 0]
-    #constraints += [x - h <= 0, cp.sum(h) <= 5]
+    # constraints += [x - h <= 0, cp.sum(h) <= 5]
 
     # PROBLEM #
     problem = cp.Problem(cp.Minimize(objective), constraints)
@@ -118,7 +117,7 @@ def quadratic_experiment(A, Ainv, r, m, N_tot, K_nums, eps_nums, foldername):
     '''
     df = pd.DataFrame(columns=["R", "K", "Epsilon", "Opt_val",
                       "Eval_val", "satisfy", "solvetime", "bound"])
-    #xsols = np.zeros((len(K_nums),len(eps_nums),m, R))
+    # xsols = np.zeros((len(K_nums),len(eps_nums),m, R))
     xsols = 0
     d = data_modes(N_tot, m, [1, 5, 15, 25, 40])
     d2 = data_modes(N_tot, m, [1, 5, 15, 25, 40])
@@ -133,7 +132,7 @@ def quadratic_experiment(A, Ainv, r, m, N_tot, K_nums, eps_nums, foldername):
             problem.solve()
             evalvalue = np.mean(-0.5*(d2@np.sum([A[i]*x.value[i]
                                 for i in range(m)], axis=0))@(d2.T))
-            #xsols[Kcount, epscount, :, r] = x.value
+            # xsols[Kcount, epscount, :, r] = x.value
             L = np.linalg.norm(np.sum([A[i]*x.value[i]
                                for i in range(m)], axis=0), 2)
             newrow = pd.Series(

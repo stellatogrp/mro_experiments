@@ -1,8 +1,9 @@
-import matplotlib.gridspec as gridspec
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
 import argparse
+
+import matplotlib.gridspec as gridspec
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--foldername', type=str,
@@ -48,8 +49,9 @@ ax4 = plt.subplot(gs[2:4, 2:])
 
 for K_count in [0, 1, 2, 4, 5]:
     ax1.plot(eps_nums, dftemp.sort_values(["K", "Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(
-        eps_nums)]["Opt_val"], linestyle='-', marker='v', label="$K = {}$".format(K_nums[K_count]), alpha=0.6)
-ax1.set_xlabel("$\epsilon$")
+        eps_nums)]["Opt_val"],
+        linestyle='-', marker='v', label="$K = {}$".format(K_nums[K_count]), alpha=0.6)
+ax1.set_xlabel(r"r$\epsilon$")
 ax1.set_xscale("log")
 ax1.set_title("Objective value")
 
@@ -58,28 +60,35 @@ ax2.plot(eps_nums, dftemp.sort_values(["K", "Epsilon"])[0*len(eps_nums):(1)*len(
     eps_nums)]["Eval_val"], label="$K = 1^*$", linestyle='-', marker='v', alpha=0.5)
 for K_count in [1, 2, 4, 5]:
     ax2.plot(eps_nums, dftemp.sort_values(["K", "Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(
-        eps_nums)]["Eval_val"], label="$K = {}$".format(K_nums[K_count]), linestyle='-', marker='v', alpha=0.5)
-ax2.set_xlabel("$\epsilon$")
+        eps_nums)]["Eval_val"],
+        label="$K = {}$".format(K_nums[K_count]), linestyle='-', marker='v', alpha=0.5)
+ax2.set_xlabel(r"$\epsilon$")
 ax2.set_title(r"$1-\beta$ (probability of constraint satisfaction)*")
 ax2.set_xscale("log")
 ax2.legend()
 
 for K_count in [0, 1, 2, 4, 5]:
     ax3.plot(eps_nums, dftemp.sort_values(["K", "Epsilon"])[K_count*len(eps_nums):(K_count+1)*len(
-        eps_nums)]["Eval_val1"], label="$K = {}$".format(K_nums[K_count]), linestyle='-', marker='v', alpha=0.5)
-ax3.set_xlabel("$\epsilon$")
+        eps_nums)]["Eval_val1"],
+        label="$K = {}$".format(K_nums[K_count]), linestyle='-', marker='v', alpha=0.5)
+ax3.set_xlabel(r"$\epsilon$")
 ax3.set_title(r"$1-\beta$ (probability of constraint satisfaction)**")
 
 ord = 0
 for i in [0, 10, 18, 22]:
-    ax4.plot(K_nums[:], dftemp.sort_values(["Epsilon", "K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"][:],
-             linestyle='-', marker='o', label="$\epsilon = {}$".format(np.round(eps_nums[i], 5)), zorder=ord)
+    ax4.plot(K_nums[:],
+             dftemp.sort_values(["Epsilon", "K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"][:],
+             linestyle='-',
+             marker='o', label=r"$\epsilon = {}$".format(np.round(eps_nums[i], 5)), zorder=ord)
     ord += 1
-    ax4.scatter(K_nums[0], np.array(dftemp.sort_values(["Epsilon", "K"])[i*len(K_nums):((i+1)*len(K_nums))]
-                                    ["solvetime"])[0], marker="s", color="black", zorder=ord)
+    ax4.scatter(K_nums[0],
+                np.array(dftemp.sort_values(
+                    ["Epsilon", "K"])[i*len(K_nums):((i+1)*len(K_nums))]["solvetime"])[0],
+                marker="s", color="black", zorder=ord)
     ord += 1
-ax4.scatter(K_nums[0], np.array(dftemp.sort_values(["Epsilon", "K"])[i*len(K_nums):((i+1)*len(K_nums))]
-                                ["solvetime"])[0], marker="s", color="black", zorder=ord, label="$K = 1^*$")
+ax4.scatter(K_nums[0], np.array(
+            dftemp.sort_values(["Epsilon", "K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"])[0],
+            marker="s", color="black", zorder=ord, label="$K = 1^*$")
 ax4.set_xlabel("$K$ (number of clusters)")
 ax4.set_title("Time (s)")
 ax4.set_yscale("log")

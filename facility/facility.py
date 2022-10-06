@@ -1,12 +1,14 @@
-from mro.utils import get_n_processes, cluster_data
 import argparse
-from joblib import Parallel, delayed
-import os
-import mosek
-import pandas as pd
-import numpy as np
-import cvxpy as cp
 import sys
+
+import cvxpy as cp
+import mosek
+import numpy as np
+import pandas as pd
+from joblib import Parallel, delayed
+
+from mro.utils import cluster_data, get_n_processes
+
 output_stream = sys.stdout
 
 
@@ -62,10 +64,6 @@ def prob_facility_separate(K, m, n):
                             gam[i, (k*m):((k+1)*m)]@(d_train[k]) <= s[i, k]]
             constraints += [cp.norm(-gam[i, (k*m):((k+1)*m)
                                          ] + X[i], 2) <= lmbda[i, k]]
-
-    # for i in range(n):
-    #    constraints += [eps*lmbda[i] + cp.quad_over_lin(X[i], 4*lmbda[i]) - p[i]*x[i] + wk @ (d_train@X[i]) <= 0]
-        # constraints += [cp.norm(X[i],2) <= lmbda[i]]
 
     constraints += [X >= 0, lmbda >= 0, gam >= 0]
 
@@ -139,7 +137,7 @@ def generate_facility_data(n=10, m=50):
     # Cost for shipment
     fac_loc = np.random.uniform(0, 15, size=(n, 2))
     cus_loc = np.random.uniform(0, 15, size=(m, 2))
-    rho = 4
+    #  rho = 4
 
     C = np.zeros((n, m))
     for i in range(n):
@@ -168,7 +166,7 @@ def generate_facility_demands(N, m, R):
     d_train: vector
         Demand vector
     """
-    #d_train = np.maximum(1, np.random.normal(2, 0.9, (N, m, R)))
+    # d_train = np.maximum(1, np.random.normal(2, 0.9, (N, m, R)))
     d_train = np.random.uniform(1, 6, (N, m, R))
     return d_train
 
@@ -190,7 +188,8 @@ def evaluate(p, x, X, d):
     boolean: indicator of constraint satisfaction
     """
     for ind in range(n):
-        if -p.value[ind]*x.value[ind] + np.reshape(np.mean(d, axis=0), (1, m))@(X.value[ind]) >= 0.001:
+        if -p.value[ind]*x.value[ind] + \
+                np.reshape(np.mean(d, axis=0), (1, m))@(X.value[ind]) >= 0.001:
             return 0
     return 1
 
@@ -221,7 +220,8 @@ def evaluate_k(p, x, X, d):
     return 1
 
 
-def facility_experiment(r, n, m, Data, Data_eval, prob_facility, N_tot, K_tot, K_nums, eps_tot, eps_nums, foldername):
+def facility_experiment(r, n, m, Data, Data_eval, prob_facility,
+                        N_tot, K_tot, K_nums, eps_tot, eps_nums, foldername):
     '''Run the experiment for multiple K and epsilon
     Parameters
     ----------
@@ -242,20 +242,21 @@ def facility_experiment(r, n, m, Data, Data_eval, prob_facility, N_tot, K_tot, K
     df = pd.DataFrame(columns=["R", "K", "Epsilon", "Opt_val", "Eval_val",
                                "Eval_val1", "solvetime", ])
 
-    ######################## solve for various K ########################
+    # solve for various K
     for K_count, K in enumerate(np.flip(K_nums)):
         d_train, wk = cluster_data(Data[:, :, r], K)
         dat_eval = Data_eval[:, :, r]
 
         if K == N_tot:
-            problem, x, X, lmbda, data_train_pm, w_pm, eps_pm, p_pm, c_pm, C_pm = prob_facility_separate_max(
-                K, m, n)
+            problem, x, X, lmbda, data_train_pm, w_pm, eps_pm, p_pm, c_pm, C_pm = \
+                prob_facility_separate_max(K, m, n)
             data_train_pm.value = d_train
             w_pm.value = wk
             p_pm.value = p
             c_pm.value = c
             C_pm.value = C
-            ############## solve for various epsilons ###################
+
+            # solve for various epsilons
             for eps_count, eps in enumerate(eps_nums):
                 eps_pm.value = eps
                 problem.solve(solver=cp.MOSEK, verbose=True, mosek_params={
@@ -280,7 +281,7 @@ def facility_experiment(r, n, m, Data, Data_eval, prob_facility, N_tot, K_tot, K
         c_pm.value = c
         C_pm.value = C
 
-        ############## solve for various epsilons ###################
+        # solve for various epsilons
         for eps_count, eps in enumerate(np.flip(eps_nums)):
             print(K, eps)
             eps_pm.value = eps
@@ -328,8 +329,10 @@ if __name__ == '__main__':
     Data_eval = generate_facility_demands(N_tot, m, R)
 
     njobs = get_n_processes(30)
-    results = Parallel(n_jobs=njobs)(delayed(facility_experiment)(r, n, m, Data, Data_eval,
-                                                                  prob_facility_separate, N_tot, K_tot, K_nums, eps_tot, eps_nums, foldername) for r in range(R))
+    results = Parallel(n_jobs=njobs)(
+        delayed(facility_experiment)(r, n, m, Data, Data_eval,
+                                     prob_facility_separate, N_tot, K_tot, K_nums,
+                                     eps_tot, eps_nums, foldername) for r in range(R))
 
     dftemp = results[0][2]
 
