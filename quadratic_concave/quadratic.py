@@ -9,31 +9,8 @@ import pandas as pd
 import scipy as sc
 from sklearn import datasets
 import sys
-#from mro.utils import get_n_processes, cluster_data
+from mro.utils import get_n_processes
 import argparse
-
-
-def get_n_processes(max_n=np.inf):
-    """Get number of processes from current cps number
-    Parameters
-    ----------
-    max_n: int
-        Maximum number of processes.
-    Returns
-    -------
-    float
-        Number of processes to use.
-    """
-
-    try:
-        # Check number of cpus if we are on a SLURM server
-        n_cpus = int(os.environ["SLURM_CPUS_PER_TASK"])
-    except KeyError:
-        n_cpus = joblib.cpu_count()
-
-    n_proc = max(min(max_n, n_cpus), 1)
-
-    return n_proc
 
 
 def normal_returns_scaled(N, m, scale):
@@ -126,7 +103,7 @@ def createproblem_quad(N, m, A):
 
     # PROBLEM #
     problem = cp.Problem(cp.Minimize(objective), constraints)
-    return problem, x, s, lam, dat, eps, w
+    return problem, x, s, lam, dat, eps, w, z
 
 
 def quadratic_experiment(A, Ainv, r, m, N_tot, K_nums, eps_nums, foldername):
@@ -148,8 +125,8 @@ def quadratic_experiment(A, Ainv, r, m, N_tot, K_nums, eps_nums, foldername):
     for Kcount, K in enumerate(K_nums):
         kmeans = KMeans(n_clusters=K).fit(d)
         weights = np.bincount(kmeans.labels_) / N_tot
+        problem, x, s, lam, dat, eps, w, z = createproblem_quad(K, m, Ainv)
         for epscount, epsval in enumerate(eps_nums):
-            problem, x, s, lam, dat, eps, w = createproblem_quad(K, m, Ainv)
             eps.value = epsval**2
             dat.value = kmeans.cluster_centers_
             w.value = weights
@@ -170,7 +147,6 @@ def quadratic_experiment(A, Ainv, r, m, N_tot, K_nums, eps_nums, foldername):
                  "bound": (L/(2*N_tot))*kmeans.inertia_
                  })
             df = df.append(newrow, ignore_index=True)
-            problem = 0
     return xsols, df
 
 
@@ -181,32 +157,25 @@ if __name__ == '__main__':
     arguments = parser.parse_args()
     foldername = arguments.foldername
 
-    N_tot = 60
+    N_tot = 90
     m = 10
-    R = 30
-    K_nums = [1, 2, 3, 4, 5, 10, 30, 60]
+    R = 20
+    K_nums = [1, 2, 3, 4, 5, 15, 45, 90]
     A = {}
     Ainv = {}
     for i in range(m):
-        A[i] = datasets.make_spd_matrix(m)
+        A[i] = datasets.make_spd_matrix(m, random_state=i)
         Ainv[i] = sc.linalg.sqrtm(np.linalg.inv(A[i]))
-    eps_nums = np.array([0.01, 0.015, 0.023, 0.036, 0.055, 0.085, 0.13, 0.20, 0.30, 0.5, 0.7, 1, 1.2, 1.4, 1.43, 1.47, 1.51, 1.55, 1.58,
-                        1.62, 1.66, 1.7, 1.73, 1.77, 1.81, 1.85, 1.88, 1.92, 1.96, 2, 2.02, 2.07, 2.11, 2.15, 2.18, 2.22, 2.26, 2.3, 2.5, 2.7, 3, 4, 9, 10])
 
-    #eps_nums = np.concatenate((np.logspace(-2,0.4,20), np.array([3,4,7,9,10])))
+    eps_nums = np.concatenate((np.logspace(-2.2, -1, 8), np.logspace(-0.8, 0, 5),
+                              np.logspace(0.1, 0.5, 20), np.array([3, 4, 7, 9, 10])))
 
     njobs = get_n_processes(30)
     results = Parallel(n_jobs=njobs)(delayed(quadratic_experiment)(
         A, Ainv, r, m, N_tot, K_nums, eps_nums, foldername) for r in range(R))
 
-    #x_sols = np.zeros((len(K_nums),len(eps_nums),m, R))
     dftemp = results[0][1]
-    # for r in range(R):
-    #    x_sols += results[r][0]
     for r in range(1, R):
         dftemp = dftemp.add(results[r][1].reset_index(), fill_value=0)
     dftemp = dftemp/R
     dftemp.to_csv(foldername + '/df.csv')
-
-    all = pd.concat([results[r][1] for r in range(R)])
-    all.to_csv(foldername + '/df_all.csv')

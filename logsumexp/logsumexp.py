@@ -7,51 +7,8 @@ import numpy as np
 import cvxpy as cp
 import pandas as pd
 import sys
-#from mro.utils import get_n_processes, cluster_data
+from mro.utils import get_n_processes
 import argparse
-
-
-def get_n_processes(max_n=np.inf):
-    """Get number of processes from current cps number
-    Parameters
-    ----------
-    max_n: int
-        Maximum number of processes.
-    Returns
-    -------
-    float
-        Number of processes to use.
-    """
-
-    try:
-        # Check number of cpus if we are on a SLURM server
-        n_cpus = int(os.environ["SLURM_CPUS_PER_TASK"])
-    except KeyError:
-        n_cpus = joblib.cpu_count()
-
-    n_proc = max(min(max_n, n_cpus), 1)
-
-    return n_proc
-
-
-def dat_scaled(N, m, scale):
-    """Creates scaled data
-    Parameters:
-    ----------
-    N: int
-        Number of data samples
-    m: int
-        Size of each data sample
-    Scales: float
-        Multiplier for a single mode
-    Returns:
-    -------
-    d: matrix
-        Scaled data with a single mode
-    """
-    R = np.vstack([np.random.uniform(0.01*i*scale, 0.01*(i+1)*scale, N)
-                  for i in range(1, m+1)])
-    return R.transpose()
 
 
 def data_modes(N, m, scales):
@@ -102,39 +59,7 @@ def createproblem_max(N, m, w):
     # CONSTRAINTS #
     constraints = [cp.sum([cp.quad_over_lin(u[k]-dat[k], 1/w[k])
                           for k in range(N)]) <= eps]
-    #constraints += [u>= 0, u <= 3]
-
-    # PROBLEM #
-    problem = cp.Problem(cp.Maximize(objective), constraints)
-    return problem, u, expx, dat, eps
-
-
-def createproblem_max1(N, m, w):
-    """Create the maximization problem to test constraint satisfaction
-    Parameters:
-    ----------
-    N: int
-        Number of data samples
-    m: int
-        Size of each data sample
-    w: vector
-        Weights for each data sample
-    Returns:
-    -------
-    The cvxpy problem and parameters
-    """
-    # PARAMETERS #
-    dat = cp.Parameter((N, m))
-    expx = cp.Parameter(m)
-    eps = cp.Parameter()
-
-    u = cp.Variable((N, m))
-
-    objective = cp.sum([w[k]*cp.log(u[k]@expx) for k in range(N)])
-    # CONSTRAINTS #
-    constraints = [cp.sum([cp.quad_over_lin(u[k]-dat[k], 1/w[k])
-                          for k in range(N)]) <= eps]
-    constraints += [u >= 0, u <= 2.4]
+    #constraints += [u >= 0]
 
     # PROBLEM #
     problem = cp.Problem(cp.Maximize(objective), constraints)
@@ -245,36 +170,21 @@ def logsumexp_experiment(r, m, N_tot, K_nums, eps_nums, foldername):
         The results of the experiments
     '''
     df = pd.DataFrame(columns=["r", "K", "Epsilon", "Opt_val",
-                      "Eval_val", "satisfy", "solvetime", "bound", "iters"])
+                      "Eval_val", "satisfy", "solvetime", "bound", "bound2", "iters"])
     d = data_modes(N_tot, m, [1, 3, 7])
     d2 = data_modes(N_tot, m, [1, 3, 7])
     for Kcount, K in enumerate(K_nums):
         kmeans = KMeans(n_clusters=K).fit(d)
         weights = np.bincount(kmeans.labels_) / N_tot
-        if K == N_tot:
-            for epscount, epsval in enumerate(eps_nums):
-                objs_val, x_val, time, iters = minmaxsolve(
-                    K, m, weights, kmeans.cluster_centers_, epsval**2, createproblem_min, createproblem_max1)
-                evalvalue = cp.sum(
-                    [(1/N_tot)*cp.log_sum_exp(x_val + np.log(d2[k])).value for k in range(N_tot)])
-                newrow = pd.Series(
-                    {"r": r,
-                     "K": 9999,
-                     "Epsilon": epsval,
-                     "Opt_val": objs_val,
-                     "Eval_val": evalvalue,
-                     "satisfy": evalvalue <= objs_val,
-                     "solvetime": time,
-                     "bound": (1/(2*N_tot))*kmeans.inertia_,
-                     "iters": iters
-                     })
-                df = df.append(newrow, ignore_index=True)
-
         for epscount, epsval in enumerate(eps_nums):
             objs_val, x_val, time, iters = minmaxsolve(
                 K, m, weights, kmeans.cluster_centers_, epsval**2, createproblem_min, createproblem_max)
             evalvalue = cp.sum(
                 [(1/N_tot)*cp.log_sum_exp(x_val + np.log(d2[k])).value for k in range(N_tot)])
+            expx = np.exp(x_val)
+            L = expx@expx / \
+                (np.min([expx@d[k]
+                 for k in range(N_tot)]))**2
             newrow = pd.Series(
                 {"r": r,
                  "K": K,
@@ -284,10 +194,10 @@ def logsumexp_experiment(r, m, N_tot, K_nums, eps_nums, foldername):
                  "satisfy": evalvalue <= objs_val,
                  "solvetime": time,
                  "bound": (1/(2*N_tot))*kmeans.inertia_,
+                 "bound2": (L/(2*N_tot))*kmeans.inertia_,
                  "iters": iters
                  })
             df = df.append(newrow, ignore_index=True)
-            #df.to_csv(foldername + '/df1_' + str(r) + '.csv')
     return df
 
 
@@ -312,4 +222,4 @@ if __name__ == '__main__':
         dftemp = dftemp.add(results[r].reset_index(), fill_value=0)
     dftemp = dftemp/R
 
-    dftemp.to_csv(foldername + '/df1.csv')
+    dftemp.to_csv(foldername + '/df.csv')

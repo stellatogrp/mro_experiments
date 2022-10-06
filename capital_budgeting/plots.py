@@ -12,7 +12,8 @@ parser.add_argument('--foldername', type=str,
 arguments = parser.parse_args()
 foldername = arguments.foldername
 
-dftemp = pd.read_csv(foldername+'df4_final.csv')
+dftemp = pd.read_csv(foldername+'df.csv')
+
 
 m = 12
 N_tot = 50
@@ -20,14 +21,6 @@ K_nums = [1, 2, 5, 10, 25, 50, 9999]
 eps_nums = np.concatenate((np.logspace(-4, -2.95, 10), np.logspace(-2.9, -
                           1.9, 15), np.logspace(-1.8, 0, 8), np.logspace(0.1, 1, 3)))
 
-# m = 15
-# N_tot = 80
-# K_nums = [1, 2, 5, 10, 25, 40, 80, 9999]
-
-# eps_nums = np.concatenate((np.logspace(-4.5, -2.95, 12),
-                           np.logspace(-2.9, -1.9,
-                                       10), np.logspace(-1.8, 0, 5),
-                           np.logspace(0.1, 1, 3)))
 
 plt.rcParams.update({
     "text.usetex": True,
@@ -56,14 +49,14 @@ axins = zoomed_inset_axes(ax1, 6, loc="upper left")
 axins.set_xlim(10**(-3.5), 10e-4)
 axins.set_ylim(-12.3, -11.9)
 j = 0
- for K_count in [0, 1, 3, 5, 6]:
+for K_count in [0, 1, 3, 5, 6]:
     axins.plot(np.array(eps_nums), dftemp.sort_values(["K", "Epsilon"])[
                K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["Opt_val"], color=colors[j])
     axins.plot(np.array(eps_nums), dftemp.sort_values(["K", "Epsilon"])[
                K_count*len(eps_nums):(K_count+1)*len(eps_nums)]["Eval_val"], linestyle=':', color=colors[j])
     j += 1
- axins.set_xticks(ticks=[])
- axins.set_yticks(ticks=[])
+axins.set_xticks(ticks=[])
+axins.set_yticks(ticks=[])
 mark_inset(ax1, axins, loc1=3, loc2=4, fc="none", ec="0.5")
 
 j = 0
@@ -79,14 +72,14 @@ ax21.set_title("Objective value")
 ax21.set_ylim([-12.3, -11.9])
 ax21.legend(bbox_to_anchor=(1, 0.75), fontsize=14)
 plt.tight_layout()
-plt.savefig("capitaltop1.pdf")
+plt.savefig(foldername + "capitaltop.pdf")
 plt.show()
 
 
 fig, (ax31, ax4) = plt.subplots(1, 2, figsize=(14, 4.5))
 
 j = 0
-for i in np.arange(0, len(eps_nums)-3, 3):
+for i in np.arange(0, len(eps_nums)-3, 8):
     gnval = np.array(dftemp.sort_values(["Epsilon", "K"])[
                      i*len(K_nums):(i+1)*len(K_nums)]["Opt_val"])[-2]
     dif = (dftemp.sort_values(["Epsilon", "K"])[
@@ -98,19 +91,19 @@ for i in np.arange(0, len(eps_nums)-3, 3):
     j += 1
 ax31.set_xlabel("$K$ (number of clusters)")
 ax31.set_yscale("log")
-ax31.set_title(r"$\bar{g}^K - g^N$")
+ax31.set_title(r"$\bar{g}^K - \bar{g}^N$")
 
 
 j = 0
-for i in np.arange(0, len(eps_nums)-3, 3):
+for i in np.arange(0, len(eps_nums)-3, 8):
     ax4.plot(K_nums[0:-1], dftemp.sort_values(["Epsilon", "K"])[i*len(K_nums):(i+1)*len(K_nums)]["solvetime"][0:-1],
              linestyle="-", marker=styles[j], color=colors[j], label="$\epsilon = {}$".format(np.round(eps_nums[i], 5)))
     j += 1
 ax4.set_xlabel("$K$ (number of clusters)")
 ax4.set_title("Time (s)")
 ax4.set_yscale("log")
-ax4.legend(loc="lower right", bbox_to_anchor=(1.33, 0.2), fontsize=14)
+ax4.legend(loc="lower right", bbox_to_anchor=(1.36, 0.2), fontsize=14)
 
 plt.tight_layout()
-plt.savefig("capitalbot1.pdf")
+plt.savefig(foldername + "capitalbot.pdf")
 plt.show()
