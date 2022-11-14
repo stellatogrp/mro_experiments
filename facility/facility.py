@@ -259,7 +259,6 @@ def evaluate_k(p, x, X, d):
     for fac in range(np.shape(x)[0]):
         for ind in range(np.shape(d)[0]):
             maxval[ind, fac] = -p.value[fac]*x.value[fac] + d[ind]@X.value[fac]
-    print(np.mean(np.max(maxval, axis=1)))
     if np.mean(np.max(maxval, axis=1)) >= 0.001:
         return 0
     return 1
@@ -317,7 +316,7 @@ def facility_experiment(r, n, m, Data, Data_eval, prob_facility,
                      "Eval_val1": evalvalue1,
                      "solvetime": problem.solver_stats.solve_time,
                      })
-                df = df.append(newrow, ignore_index=True)
+                df = pd.concat([df, newrow.to_frame().T], ignore_index=True)
         problem, x, X, s, lmbda, data_train_pm, w_pm, eps_pm, p_pm, c_pm, C_pm = prob_facility(
             K, m, n)
         data_train_pm.value = d_train
@@ -328,7 +327,6 @@ def facility_experiment(r, n, m, Data, Data_eval, prob_facility,
 
         # solve for various epsilons
         for eps_count, eps in enumerate(np.flip(eps_nums)):
-            #            print(K, eps)
             eps_pm.value = eps
             problem.solve(solver=cp.MOSEK, mosek_params={
                           mosek.dparam.optimizer_max_time:  1500.0}, verbose=True)
@@ -345,7 +343,7 @@ def facility_experiment(r, n, m, Data, Data_eval, prob_facility,
                  "Eval_val1": evalvalue1,
                  "solvetime": problem.solver_stats.solve_time,
                  })
-            df = df.append(newrow, ignore_index=True)
+            df = pd.concat([df, newrow.to_frame().T], ignore_index=True)
     return X_sols, x_sols, df
 
 

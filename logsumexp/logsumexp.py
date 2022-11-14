@@ -240,7 +240,7 @@ def logsumexp_experiment(r, m, N_tot, K_nums, eps_nums, foldername):
                  "bound2": (L/(2*N_tot))*kmeans.inertia_,
                  "iters": iters
                  })
-            df = df.append(newrow, ignore_index=True)
+            df = pd.concat([df, newrow.to_frame().T], ignore_index=True)
     return df
 
 

@@ -168,7 +168,7 @@ def quadratic_experiment(A, Ainv, r, m, N_tot, K_nums, eps_nums, foldername):
                  "solvetime": problem.solver_stats.solve_time,
                  "bound": (L/(2*N_tot))*kmeans.inertia_
                  })
-            df = df.append(newrow, ignore_index=True)
+            df = pd.concat([df, newrow.to_frame().T], ignore_index=True)
     return xsols, df
 
 

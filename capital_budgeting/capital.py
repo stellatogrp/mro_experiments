@@ -175,7 +175,8 @@ def capital_experiment(R, r, m, N_tot, K_nums, eps_nums, T, h, F):
                      "solvetime": problem.solver_stats.solve_time,
                      "bound2": (L2/(2*N_tot))*kmeans.inertia_
                      })
-                df = df.append(newrow, ignore_index=True)
+                df = pd.concat([df, newrow.to_frame().T], ignore_index=True)
+
         problem, x, dat, eps = createproblem(K, m, T, F, h, weights)
         dat.value = kmeans.cluster_centers_
         for epscount, epsval in enumerate(eps_nums):
@@ -198,7 +199,8 @@ def capital_experiment(R, r, m, N_tot, K_nums, eps_nums, T, h, F):
                  "solvetime": problem.solver_stats.solve_time,
                  "bound2": (L2/(2*N_tot))*kmeans.inertia_
                  })
-            df = df.append(newrow, ignore_index=True)
+            df = pd.concat([df, newrow.to_frame().T], ignore_index=True)
+
     return xsols, df
 
 
