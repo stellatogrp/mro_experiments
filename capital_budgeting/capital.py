@@ -1,12 +1,35 @@
 import argparse
+import os
 
 import cvxpy as cp
+import joblib
 import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
 from sklearn.cluster import KMeans
 
-from mro.utils import get_n_processes
+
+def get_n_processes(max_n=np.inf):
+    """Get number of processes from current cps number
+    Parameters
+    ----------
+    max_n: int
+        Maximum number of processes.
+    Returns
+    -------
+    float
+        Number of processes to use.
+    """
+
+    try:
+        # Check number of cpus if we are on a SLURM server
+        n_cpus = int(os.environ["SLURM_CPUS_PER_TASK"])
+    except KeyError:
+        n_cpus = joblib.cpu_count()
+
+    n_proc = max(min(max_n, n_cpus), 1)
+
+    return n_proc
 
 
 def createproblem(N, m, T, F, h, w):
@@ -134,7 +157,7 @@ def capital_experiment(R, r, m, N_tot, K_nums, eps_nums, T, h, F):
             dat.value = kmeans.cluster_centers_
             for epscount, epsval in enumerate(eps_nums):
                 eps.value = epsval**2
-                problem.solve(verbose=True)
+                problem.solve()
                 evalvalue = -np.mean([
                     np.sum([np.sum([F[j, t]*x[j].value/(1+dat_eval[i, j]) ** t
                                    for t in range(T+1)]) for j in range(m)])
@@ -157,7 +180,7 @@ def capital_experiment(R, r, m, N_tot, K_nums, eps_nums, T, h, F):
         dat.value = kmeans.cluster_centers_
         for epscount, epsval in enumerate(eps_nums):
             eps.value = epsval**2
-            problem.solve(verbose=True)
+            problem.solve()
             evalvalue = -np.mean([np.sum([np.sum([F[j, t]*x[j].value/(1+dat_eval[i, j])
                                  ** t for t in range(T+1)]) for j in range(m)])
                                  for i in range(N_tot)])
@@ -191,6 +214,8 @@ if __name__ == '__main__':
     T = 5
     F = np.vstack([np.random.uniform(0.1, 0.5+0.004*t, m)
                   for t in range(T+1)]).T
+    h = np.zeros(m)
+    theta = 8
     for i in range(m):
         h[i] = np.random.uniform(1, 3-0.05*i)
     K_nums = [1, 2, 5, 10, 25, 50]

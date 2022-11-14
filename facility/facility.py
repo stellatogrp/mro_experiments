@@ -1,15 +1,60 @@
 import argparse
+import os
 import sys
 
 import cvxpy as cp
+import joblib
 import mosek
 import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
-
-from mro.utils import cluster_data, get_n_processes
+from sklearn.cluster import KMeans
 
 output_stream = sys.stdout
+
+
+def get_n_processes(max_n=np.inf):
+    """Get number of processes from current cps number
+    Parameters
+    ----------
+    max_n: int
+        Maximum number of processes.
+    Returns
+    -------
+    float
+        Number of processes to use.
+    """
+
+    try:
+        # Check number of cpus if we are on a SLURM server
+        n_cpus = int(os.environ["SLURM_CPUS_PER_TASK"])
+    except KeyError:
+        n_cpus = joblib.cpu_count()
+
+    n_proc = max(min(max_n, n_cpus), 1)
+
+    return n_proc
+
+
+def cluster_data(D_in, K):
+    """Return K cluster means after clustering D_in into K clusters
+    Parameters
+    ----------
+    D_in: array
+        Input dataset, N entries
+    Returns
+    -------
+    Dbar_in: array
+        Output dataset, K entries
+    weights: vector
+        Vector of weights for Dbar_in
+    """
+    N = D_in.shape[0]
+    kmeans = KMeans(n_clusters=K).fit(D_in)
+    Dbar_in = kmeans.cluster_centers_
+    weights = np.bincount(kmeans.labels_) / N
+
+    return Dbar_in, weights
 
 
 def prob_facility_separate(K, m, n):
@@ -259,7 +304,7 @@ def facility_experiment(r, n, m, Data, Data_eval, prob_facility,
             # solve for various epsilons
             for eps_count, eps in enumerate(eps_nums):
                 eps_pm.value = eps
-                problem.solve(solver=cp.MOSEK, verbose=True, mosek_params={
+                problem.solve(solver=cp.MOSEK, mosek_params={
                     mosek.dparam.optimizer_max_time:  1500.0})
                 evalvalue = evaluate(p_pm, x, X, dat_eval)
                 evalvalue1 = evaluate_k(p_pm, x, X, dat_eval)

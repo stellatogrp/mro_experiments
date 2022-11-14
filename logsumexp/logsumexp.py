@@ -1,12 +1,55 @@
 import argparse
+import os
 
 import cvxpy as cp
+import joblib
 import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
 from sklearn.cluster import KMeans
 
-from mro.utils import get_n_processes
+
+def get_n_processes(max_n=np.inf):
+    """Get number of processes from current cps number
+    Parameters
+    ----------
+    max_n: int
+        Maximum number of processes.
+    Returns
+    -------
+    float
+        Number of processes to use.
+    """
+
+    try:
+        # Check number of cpus if we are on a SLURM server
+        n_cpus = int(os.environ["SLURM_CPUS_PER_TASK"])
+    except KeyError:
+        n_cpus = joblib.cpu_count()
+
+    n_proc = max(min(max_n, n_cpus), 1)
+
+    return n_proc
+
+
+def dat_scaled(N, m, scale):
+    """Creates scaled data
+    Parameters:
+    ----------
+    N: int
+        Number of data samples
+    m: int
+        Size of each data sample
+    Scales: float
+        Multiplier for a single mode
+    Returns:
+    -------
+    d: matrix
+        Scaled data with a single mode
+    """
+    R = np.vstack([np.random.uniform(0.01*i*scale, 0.01*(i+1)*scale, N)
+                  for i in range(1, m+1)])
+    return R.transpose()
 
 
 def data_modes(N, m, scales):
