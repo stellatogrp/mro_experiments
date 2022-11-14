@@ -7,7 +7,7 @@ from mpl_toolkits.axes_grid1.inset_locator import mark_inset, zoomed_inset_axes
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--foldername', type=str,
-                    default="/scratch/gpfs/iywang/mro_results/", metavar='N')
+                    default="capital_budgeting/", metavar='N')
 arguments = parser.parse_args()
 foldername = arguments.foldername
 

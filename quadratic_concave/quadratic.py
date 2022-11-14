@@ -175,7 +175,7 @@ def quadratic_experiment(A, Ainv, r, m, N_tot, K_nums, eps_nums, foldername):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--foldername', type=str,
-                        default="/scratch/gpfs/iywang/mro_results/", metavar='N')
+                        default="quadratic_concave/", metavar='N')
     arguments = parser.parse_args()
     foldername = arguments.foldername
 

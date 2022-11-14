@@ -6,7 +6,7 @@ import pandas as pd
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--foldername', type=str,
-                    default="/scratch/gpfs/iywang/mro_results/", metavar='N')
+                    default="quadratic_concave/", metavar='N')
 arguments = parser.parse_args()
 foldername = arguments.foldername
 

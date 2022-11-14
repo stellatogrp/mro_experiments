@@ -352,7 +352,7 @@ def facility_experiment(r, n, m, Data, Data_eval, prob_facility,
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--foldername', type=str,
-                        default="/scratch/gpfs/iywang/mro_results/", metavar='N')
+                        default="facility/", metavar='N')
     arguments = parser.parse_args()
     foldername = arguments.foldername
     # different cluster values we consider

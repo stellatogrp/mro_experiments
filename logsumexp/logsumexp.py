@@ -247,7 +247,7 @@ def logsumexp_experiment(r, m, N_tot, K_nums, eps_nums, foldername):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--foldername', type=str,
-                        default="/scratch/gpfs/iywang/mro_results/", metavar='N')
+                        default="logsumexp/", metavar='N')
     arguments = parser.parse_args()
     foldername = arguments.foldername
     N_tot = 90
