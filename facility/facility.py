@@ -328,7 +328,7 @@ def facility_experiment(r, n, m, Data, Data_eval, prob_facility,
 
         # solve for various epsilons
         for eps_count, eps in enumerate(np.flip(eps_nums)):
-            print(K, eps)
+            #            print(K, eps)
             eps_pm.value = eps
             problem.solve(solver=cp.MOSEK, mosek_params={
                           mosek.dparam.optimizer_max_time:  1500.0}, verbose=True)
