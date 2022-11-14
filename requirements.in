@@ -3,6 +3,7 @@ scipy
 cvxpy
 matplotlib
 sklearn
+scikit-learn
 joblib
 mosek
 argparse
