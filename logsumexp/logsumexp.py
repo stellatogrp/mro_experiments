@@ -245,6 +245,7 @@ def logsumexp_experiment(r, m, N_tot, K_nums, eps_nums, foldername):
 
 
 if __name__ == '__main__':
+    print("START")
     parser = argparse.ArgumentParser()
     parser.add_argument('--foldername', type=str,
                         default="logsumexp/", metavar='N')

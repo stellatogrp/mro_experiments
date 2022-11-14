@@ -157,7 +157,7 @@ def capital_experiment(R, r, m, N_tot, K_nums, eps_nums, T, h, F):
             dat.value = kmeans.cluster_centers_
             for epscount, epsval in enumerate(eps_nums):
                 eps.value = epsval**2
-                problem.solve()
+                problem.solve(verbose=True)
                 evalvalue = -np.mean([
                     np.sum([np.sum([F[j, t]*x[j].value/(1+dat_eval[i, j]) ** t
                                    for t in range(T+1)]) for j in range(m)])
@@ -181,7 +181,7 @@ def capital_experiment(R, r, m, N_tot, K_nums, eps_nums, T, h, F):
         dat.value = kmeans.cluster_centers_
         for epscount, epsval in enumerate(eps_nums):
             eps.value = epsval**2
-            problem.solve()
+            problem.solve(verbose=True)
             evalvalue = -np.mean([np.sum([np.sum([F[j, t]*x[j].value/(1+dat_eval[i, j])
                                  ** t for t in range(T+1)]) for j in range(m)])
                                  for i in range(N_tot)])

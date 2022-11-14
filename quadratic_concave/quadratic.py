@@ -152,7 +152,7 @@ def quadratic_experiment(A, Ainv, r, m, N_tot, K_nums, eps_nums, foldername):
             eps.value = epsval**2
             dat.value = kmeans.cluster_centers_
             w.value = weights
-            problem.solve()
+            problem.solve(verbose=True)
             evalvalue = np.mean(-0.5*(d2@np.sum([A[i]*x.value[i]
                                 for i in range(m)], axis=0))@(d2.T))
             # xsols[Kcount, epscount, :, r] = x.value
@@ -173,6 +173,7 @@ def quadratic_experiment(A, Ainv, r, m, N_tot, K_nums, eps_nums, foldername):
 
 
 if __name__ == '__main__':
+    print("START")
     parser = argparse.ArgumentParser()
     parser.add_argument('--foldername', type=str,
                         default="quadratic_concave/", metavar='N')
