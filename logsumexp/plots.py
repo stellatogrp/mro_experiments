@@ -3,13 +3,57 @@ import argparse
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-
+from sklearn.cluster import KMeans
 parser = argparse.ArgumentParser()
 parser.add_argument('--foldername', type=str,
                     default="logsumexp/", metavar='N')
 arguments = parser.parse_args()
 foldername = arguments.foldername
 dftemp = pd.read_csv(foldername + 'df.csv')
+
+
+def dat_scaled(N, m, scale):
+    """Creates scaled data
+    Parameters:
+    ----------
+    N: int
+        Number of data samples
+    m: int
+        Size of each data sample
+    Scales: float
+        Multiplier for a single mode
+    Returns:
+    -------
+    d: matrix
+        Scaled data with a single mode
+    """
+    R = np.vstack([np.random.uniform(0.01*i*scale, 0.01*(i+1)*scale, N)
+                  for i in range(1, m+1)])
+    return R.transpose()
+
+
+def data_modes(N, m, scales):
+    """Creates data scaled by given multipliers
+    Parameters:
+    ----------
+    N: int
+        Number of data samples
+    m: int
+        Size of each data sample
+    Scales: vector
+        Multipliers of different modes
+    Returns:
+    -------
+    d: matrix
+        Scaled data with all modes
+    """
+    modes = len(scales)
+    d = np.ones((N+100, m))
+    weights = int(np.ceil(N/modes))
+    for i in range(modes):
+        d[i*weights:(i+1)*weights, :] = dat_scaled(weights, m, scales[i])
+    return d[0:N, :]
+
 
 plt.rcParams.update({
     "text.usetex": True,
@@ -21,6 +65,20 @@ m = 30
 K_nums = np.array([1, 2, 3, 5, 6, 7, 8, 10, 20, 40, 90])
 eps_nums = np.append(np.logspace(-5.2, -4, 15), np.logspace(-3.9, 1, 10))
 
+d = data_modes(90, 30, [1, 3, 7])
+vals = []
+for K in np.arange(1,40):
+    kmeans = KMeans(n_clusters=K, n_init='auto').fit(d)
+    weights = np.bincount(kmeans.labels_) / N_tot
+    vals.append(kmeans.inertia_/N_tot)
+plt.figure(figsize = (8,2.5))
+plt.plot(np.arange(1,40),vals)
+plt.yscale("log")
+plt.xlabel("$K$ (number of clusters)")
+plt.ylabel("$D(K)$")
+plt.tight_layout()
+plt.savefig(foldername + "log_k.pdf")
+plt.show()
 
 colors = ["tab:blue", "tab:orange", "tab:green",
           "tab:red", "tab:purple", "tab:brown", "tab:pink", "tab:grey", "tab:olive",

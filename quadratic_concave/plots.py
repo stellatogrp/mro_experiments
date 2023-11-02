@@ -3,6 +3,7 @@ import argparse
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from sklearn.cluster import KMeans
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--foldername', type=str,
@@ -25,6 +26,64 @@ K_nums = [1, 2, 3, 4, 5, 15, 45, 90]
 eps_nums = np.concatenate((np.logspace(-2.2, -1, 8), np.logspace(-0.8, 0, 5),
                            np.logspace(0.1, 0.5, 20), np.array([3, 4, 7, 9, 10])))
 
+
+def normal_returns_scaled(N, m, scale):
+    """Creates scaled data
+    Parameters:
+    ----------
+    N: int
+        Number of data samples
+    m: int
+        Size of each data sample
+    Scales: float
+        Multiplier for a single mode
+    Returns:
+    -------
+    d: matrix
+        Scaled data with a single mode
+    """
+    R = np.vstack([np.random.normal(
+        i*0.03*scale, np.sqrt((0.02**2+(i*0.025)**2)), N) for i in range(1, m+1)])
+    return (R.transpose())
+
+
+def data_modes(N, m, scales):
+    """Creates data scaled by given multipliers
+    Parameters:
+    ----------
+    N: int
+        Number of data samples
+    m: int
+        Size of each data sample
+    Scales: vector
+        Multipliers of different modes
+    Returns:
+    -------
+    d: matrix
+        Scaled data with all modes
+    """
+    modes = len(scales)
+    d = np.zeros((N+100, m))
+    weights = int(np.ceil(N/modes))
+    for i in range(modes):
+        d[i*weights:(i+1)*weights,
+          :] = normal_returns_scaled(weights, m, scales[i])
+    return d[0:N, :]
+
+d = data_modes(N_tot, m, [1, 5, 15, 25, 40])
+vals = []
+for K in np.arange(1,45):
+    kmeans = KMeans(n_clusters=K, n_init='auto').fit(d)
+    weights = np.bincount(kmeans.labels_) / N_tot
+    vals.append(kmeans.inertia_/N_tot)
+plt.figure(figsize = (8,2.5))
+plt.plot(np.arange(1,45),vals)
+plt.yscale("log")
+plt.xlabel("$K$ (number of clusters)")
+plt.ylabel("$D(K)$")
+plt.tight_layout()
+plt.savefig(foldername + "quad_k.pdf")
+plt.show()
 
 styles = ["o", 's', "^", "v", "<", ">"]
 colors = ["tab:blue", "tab:orange", "tab:green",

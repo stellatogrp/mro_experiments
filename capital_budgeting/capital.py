@@ -124,6 +124,14 @@ def createproblem_max(N, m, T, F, h, w):
     problem = cp.Problem(cp.Minimize(objective), constraints)
     return problem, x, dat, eps
 
+def gen_Fh(T,m):
+    np.random.seed(50)
+    F = np.vstack([np.random.uniform(0.1, 0.5+0.004*t, m)
+                  for t in range(T+1)]).T
+    h = np.zeros(m)
+    for i in range(m):
+        h[i] = np.random.uniform(1, 3-0.05*i)
+    return F, h
 
 def capital_experiment(R, r, m, N_tot, K_nums, eps_nums, T, h, F):
     '''Run the experiment for multiple K and epsilon
@@ -214,12 +222,8 @@ if __name__ == '__main__':
     m = 12
     N_tot = 50
     T = 5
-    F = np.vstack([np.random.uniform(0.1, 0.5+0.004*t, m)
-                  for t in range(T+1)]).T
-    h = np.zeros(m)
+    F, h = gen_Fh(T,m)
     theta = 8
-    for i in range(m):
-        h[i] = np.random.uniform(1, 3-0.05*i)
     K_nums = [1, 2, 5, 10, 25, 50]
     eps_nums = np.concatenate((np.logspace(-4, -2.95, 10), np.logspace(-2.9, -
                                                                        1.9, 15),

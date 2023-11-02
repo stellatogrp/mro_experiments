@@ -12,7 +12,7 @@
 export MOSEKLM_LICENSE_FILE=/scratch/gpfs/iywang/mro_experiments/mosek/mosek.lic
 
 module purge
-module load anaconda3
+module load anaconda3/2022.5
 conda activate mroenv
 
 python quadratic_concave/quadratic.py --foldername /scratch/gpfs/iywang/mro_results/quadratic_concave/m10_K90_r20/
