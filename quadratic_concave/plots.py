@@ -70,14 +70,15 @@ def data_modes(N, m, scales):
           :] = normal_returns_scaled(weights, m, scales[i])
     return d[0:N, :]
 
+
 d = data_modes(N_tot, m, [1, 5, 15, 25, 40])
 vals = []
-for K in np.arange(1,45):
+for K in np.arange(1, 45):
     kmeans = KMeans(n_clusters=K, n_init='auto').fit(d)
     weights = np.bincount(kmeans.labels_) / N_tot
     vals.append(kmeans.inertia_/N_tot)
-plt.figure(figsize = (8,2.5))
-plt.plot(np.arange(1,45),vals)
+plt.figure(figsize=(8, 2.5))
+plt.plot(np.arange(1, 45), vals)
 plt.yscale("log")
 plt.xlabel("$K$ (number of clusters)")
 plt.ylabel("$D(K)$")

@@ -84,17 +84,27 @@ def prob_news(K, n):
     objective = cp.Minimize(buy_p@x + eps*lam + s@wk)
     constraints = []
     # formulate constraints
-    
+
     for k in range(K):
-        constraints += [ -sell_p@x + gam[0, (k*4):((k+1)*4)]@(d_r - C_r@d_train[k]) <= s[k]]
-        constraints += [-sell_p[0]*x[0] - d_train[k]@(sell_p[1]*np.array([0,1])) + gam[1, (k*4):((k+1)*4)]@(d_r - C_r@d_train[k])<= s[k]]
-        constraints += [ -d_train[k]@(sell_p[0]*np.array([1,0])) -sell_p[1]*x[1] + gam[2, (k*4):((k+1)*4)]@(d_r - C_r@d_train[k])<= s[k]]
-        constraints += [-d_train[k]@(sell_p) + gam[3, (k*4):((k+1)*4)]@(d_r - C_r@d_train[k])<= s[k]]
+        constraints += [-sell_p@x + gam[0, (k*4):((k+1)*4)]@(d_r - C_r@d_train[k]) <= s[k]]
+        constraints += [-sell_p[0]*x[0] - d_train[k] @
+                        (sell_p[1]*np.array([0, 1]))
+                        + gam[1, (k*4):((k+1)*4)]@(d_r
+                                                   - C_r@d_train[k]) <= s[k]]
+        constraints += [-d_train[k]@(sell_p[0]*np.array([1, 0]))
+                        - sell_p[1]*x[1] +
+                        gam[2, (k*4):((k+1)*4)]@(d_r - C_r@d_train[k]) <= s[k]]
+        constraints += [-d_train[k]@(sell_p) +
+                        gam[3, (k*4):((k+1)*4)]@(d_r
+                                                 - C_r@d_train[k]) <= s[k]]
         constraints += [cp.norm(C_r.T@gam[0, (k*4):((k+1)*4)]) <= lam]
-        constraints += [cp.norm(C_r.T@gam[1, (k*4):((k+1)*4)] + sell_p[1]*np.array([0,1]),2)<= lam]
-        constraints += [cp.norm(C_r.T@gam[2, (k*4):((k+1)*4)] + sell_p[0]*np.array([1,0]),2)<= lam]
-        constraints += [cp.norm(C_r.T@gam[3, (k*4):((k+1)*4)] + sell_p,2)<= lam]
-    
+        constraints += [cp.norm(C_r.T@gam[1, (k*4):((k+1)*4)]
+                                + sell_p[1]*np.array([0, 1]), 2) <= lam]
+        constraints += [cp.norm(C_r.T@gam[2, (k*4):((k+1)*4)]
+                                + sell_p[0]*np.array([1, 0]), 2) <= lam]
+        constraints += [cp.norm(C_r.T@gam[3, (k*4):((k+1)*4)]
+                                + sell_p, 2) <= lam]
+
     constraints += [x >= 0, gam >= 0]
 
     problem = cp.Problem(objective, constraints)
@@ -128,17 +138,18 @@ def prob_news_max(K, n):
     objective = cp.Minimize(buy_p@x + eps*lam + s@wk)
     constraints = []
     # formulate constraints
-    
-    for k in range(K):
-        constraints += [ -sell_p@x  <= s[k]]
-        constraints += [-sell_p[0]*x[0] - d_train[k]@(sell_p[1]*np.array([0,1]))<= s[k]]
-        constraints += [ -d_train[k]@(sell_p[0]*np.array([1,0])) -sell_p[1]*x[1] <= s[k]]
-        constraints += [-d_train[k]@(sell_p)<= s[k]]
 
-    constraints += [cp.norm(sell_p[1]*np.array([0,1]),2)<= lam]
-    constraints += [cp.norm(sell_p[0]*np.array([1,0]),2)<= lam]
-    constraints += [cp.norm(sell_p,2)<= lam]
-    
+    for k in range(K):
+        constraints += [-sell_p@x <= s[k]]
+        constraints += [-sell_p[0]*x[0] - d_train[k]@(sell_p[1]*np.array([0, 1])) <= s[k]]
+        constraints += [-d_train[k]@(sell_p[0]*np.array([1, 0]))
+                        - sell_p[1]*x[1] <= s[k]]
+        constraints += [-d_train[k]@(sell_p) <= s[k]]
+
+    constraints += [cp.norm(sell_p[1]*np.array([0, 1]), 2) <= lam]
+    constraints += [cp.norm(sell_p[0]*np.array([1, 0]), 2) <= lam]
+    constraints += [cp.norm(sell_p, 2) <= lam]
+
     constraints += [x >= 0]
 
     problem = cp.Problem(objective, constraints)
@@ -146,8 +157,7 @@ def prob_news_max(K, n):
     return problem, x, s, lam, d_train, wk, eps, buy_p, sell_p
 
 
-
-def evaluate(buy_p, sell_p,x, d):
+def evaluate(buy_p, sell_p, x, d):
     """Evaluate constraint satisfaction
     Parameters
     ----------
@@ -164,20 +174,23 @@ def evaluate(buy_p, sell_p,x, d):
     float: out of sample expected value
     """
     totval = 0
-    totval = np.maximum(-sell_p[0]*x.value[0],-sell_p[0]*d[:,0]) +  np.maximum(-sell_p[1]*x.value[1],-sell_p[1]*d[:,1])
+    totval = np.maximum(-sell_p[0]*x.value[0], -sell_p[0]*d[:, 0]) + \
+        np.maximum(-sell_p[1]*x.value[1], -sell_p[1]*d[:, 1])
     return buy_p@x.value + np.mean(totval)
+
 
 def gen_demand(N, R, seed):
     np.random.seed(seed)
-    sig = np.array([[0.3,-0.1],[-0.1,0.2]])
-    mu = np.array((3,2.8))
-    norms = np.random.multivariate_normal(mu,sig, (N,R))
+    sig = np.array([[0.3, -0.1], [-0.1, 0.2]])
+    mu = np.array((3, 2.8))
+    norms = np.random.multivariate_normal(mu, sig, (N, R))
     d_train = np.exp(norms)
-    d_train = np.minimum(d_train,40)
+    d_train = np.minimum(d_train, 40)
     return d_train
 
+
 def news_experiment(r, n, Data, Data_eval, prob_news,
-                        N_tot, K_tot, K_nums, eps_tot, eps_nums, foldername):
+                    N_tot, K_tot, K_nums, eps_tot, eps_nums, foldername):
     '''Run the experiment for multiple K and epsilon
     Parameters
     ----------
@@ -194,12 +207,12 @@ def news_experiment(r, n, Data, Data_eval, prob_news,
     # x_sols = np.zeros((K_tot, eps_tot, n))
     x_sols = 0
     df = pd.DataFrame(columns=["R", "K", "Epsilon", "Opt_val", "Eval_val",
-                              "solvetime", ])
+                               "solvetime", ])
 
     # solve for various K
     for K_count, K in enumerate(np.flip(K_nums)):
         dat_orig = Data[:, r, :]
-        dat_new = np.vstack([dat_orig,np.array([0,0])])
+        dat_new = np.vstack([dat_orig, np.array([0, 0])])
         d_train, wk, kmeans = cluster_data(dat_new, K)
         dat_eval = Data_eval[:, r, :]
         if K == N_tot+1:
@@ -224,12 +237,12 @@ def news_experiment(r, n, Data, Data_eval, prob_news,
                      "Epsilon": eps,
                      "Opt_val": problem.objective.value,
                      "Eval_val": evalvalue,
-                     "satisfy" : float(evalvalue <= problem.objective.value),
+                     "satisfy": float(evalvalue <= problem.objective.value),
                      "solvetime": problem.solver_stats.solve_time,
                      "bound": 0
                      })
                 df = pd.concat([df, newrow.to_frame().T], ignore_index=True)
-        problem, x, s, lam, data_train_pm, w_pm, eps_pm, gam, buy_p, sell_p= prob_news(K,n)
+        problem, x, s, lam, data_train_pm, w_pm, eps_pm, gam, buy_p, sell_p = prob_news(K, n)
         data_train_pm.value = d_train
         w_pm.value = wk
         buy_p.value = buy_pval
@@ -247,9 +260,15 @@ def news_experiment(r, n, Data, Data_eval, prob_news,
                  "Epsilon": eps,
                  "Opt_val": problem.objective.value,
                  "Eval_val": evalvalue,
-                 "satisfy" : float(evalvalue <= problem.objective.value),
+                 "satisfy": float(evalvalue <= problem.objective.value),
                  "solvetime": problem.solver_stats.solve_time,
-                 "bound": np.mean([np.max([(d_train[k] - dat_new[kmeans.labels_ == k])@(-zvals[i] -gam.value[i, (k*4):((k+1)*4)].T@C_r) for i in range(4)],axis = 1) for k in range(K)])
+                 "bound": np.mean([np.max(
+                     [(d_train[k] -
+                       dat_new[kmeans.labels_ ==
+                               k])@(-zvals[i] -
+                                    gam.value[i, (k*4):((k+1)*4)].T@C_r)
+                      for i in range(4)], axis=1)
+                     for k in range(K)])
                  })
             df = pd.concat([df, newrow.to_frame().T], ignore_index=True)
     return x_sols, df
@@ -263,24 +282,25 @@ if __name__ == '__main__':
     arguments = parser.parse_args()
     foldername = arguments.foldername
     # different cluster values we consider
-    K_nums = np.array([1, 3,5, 10, 25, 50, 101])
+    K_nums = np.array([1, 3, 5, 10, 25, 50, 101])
     K_tot = K_nums.size  # Total number of clusters we consider
     N_tot = 100
     eps_tot = 30
     M = 10
     R = 30     # Total times we repeat experiment to estimate final probabilty
     n = 2  # number of products
-    eps_nums = np.concatenate([np.logspace(-4,-0.5,30), np.linspace(0.32,2,30)])
+    eps_nums = np.concatenate([np.logspace(-4, -0.5, 30), np.linspace(0.32, 2, 30)])
     # eps_nums = np.linspace(0.01,3,30)
-    # eps_nums = np.concatenate([np.linspace(0.01,0.25,20), np.linspace(0.3,1.2,20), np.linspace(1.25,2,15)])
+    # eps_nums = np.concatenate([np.linspace(0.01,0.25,20),
+    #  np.linspace(0.3,1.2,20), np.linspace(1.25,2,15)])
 
-    buy_pval = np.array([4.,5.])
-    sell_pval = np.array([5,6.5])
+    buy_pval = np.array([4., 5.])
+    sell_pval = np.array([5, 6.5])
     C_r = np.vstack([-np.eye(2), np.eye(2)])
     zvals = {}
     zvals[0] = 0
-    zvals[1] = sell_pval[1]*np.array([0,1])
-    zvals[2] = sell_pval[0]*np.array([1,0])
+    zvals[1] = sell_pval[1]*np.array([0, 1])
+    zvals[2] = sell_pval[0]*np.array([1, 0])
     zvals[3] = sell_pval
 
     Data = gen_demand(N_tot, R, 2)
@@ -289,8 +309,8 @@ if __name__ == '__main__':
     njobs = get_n_processes(30)
     results = Parallel(n_jobs=njobs)(
         delayed(news_experiment)(r, n, Data, Data_eval,
-                                     prob_news, N_tot, K_tot, K_nums,
-                                     eps_tot, eps_nums, foldername) for r in range(R))
+                                 prob_news, N_tot, K_tot, K_nums,
+                                 eps_tot, eps_nums, foldername) for r in range(R))
 
     dftemp = results[0][1]
 

@@ -1,15 +1,16 @@
 import argparse
-from joblib import Parallel, delayed
 import os
+import sys
+
+import cvxpy as cp
+import joblib
 import mosek
-import time
-import pandas as pd
 import numpy as np
+import pandas as pd
+from joblib import Parallel, delayed
 from sklearn.cluster import KMeans
 from sklearn.model_selection import train_test_split
-import cvxpy as cp
-import matplotlib.pyplot as plt
-import sys
+
 output_stream = sys.stdout
 
 
@@ -96,7 +97,6 @@ def port_experiment(dat, dateval, r, m, prob, N_tot, K_tot, K_nums, eps_tot, eps
     Data = dat
     Data_eval = dateval
 
-   ######################## solve for various K ########################
     for K_count, K in enumerate(K_nums):
         d_eval = Data_eval[(N_tot*r):(N_tot*(r+1))]
         kmeans = KMeans(n_clusters=K).fit(Data[(N_tot*r):(N_tot*(r+1))])
@@ -105,7 +105,6 @@ def port_experiment(dat, dateval, r, m, prob, N_tot, K_tot, K_nums, eps_tot, eps
         assert (d_train.shape == (K, m))
         problem, x, s, tau, lmbda, data_train_pm, eps_pm, w_pm = prob(K, m)
         data_train_pm.value = d_train
-        ############## solve for various epsilons ###################
         for eps_count, eps in enumerate(eps_nums):
             w_pm.value = wk
             eps_pm.value = eps
@@ -127,7 +126,7 @@ def port_experiment(dat, dateval, r, m, prob, N_tot, K_tot, K_nums, eps_tot, eps
                     "bound": bound
                  })
             df = df.append(newrow, ignore_index=True)
-            #df.to_csv(foldername + '/df11_'+str(r)+'.csv')
+            # df.to_csv(foldername + '/df11_'+str(r)+'.csv')
     return x_sols, df
 
 
@@ -137,8 +136,9 @@ if __name__ == '__main__':
                         default="/scratch/gpfs/iywang/mro_results/", metavar='N')
     arguments = parser.parse_args()
     foldername = arguments.foldername
-    synthetic_returns = pd.read_csv(
-        '/scratch/gpfs/iywang/mro_experiments/portfolio/sp500_synthetic_returns.csv').to_numpy()[:, 1:]
+    datname = '/scratch/gpfs/iywang/mro_experiments/portfolio/sp500_synthetic_returns.csv'
+    synthetic_returns = pd.read_csv(datname
+                                    ).to_numpy()[:, 1:]
 
     K_nums = np.array([1, 4, 5, 10, 25, 50, 100, 150, 250, 500, 1000])
     K_tot = K_nums.size  # Total number of clusters we consider
@@ -156,7 +156,9 @@ if __name__ == '__main__':
         synthetic_returns[:, :m], train_size=10000, test_size=10000, random_state=7)
     njobs = get_n_processes(30)
     results = Parallel(n_jobs=njobs)(delayed(port_experiment)(
-        dat, dateval, r, m, createproblem_portMIP, N_tot, K_tot, K_nums, eps_tot, eps_nums, foldername) for r in range(R))
+        dat, dateval, r, m,
+        createproblem_portMIP, N_tot,
+        K_tot, K_nums, eps_tot, eps_nums, foldername) for r in range(R))
 
     x_sols = np.zeros((K_tot, eps_tot, m, R))
     dftemp = results[0][1]

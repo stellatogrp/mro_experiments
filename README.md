@@ -49,3 +49,14 @@ Log-sum-exp concave:
 python logsumexp/logsumexp.py --foldername logsumexp/
 python logsumexp/plots.py --foldername logsumexp/
 ```
+Newsvendor problem:
+```
+python newsvendor/newsvendor.py --foldername newsvendor/
+python newsvendor/plots.py --foldername newsvendor/
+```
+Sparse portfolio optimization:
+You need to run 'generate_synthetic_data.R" using R, to generate the csv file of the dataset. Then, run the python files.
+```
+python portfolio/portMIP.py --foldername portfolio/
+python portfolio/plots.py --foldername portfolio/
+```

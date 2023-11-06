@@ -18,5 +18,3 @@ conda activate mroenv
 python facility/facility.py --foldername /scratch/gpfs/iywang/mro_results/facility/cvar/
 
 # python facility/plots.py --foldername /scratch/gpfs/iywang/mro_results/facility/cvar/
-
-

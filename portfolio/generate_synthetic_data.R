@@ -1,7 +1,7 @@
 #load packages and returns data
 install.packages("Rsafd")
-library(Rsafd) 
-returns = read.csv(file = 'returns.csv',header = FALSE) 
+library(Rsafd)
+returns = read.csv(file = 'returns.csv',header = FALSE)
 n = 20000
 K = dim(returns)[2]
 rrets = returns

@@ -83,7 +83,7 @@ def prob_facility_separate(K, m, n):
     tau = cp.Variable()
     s = cp.Variable(K)
     gam = cp.Variable((n, K*2*m))
-    a =  5
+    a = 5
     C_r = np.vstack([-np.eye(m), np.eye(m)])
     d_r = np.hstack([-np.ones(m), np.ones(m)*6])
 
@@ -96,10 +96,10 @@ def prob_facility_separate(K, m, n):
     constraints += [tau + wk @ s <= 0]
     for k in range(K):
         for i in range(n):
-            constraints += [-a*tau+ lmbda[k]*eps - a*p[i]*x[i] + a*d_train[k]@X[i] +
+            constraints += [-a*tau + lmbda[k]*eps - a*p[i]*x[i] + a*d_train[k]@X[i] +
                             gam[i, (k*2*m):((k+1)*2*m)]@(d_r - C_r@d_train[k]) <= s[k]]
             constraints += [cp.norm(C_r.T@gam[i, (k*2*m):((k+1)*2*m)
-                                            ] - a*X[i], 2) <= lmbda[k]]
+                                              ] - a*X[i], 2) <= lmbda[k]]
         constraints += [lmbda[k]*eps <= s[k]]
     constraints += [X >= 0, lmbda >= 0, gam >= 0]
 
@@ -191,6 +191,7 @@ def generate_facility_data(n=10, m=50):
     # Past demands of customer (past uncertain data)
     return c, C, p
 
+
 def generate_facility_demands(N, m, R):
     """Generate uncertain demand
     Parameters:
@@ -207,11 +208,11 @@ def generate_facility_demands(N, m, R):
         Demand vector
     """
 
-    dat = np.random.normal(4,0.8,(N,m,R))
-    dat2 = np.random.normal(3,0.9,(N,m,R))
+    dat = np.random.normal(4, 0.8, (N, m, R))
+    dat2 = np.random.normal(3, 0.9, (N, m, R))
     dat = np.vstack([dat, dat2])
-    dat = np.minimum(dat,6)
-    dat = np.maximum(dat,1)
+    dat = np.minimum(dat, 6)
+    dat = np.maximum(dat, 1)
     return dat
 
 
@@ -234,7 +235,8 @@ def evaluate(p, x, X, tau, d):
     maxval = np.zeros((np.shape(d)[0], np.shape(x)[0]))
     for fac in range(np.shape(x)[0]):
         for ind in range(np.shape(d)[0]):
-            maxval[ind, fac] = tau.value + np.maximum(-5*p.value[fac]*x.value[fac] + 5*d[ind]@X.value[fac] - 5*tau.value, 0)
+            maxval[ind, fac] = tau.value + \
+                np.maximum(-5*p.value[fac]*x.value[fac] + 5*d[ind]@X.value[fac] - 5*tau.value, 0)
     if np.mean(np.max(maxval, axis=1)) >= 0.001:
         return 0
     return 1
@@ -315,12 +317,15 @@ def facility_experiment(r, n, m, Data, Data_eval, prob_facility,
         #              "Eval_val": evalvalue,
         #              "Eval_val1": evalvalue1,
         #              "solvetime": problem.solver_stats.solve_time,
-        #              "bound": np.mean([np.max([(d_train[k] - Data[:, :, r][kmeans.labels_ == k])@(-5*X[i].value) for i in range(n)],axis = 1) for k in range(K)])
+        #              "bound": np.mean([np.max([(d_train[k] - Data[:, :, r]\
+        # [kmeans.labels_ == k])@(-5*X[i].value) for i \
+        # in range(n)],axis = 1) for k in range(K)])
         #              })
         #         df = pd.concat([df, newrow.to_frame().T], ignore_index=True)
         #         df.to_csv(foldername + '/df.csv')
-        problem, x, X, s, lmbda, data_train_pm, w_pm, eps_pm, p_pm, c_pm, C_pm, gam, tau = prob_facility(
-            K, m, n)
+        problem, x, X, s, lmbda, data_train_pm, w_pm, eps_pm, p_pm, \
+            c_pm, C_pm, gam, tau = prob_facility(
+                K, m, n)
         data_train_pm.value = d_train
         w_pm.value = wk
         p_pm.value = p
@@ -342,7 +347,13 @@ def facility_experiment(r, n, m, Data, Data_eval, prob_facility,
                  "Eval_val": evalvalue,
                  "Eval_val1": evalvalue1,
                  "solvetime": problem.solver_stats.solve_time,
-                 "bound": np.mean([np.max([(d_train[k] - Data[:, :, r][kmeans.labels_ == k])@np.minimum(-5*X[i].value + gam.value[i, (k*2*m):((k+1)*2*m)]@C_r,0) for i in range(n)],axis = 1) for k in range(K)])
+                 "bound": np.mean(
+                     [np.max([(d_train[k] -
+                               Data[:, :, r][kmeans.labels_ == k])@np.minimum(
+                         -5*X[i].value + gam.value[i,
+                                                   (k*2*m):((k+1)*2*m)]@C_r,
+                         0) for
+                         i in range(n)], axis=1) for k in range(K)])
                  })
             df = pd.concat([df, newrow.to_frame().T], ignore_index=True)
             # df.to_csv(foldername + '/df.csv')
@@ -367,7 +378,9 @@ if __name__ == '__main__':
     eps_min = 0.05      # minimum epsilon we consider
     eps_max = 2         # maximum epsilon we consider
 
-    eps_nums = np.concatenate([np.logspace(-3,-0.8,25), np.linspace(0.16,0.5,20), np.linspace(0.51, 0.8, 5)])
+    eps_nums = np.concatenate([np.logspace(-3, -0.8, 25),
+                               np.linspace(0.16, 0.5, 20),
+                               np.linspace(0.51, 0.8, 5)])
     eps_tot = M
     c, C, p = generate_facility_data(n, m)
     Data = generate_facility_demands(N_tot, m, R)

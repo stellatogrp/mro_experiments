@@ -3,8 +3,8 @@ import argparse
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from sklearn.cluster import KMeans
 from mpl_toolkits.axes_grid1.inset_locator import mark_inset, zoomed_inset_axes
+from sklearn.cluster import KMeans
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--foldername', type=str,
@@ -29,22 +29,22 @@ plt.rcParams.update({
 })
 
 d = (np.vstack([np.random.uniform(0.005*i, 0.02 *
-      (i+1), int(N_tot/2)) for i in range(m)])).T
+                                  (i+1), int(N_tot/2)) for i in range(m)])).T
 d2 = (np.vstack([np.random.uniform(0.01*i, 0.025 *
       (i+1), int(N_tot/2)) for i in range(m)])).T
 dat_val = np.vstack([d, d2])
 d = (np.vstack([np.random.uniform(0.005*i, 0.02 *
-      (i+1), int(N_tot/2)) for i in range(m)])).T
+                                  (i+1), int(N_tot/2)) for i in range(m)])).T
 d2 = (np.vstack([np.random.uniform(0.01*i, 0.025 *
       (i+1), int(N_tot/2)) for i in range(m)])).T
 dat_eval = np.vstack([d, d2])
 vals = []
-for K in np.arange(1,25):
+for K in np.arange(1, 25):
     kmeans = KMeans(n_clusters=K, n_init='auto').fit(dat_val)
     weights = np.bincount(kmeans.labels_) / N_tot
     vals.append(kmeans.inertia_/N_tot)
-plt.figure(figsize = (8,2.5))
-plt.plot(np.arange(1,25),vals)
+plt.figure(figsize=(8, 2.5))
+plt.plot(np.arange(1, 25), vals)
 plt.yscale("log")
 plt.xlabel("$K$ (number of clusters)")
 plt.ylabel("$D(K)$")

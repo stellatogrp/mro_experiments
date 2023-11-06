@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn.cluster import KMeans
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--foldername', type=str,
                     default="logsumexp/", metavar='N')
@@ -67,12 +68,12 @@ eps_nums = np.append(np.logspace(-5.2, -4, 15), np.logspace(-3.9, 1, 10))
 
 d = data_modes(90, 30, [1, 3, 7])
 vals = []
-for K in np.arange(1,40):
+for K in np.arange(1, 40):
     kmeans = KMeans(n_clusters=K, n_init='auto').fit(d)
     weights = np.bincount(kmeans.labels_) / N_tot
     vals.append(kmeans.inertia_/N_tot)
-plt.figure(figsize = (8,2.5))
-plt.plot(np.arange(1,40),vals)
+plt.figure(figsize=(8, 2.5))
+plt.plot(np.arange(1, 40), vals)
 plt.yscale("log")
 plt.xlabel("$K$ (number of clusters)")
 plt.ylabel("$D(K)$")
